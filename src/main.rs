@@ -93,6 +93,15 @@ enum CanvasTask {
     DrawRects {
         rects: Vec<Rectangle>,
     },
+    FillRect {
+        x: i32,
+        y: i32,
+        width: u32,
+        height: u32,
+    },
+    FillRects {
+        rects: Vec<Rectangle>,
+    },
     Clear,
     Quit,
     None,
@@ -334,6 +343,21 @@ fn main() -> std::io::Result<()> {
                         .map(|r| Rect::new(r.x, r.y, r.width, r.height))
                         .collect();
                     canvas.draw_rects(rects.as_slice());
+                }
+                CanvasTask::FillRect {
+                    x,
+                    y,
+                    width,
+                    height,
+                } => {
+                    canvas.fill_rect(Some(Rect::new(x, y, width, height)));
+                }
+                CanvasTask::FillRects { rects } => {
+                    let rects: Vec<Rect> = rects
+                        .iter()
+                        .map(|r| Rect::new(r.x, r.y, r.width, r.height))
+                        .collect();
+                    canvas.fill_rects(rects.as_slice());
                 }
                 _ => {}
             }

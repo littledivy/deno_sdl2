@@ -49,6 +49,14 @@ class Canvas extends EventTarget {
     this.#tasks.push({ drawRects: { rects } });
   }
 
+  fillRect(x, y, width, height) {
+    this.#tasks.push({ fillRect: { x, y, width, height } });
+  }
+
+  fillRects(rects) {
+    this.#tasks.push({ fillRects: { rects } });
+  }
+
   quit() {
     this.#tasks.push("quit");
   }
@@ -139,7 +147,7 @@ canvas.addEventListener("event", (e) => {
 
   if (e.detail["MouseMotion"]) {
     canvas.setDrawColor(25, 25, 25, 1);
-    canvas.drawRect(
+    canvas.fillRect(
       e.detail["MouseMotion"].x,
       e.detail["MouseMotion"].y,
       10,
