@@ -4,6 +4,8 @@ use std::net::TcpStream;
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 use sdl2::pixels::Color;
+use sdl2::rect::Point;
+use sdl2::rect::Rect;
 use sdl2::render::CanvasBuilder;
 use sdl2::render::WindowCanvas;
 use sdl2::video::Window;
@@ -38,13 +40,59 @@ struct CanvasOptions {
     software: bool,
 }
 
-#[derive(Deserialize, PartialEq)]
+#[derive(Deserialize)]
+struct CanvasPoint {
+    x: i32,
+    y: i32,
+}
+
+#[derive(Deserialize)]
+struct Rectangle {
+    x: i32,
+    y: i32,
+    width: u32,
+    height: u32,
+}
+
+#[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
 enum CanvasTask {
     Present,
-    SetDrawColor { r: u8, g: u8, b: u8, a: u8 },
+    SetDrawColor {
+        r: u8,
+        g: u8,
+        b: u8,
+        a: u8,
+    },
     // TODO(@littledivy): Add this when there is a usecase
     // SetBlendMode { },
+    SetScale {
+        x: f32,
+        y: f32,
+    },
+    DrawPoint {
+        x: i32,
+        y: i32,
+    },
+    DrawPoints {
+        points: Vec<CanvasPoint>,
+    },
+    DrawLine {
+        p1: CanvasPoint,
+        p2: CanvasPoint,
+    },
+    DrawLines {
+        points: Vec<CanvasPoint>,
+    },
+    DrawRect {
+        x: i32,
+        y: i32,
+        width: u32,
+        height: u32,
+    },
+    DrawRects {
+        rects: Vec<Rectangle>,
+    },
     Clear,
     Quit,
     None,
@@ -202,21 +250,6 @@ fn build_window(builder: &mut WindowBuilder, options: WindowOptions) -> Window {
     builder.build().unwrap()
 }
 
-fn canvas_task(canvas: &mut WindowCanvas, task: CanvasTask) {
-    match task {
-        CanvasTask::Present => {
-            canvas.present();
-        }
-        CanvasTask::Clear => {
-            canvas.clear();
-        }
-        CanvasTask::SetDrawColor { r, g, b, a } => {
-            canvas.set_draw_color((r, g, b, a));
-        }
-        _ => {}
-    }
-}
-
 fn main() -> std::io::Result<()> {
     let mut stream = TcpStream::connect("127.0.0.1:34254")?;
 
@@ -257,10 +290,53 @@ fn main() -> std::io::Result<()> {
         // Get canvas task
         let tasks: Vec<CanvasTask> = serde_json::from_slice(&read!(stream)).unwrap();
         for task in tasks {
-            if task == CanvasTask::Quit {
-                break 'running;
+            match task {
+                CanvasTask::Quit => {
+                    break 'running;
+                }
+                CanvasTask::Present => {
+                    canvas.present();
+                }
+                CanvasTask::Clear => {
+                    canvas.clear();
+                }
+                CanvasTask::SetDrawColor { r, g, b, a } => {
+                    canvas.set_draw_color((r, g, b, a));
+                }
+                CanvasTask::SetScale { x, y } => {
+                    canvas.set_scale(x, y);
+                }
+                CanvasTask::DrawPoint { x, y } => {
+                    canvas.draw_point(Point::new(x, y));
+                }
+                CanvasTask::DrawPoints { points } => {
+                    let points: Vec<Point> = points.iter().map(|p| Point::new(p.x, p.y)).collect();
+                    canvas.draw_points(points.as_slice());
+                }
+                CanvasTask::DrawLine { p1, p2 } => {
+                    canvas.draw_line(Point::new(p1.x, p1.y), Point::new(p2.x, p2.y));
+                }
+                CanvasTask::DrawLines { points } => {
+                    let points: Vec<Point> = points.iter().map(|p| Point::new(p.x, p.y)).collect();
+                    canvas.draw_lines(points.as_slice());
+                }
+                CanvasTask::DrawRect {
+                    x,
+                    y,
+                    width,
+                    height,
+                } => {
+                    canvas.draw_rect(Rect::new(x, y, width, height));
+                }
+                CanvasTask::DrawRects { rects } => {
+                    let rects: Vec<Rect> = rects
+                        .iter()
+                        .map(|r| Rect::new(r.x, r.y, r.width, r.height))
+                        .collect();
+                    canvas.draw_rects(rects.as_slice());
+                }
+                _ => {}
             }
-            canvas_task(&mut canvas, task);
         }
 
         stream.read_exact(&mut vec![0; 1])?;

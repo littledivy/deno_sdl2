@@ -1,6 +1,6 @@
 import { decodeConn, encode, readStatus } from "./msg.ts";
 
-class Window extends EventTarget {
+class Canvas extends EventTarget {
   #properties;
   #tasks = [];
 
@@ -19,6 +19,34 @@ class Window extends EventTarget {
 
   setDrawColor(r, g, b, a) {
     this.#tasks.push({ setDrawColor: { r, g, b, a } });
+  }
+
+  setScale(x, y) {
+    this.#tasks.push({ setScale: { x, y } });
+  }
+
+  drawPoint(x, y) {
+    this.#tasks.push({ drawPoint: { x, y } });
+  }
+
+  drawPoints(points) {
+    this.#tasks.push({ drawPoints: { points } });
+  }
+
+  drawLine(p1, p2) {
+    this.#tasks.push({ drawLine: { p1, p2 } });
+  }
+
+  drawLines(points) {
+    this.#tasks.push({ drawLines: { points } });
+  }
+
+  drawRect(x, y, width, height) {
+    this.#tasks.push({ drawRect: { x, y, width, height } });
+  }
+
+  drawRects(rects) {
+    this.#tasks.push({ drawRects: { rects } });
   }
 
   quit() {
@@ -74,6 +102,7 @@ class Window extends EventTarget {
 
 async function init(cb) {
   const listener = Deno.listen({ port: 34254, transport: "tcp" });
+  // TODO: Spawn client process
 
   console.log("listening on 0.0.0.0:34254");
 
@@ -91,7 +120,7 @@ async function init(cb) {
   }
 }
 
-const window = new Window({
+const canvas = new Canvas({
   title: "Hello, Deno!",
   height: 800,
   width: 600,
@@ -103,15 +132,26 @@ const window = new Window({
   maximized: false,
 });
 
-window.addEventListener("event", (e) => {
+canvas.addEventListener("event", (e) => {
   if (e.detail == "Quit") {
-    window.quit();
+    canvas.quit();
   }
-  console.log(e.detail);
+
+  if (e.detail["MouseMotion"]) {
+    canvas.setDrawColor(25, 25, 25, 1);
+    canvas.drawRect(
+      e.detail["MouseMotion"].x,
+      e.detail["MouseMotion"].y,
+      10,
+      10,
+    );
+    canvas.present();
+  }
 });
 
-window.setDrawColor(0, 64, 255, 0);
-window.clear();
-window.present();
+canvas.setDrawColor(0, 64, 255, 1);
+canvas.clear();
 
-await window.start();
+canvas.present();
+
+await canvas.start();
