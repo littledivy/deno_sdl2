@@ -29,6 +29,19 @@ export interface Rect extends Point {
   height: number;
 }
 
+export interface Color {
+  r: number;
+  g: number;
+  b: number;
+  a: number;
+}
+
+export interface FontRenderOptions {
+  solid?: Color;
+  shaded?: { color: Color; background: Color };
+  blended?: Color;
+}
+
 class Canvas extends EventTarget {
   #properties: WindowOptions;
   // Used internally.
@@ -37,6 +50,9 @@ class Canvas extends EventTarget {
   // Used internally.
   // @deno-lint-ignore allow-any
   #windowTasks: any[] = [];
+  // Used internally. Too lazy to type.
+  // @deno-lint-ignore allow-any
+  #fonts: any[] = [];
 
   constructor(properties: WindowOptions) {
     super();
@@ -158,6 +174,21 @@ class Canvas extends EventTarget {
 
   restore() {
     this.#windowTasks.push("restore");
+  }
+
+  loadFont(path: string, size: number, opts?: { style: string }): number {
+    const options = { path, size, ...opts };
+    const index = this.#fonts.push(options);
+    // this.#tasks.push({ loadFont: { ...options, index } });
+    return index;
+  }
+
+  renderFont(font: number, text: string, options: FontRenderOptions) {
+    const _font = this.#fonts[font];
+    if (!_font) {
+      throw new Error("Font not loaded. Did you forget to call `loadFont` ?");
+    }
+    this.#tasks.push({ renderFont: { font, text, ...options, ..._font } });
   }
 
   async start() {

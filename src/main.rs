@@ -9,11 +9,14 @@ use sdl2::rect::Point;
 use sdl2::rect::Rect;
 use sdl2::render::CanvasBuilder;
 use sdl2::render::WindowCanvas;
+use sdl2::ttf::Font;
+use sdl2::ttf::FontStyle;
 use sdl2::video::DisplayMode;
 use sdl2::video::Window;
 use sdl2::video::WindowBuilder;
 use sdl2::video::WindowPos;
 
+use std::collections::HashMap;
 use std::convert::TryFrom;
 
 use serde::Deserialize;
@@ -57,6 +60,14 @@ struct Rectangle {
     y: i32,
     width: u32,
     height: u32,
+}
+
+#[derive(Deserialize)]
+struct CanvasColor {
+    r: u8,
+    g: u8,
+    b: u8,
+    a: u8,
 }
 
 #[derive(Deserialize)]
@@ -154,6 +165,57 @@ enum CanvasTask {
     Clear,
     Quit,
     None,
+    // LoadFont {
+    //     // Internal
+    //     index: u32,
+    //     path: String,
+    //     size: u16,
+    //     style: Option<CanvasFontSize>,
+    // },
+    RenderFont {
+        text: String,
+        options: CanvasFontPartial,
+        target: Option<Rectangle>,
+        path: String,
+        size: u16,
+        style: Option<CanvasFontSize>,
+    },
+}
+
+#[derive(Deserialize)]
+enum CanvasFontPartial {
+    Solid {
+        color: CanvasColor,
+    },
+    Shaded {
+        color: CanvasColor,
+        background: CanvasColor,
+    },
+    Blended {
+        color: CanvasColor,
+    },
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "lowercase")]
+enum CanvasFontSize {
+    Normal,
+    Bold,
+    Italic,
+    Underline,
+    Strikethrough,
+}
+
+impl Into<FontStyle> for CanvasFontSize {
+    fn into(self) -> FontStyle {
+        match self {
+            CanvasFontSize::Normal => FontStyle::NORMAL,
+            CanvasFontSize::Bold => FontStyle::BOLD,
+            CanvasFontSize::Italic => FontStyle::ITALIC,
+            CanvasFontSize::Underline => FontStyle::UNDERLINE,
+            CanvasFontSize::Strikethrough => FontStyle::STRIKETHROUGH,
+        }
+    }
 }
 
 #[derive(Serialize)]
@@ -311,9 +373,12 @@ fn build_window(builder: &mut WindowBuilder, options: WindowOptions) -> Window {
 
 fn main() -> std::io::Result<()> {
     let mut stream = TcpStream::connect("127.0.0.1:34254")?;
+    let mut fonts: HashMap<u32, Font> = HashMap::new();
 
     let sdl_context = sdl2::init().unwrap();
     let video_subsystem = sdl_context.video().unwrap();
+    let ttf_context = sdl2::ttf::init().unwrap();
+
     // Request VIDEO_READY
     stream.write(&[0])?;
     // Get Window options
@@ -471,6 +536,48 @@ fn main() -> std::io::Result<()> {
                         .map(|r| Rect::new(r.x, r.y, r.width, r.height))
                         .collect();
                     canvas.fill_rects(rects.as_slice());
+                }
+                // CanvasTask::LoadFont { path, size, style, index } => {
+                //     let mut font = ttf_context.load_font(path, size).unwrap();
+                //     if let Some(font_style) = style {
+                //         font.set_style(font_style.into());
+                //     }
+                //     fonts.insert(index, font);
+                // }
+                CanvasTask::RenderFont {
+                    path,
+                    size,
+                    style,
+                    text,
+                    options,
+                    target,
+                } => {
+                    let texture_creator = canvas.texture_creator();
+                    let mut font = ttf_context.load_font(path, size).unwrap();
+                    if let Some(font_style) = style {
+                        font.set_style(font_style.into());
+                    }
+                    let partial = font.render(&text);
+                    let surface = match options {
+                        CanvasFontPartial::Solid { color } => {
+                            partial.solid(Color::RGBA(color.r, color.g, color.b, color.a))
+                        }
+                        CanvasFontPartial::Shaded { color, background } => partial.shaded(
+                            Color::RGBA(color.r, color.g, color.b, color.a),
+                            Color::RGBA(background.r, background.g, background.b, background.a),
+                        ),
+                        CanvasFontPartial::Blended { color } => {
+                            partial.blended(Color::RGBA(color.r, color.g, color.b, color.a))
+                        }
+                    };
+                    let texture = texture_creator
+                        .create_texture_from_surface(&surface.unwrap())
+                        .unwrap();
+                    let target = match target {
+                        Some(r) => Some(Rect::new(r.x, r.y, r.width, r.height)),
+                        None => None,
+                    };
+                    canvas.copy(&texture, None, target).unwrap();
                 }
                 _ => {}
             }
