@@ -4,12 +4,17 @@ use std::net::TcpStream;
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 use sdl2::pixels::Color;
+use sdl2::pixels::PixelFormatEnum;
 use sdl2::rect::Point;
 use sdl2::rect::Rect;
 use sdl2::render::CanvasBuilder;
 use sdl2::render::WindowCanvas;
+use sdl2::video::DisplayMode;
 use sdl2::video::Window;
 use sdl2::video::WindowBuilder;
+use sdl2::video::WindowPos;
+
+use std::convert::TryFrom;
 
 use serde::Deserialize;
 use serde::Serialize;
@@ -52,6 +57,50 @@ struct Rectangle {
     y: i32,
     width: u32,
     height: u32,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+enum WindowTask {
+    // format is i32 representation of `sdl2::pixels::PixelFormatEnum`
+    SetDisplayMode {
+        width: i32,
+        height: i32,
+        rate: i32,
+        format: u32,
+    },
+    SetTitle {
+        title: String,
+    },
+    // Path to icon file. Surface is created under the hood
+    SetIcon {
+        icon: String,
+    },
+    // x and y should be `sdl2::video::WindowPos`
+    SetPosition {
+        x: i32,
+        y: i32,
+    },
+    SetSize {
+        width: u32,
+        height: u32,
+    },
+    SetMinimumSize {
+        width: u32,
+        height: u32,
+    },
+    Show,
+    Hide,
+    Raise,
+    Maximize,
+    Minimize,
+    Restore,
+    SetBrightness {
+        brightness: f64,
+    },
+    SetOpacity {
+        opacity: f32,
+    },
 }
 
 #[derive(Deserialize)]
@@ -224,13 +273,12 @@ macro_rules! read {
 }
 
 fn build_canvas(window: Window, options: CanvasOptions) -> WindowCanvas {
-    let builder = window.into_canvas();
-
+    let mut canvas_builder = window.into_canvas();
     if options.software {
-        return builder.software().build().unwrap();
+        return canvas_builder.software().build().unwrap();
     }
 
-    builder.build().unwrap()
+    canvas_builder.build().unwrap()
 }
 
 fn build_window(builder: &mut WindowBuilder, options: WindowOptions) -> Window {
@@ -255,7 +303,9 @@ fn build_window(builder: &mut WindowBuilder, options: WindowOptions) -> Window {
     if options.maximized {
         builder.maximized();
     }
-
+    if options.resizable {
+        builder.resizable();
+    }
     builder.build().unwrap()
 }
 
@@ -281,10 +331,73 @@ fn main() -> std::io::Result<()> {
     stream.write(&[1])?;
     // Get Canvas options
     let canvas_options: CanvasOptions = serde_json::from_slice(&read!(stream)).unwrap();
+
     let mut canvas = build_canvas(window, canvas_options);
 
     let mut event_pump = sdl_context.event_pump().unwrap();
     'running: loop {
+        stream.write(&[1]);
+
+        let window_tasks: Vec<WindowTask> = serde_json::from_slice(&read!(stream)).unwrap();
+        for task in window_tasks {
+            let window = canvas.window_mut();
+            match task {
+                WindowTask::SetDisplayMode {
+                    width,
+                    height,
+                    rate,
+                    format,
+                } => {
+                    window.set_display_mode(DisplayMode::new(
+                        PixelFormatEnum::try_from(format).unwrap(),
+                        width,
+                        height,
+                        rate,
+                    ));
+                }
+                WindowTask::SetTitle { title } => {
+                    window.set_title(&title);
+                }
+                WindowTask::SetIcon { icon } => {
+                    // TODO: Requires surface creation. Yet to decide the API
+                }
+                WindowTask::SetPosition { x, y } => {
+                    window.set_position(WindowPos::Positioned(x), WindowPos::Positioned(y));
+                }
+                WindowTask::SetSize { width, height } => {
+                    window.set_size(width, height);
+                }
+                WindowTask::SetMinimumSize { width, height } => {
+                    window.set_minimum_size(width, height);
+                }
+                WindowTask::Show => {
+                    window.show();
+                }
+                WindowTask::Hide => {
+                    window.hide();
+                }
+                WindowTask::Raise => {
+                    window.raise();
+                }
+                WindowTask::Maximize => {
+                    window.maximize();
+                }
+                WindowTask::Minimize => {
+                    window.minimize();
+                }
+                WindowTask::Restore => {
+                    window.restore();
+                }
+                WindowTask::SetBrightness { brightness } => {
+                    window.set_brightness(brightness);
+                }
+                WindowTask::SetOpacity { opacity } => {
+                    window.set_opacity(opacity);
+                }
+                _ => {}
+            }
+        }
+
         for event in event_pump.poll_iter() {
             // Send Event ping
             stream.write(&[3])?;
