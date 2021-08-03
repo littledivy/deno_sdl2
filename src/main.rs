@@ -16,8 +16,12 @@ use sdl2::video::Window;
 use sdl2::video::WindowBuilder;
 use sdl2::video::WindowPos;
 
+use anyhow::anyhow;
+use anyhow::Result;
+
 use std::collections::HashMap;
 use std::convert::TryFrom;
+use std::io::BufReader;
 
 use serde::Deserialize;
 use serde::Serialize;
@@ -372,18 +376,19 @@ fn build_window(builder: &mut WindowBuilder, options: WindowOptions) -> Window {
     builder.build().unwrap()
 }
 
-fn main() -> std::io::Result<()> {
+fn main() -> Result<()> {
     let mut stream = TcpStream::connect("127.0.0.1:34254")?;
-    let mut fonts: HashMap<u32, Font> = HashMap::new();
+    let mut reader = BufReader::new(stream.try_clone()?);
+    // let mut fonts: HashMap<u32, Font> = HashMap::new();
 
-    let sdl_context = sdl2::init().unwrap();
-    let video_subsystem = sdl_context.video().unwrap();
-    let ttf_context = sdl2::ttf::init().unwrap();
+    let sdl_context = sdl2::init().map_err(|e| anyhow!(e))?;
+    let video_subsystem = sdl_context.video().map_err(|e| anyhow!(e))?;
+    let ttf_context = sdl2::ttf::init()?;
 
     // Request VIDEO_READY
     stream.write(&[0])?;
     // Get Window options
-    let window_options: WindowOptions = serde_json::from_slice(&read!(stream)).unwrap();
+    let window_options: WindowOptions = serde_json::from_slice(&read!(stream))?;
 
     let mut window_builder = video_subsystem.window(
         &window_options.title,
@@ -396,15 +401,15 @@ fn main() -> std::io::Result<()> {
     // Request CANVAS_READY
     stream.write(&[1])?;
     // Get Canvas options
-    let canvas_options: CanvasOptions = serde_json::from_slice(&read!(stream)).unwrap();
+    let canvas_options: CanvasOptions = serde_json::from_slice(&read!(reader))?;
 
     let mut canvas = build_canvas(window, canvas_options);
 
-    let mut event_pump = sdl_context.event_pump().unwrap();
+    let mut event_pump = sdl_context.event_pump().map_err(|e| anyhow!(e))?;
     'running: loop {
-        stream.write(&[1]);
+        stream.write(&[1])?;
 
-        let window_tasks: Vec<WindowTask> = serde_json::from_slice(&read!(stream)).unwrap();
+        let window_tasks: Vec<WindowTask> = serde_json::from_slice(&read!(reader))?;
         for task in window_tasks {
             let window = canvas.window_mut();
             match task {
@@ -414,15 +419,18 @@ fn main() -> std::io::Result<()> {
                     rate,
                     format,
                 } => {
-                    window.set_display_mode(DisplayMode::new(
-                        PixelFormatEnum::try_from(format).unwrap(),
-                        width,
-                        height,
-                        rate,
-                    ));
+                    window
+                        .set_display_mode(DisplayMode::new(
+                            PixelFormatEnum::try_from(format)
+                                .map_err(|_| anyhow!("Invalid pixel format"))?,
+                            width,
+                            height,
+                            rate,
+                        ))
+                        .map_err(|e| anyhow!(e))?;
                 }
                 WindowTask::SetTitle { title } => {
-                    window.set_title(&title);
+                    window.set_title(&title).map_err(|e| anyhow!(e))?;
                 }
                 WindowTask::SetIcon { icon } => {
                     // TODO: Requires surface creation. Yet to decide the API
@@ -431,10 +439,10 @@ fn main() -> std::io::Result<()> {
                     window.set_position(WindowPos::Positioned(x), WindowPos::Positioned(y));
                 }
                 WindowTask::SetSize { width, height } => {
-                    window.set_size(width, height);
+                    window.set_size(width, height)?;
                 }
                 WindowTask::SetMinimumSize { width, height } => {
-                    window.set_minimum_size(width, height);
+                    window.set_minimum_size(width, height)?;
                 }
                 WindowTask::Show => {
                     window.show();
@@ -455,12 +463,11 @@ fn main() -> std::io::Result<()> {
                     window.restore();
                 }
                 WindowTask::SetBrightness { brightness } => {
-                    window.set_brightness(brightness);
+                    window.set_brightness(brightness).map_err(|e| anyhow!(e))?;
                 }
                 WindowTask::SetOpacity { opacity } => {
-                    window.set_opacity(opacity);
+                    window.set_opacity(opacity).map_err(|e| anyhow!(e))?;
                 }
-                _ => {}
             }
         }
 
@@ -469,14 +476,14 @@ fn main() -> std::io::Result<()> {
             stream.write(&[3])?;
             // Send Event
             let canvas_event: CanvasEvent = event.into();
-            let buf = serde_json::to_vec(&canvas_event).unwrap();
+            let buf = serde_json::to_vec(&canvas_event)?;
             stream.write(&(buf.len() as u32).to_le_bytes())?;
             stream.write(&buf)?;
         }
         // Request CANVAS_LOOP_ACTION
         stream.write(&[2])?;
         // Get canvas task
-        let tasks: Vec<CanvasTask> = serde_json::from_slice(&read!(stream)).unwrap();
+        let tasks: Vec<CanvasTask> = serde_json::from_slice(&read!(reader))?;
         for task in tasks {
             match task {
                 CanvasTask::Quit => {
@@ -492,21 +499,29 @@ fn main() -> std::io::Result<()> {
                     canvas.set_draw_color((r, g, b, a));
                 }
                 CanvasTask::SetScale { x, y } => {
-                    canvas.set_scale(x, y);
+                    canvas.set_scale(x, y).map_err(|e| anyhow!(e))?;
                 }
                 CanvasTask::DrawPoint { x, y } => {
-                    canvas.draw_point(Point::new(x, y));
+                    canvas
+                        .draw_point(Point::new(x, y))
+                        .map_err(|e| anyhow!(e))?;
                 }
                 CanvasTask::DrawPoints { points } => {
                     let points: Vec<Point> = points.iter().map(|p| Point::new(p.x, p.y)).collect();
-                    canvas.draw_points(points.as_slice());
+                    canvas
+                        .draw_points(points.as_slice())
+                        .map_err(|e| anyhow!(e))?;
                 }
                 CanvasTask::DrawLine { p1, p2 } => {
-                    canvas.draw_line(Point::new(p1.x, p1.y), Point::new(p2.x, p2.y));
+                    canvas
+                        .draw_line(Point::new(p1.x, p1.y), Point::new(p2.x, p2.y))
+                        .map_err(|e| anyhow!(e))?;
                 }
                 CanvasTask::DrawLines { points } => {
                     let points: Vec<Point> = points.iter().map(|p| Point::new(p.x, p.y)).collect();
-                    canvas.draw_lines(points.as_slice());
+                    canvas
+                        .draw_lines(points.as_slice())
+                        .map_err(|e| anyhow!(e))?;
                 }
                 CanvasTask::DrawRect {
                     x,
@@ -514,14 +529,18 @@ fn main() -> std::io::Result<()> {
                     width,
                     height,
                 } => {
-                    canvas.draw_rect(Rect::new(x, y, width, height));
+                    canvas
+                        .draw_rect(Rect::new(x, y, width, height))
+                        .map_err(|e| anyhow!(e))?;
                 }
                 CanvasTask::DrawRects { rects } => {
                     let rects: Vec<Rect> = rects
                         .iter()
                         .map(|r| Rect::new(r.x, r.y, r.width, r.height))
                         .collect();
-                    canvas.draw_rects(rects.as_slice());
+                    canvas
+                        .draw_rects(rects.as_slice())
+                        .map_err(|e| anyhow!(e))?;
                 }
                 CanvasTask::FillRect {
                     x,
@@ -529,14 +548,18 @@ fn main() -> std::io::Result<()> {
                     width,
                     height,
                 } => {
-                    canvas.fill_rect(Some(Rect::new(x, y, width, height)));
+                    canvas
+                        .fill_rect(Some(Rect::new(x, y, width, height)))
+                        .map_err(|e| anyhow!(e))?;
                 }
                 CanvasTask::FillRects { rects } => {
                     let rects: Vec<Rect> = rects
                         .iter()
                         .map(|r| Rect::new(r.x, r.y, r.width, r.height))
                         .collect();
-                    canvas.fill_rects(rects.as_slice());
+                    canvas
+                        .fill_rects(rects.as_slice())
+                        .map_err(|e| anyhow!(e))?;
                 }
                 // CanvasTask::LoadFont { path, size, style, index } => {
                 //     let mut font = ttf_context.load_font(path, size).unwrap();
@@ -583,8 +606,6 @@ fn main() -> std::io::Result<()> {
                 _ => {}
             }
         }
-
-        stream.read_exact(&mut vec![0; 1])?;
     }
 
     Ok(())

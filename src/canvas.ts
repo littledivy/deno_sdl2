@@ -216,7 +216,6 @@ export class Canvas extends EventTarget {
                 const tasks = encode(this.#tasks);
                 await conn.write(tasks);
                 this.#tasks = [];
-                await conn.write(new Uint8Array([1]));
                 break;
               case 3:
                 // EVENT_PUMP
@@ -226,7 +225,6 @@ export class Canvas extends EventTarget {
                 break;
               default:
                 await conn.write(encode(["none"]));
-                await conn.write(new Uint8Array([1]));
                 break;
             }
           }
