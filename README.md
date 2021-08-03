@@ -9,7 +9,7 @@ Have fun!
 
 - Bindings to Graphics and Font subsystem.
 - API similar to `Rust-sdl2`
-- Not `--unstable`. Uses TCP instead of Deno's tradional plugin system.
+- Not `--unstable`. Uses TCP instead of Deno's traditional plugin system.
 
 #### Usage
 
