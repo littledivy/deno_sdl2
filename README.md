@@ -6,6 +6,8 @@ Have fun!
 ![canvas_font_demo](https://user-images.githubusercontent.com/34997667/127973999-d0212cac-0800-46c8-8817-7e401fec69a6.png)
 
 
+#### Usage
+
 ```typescript
 const window = new Window({ title: "Hello, Deno!", width: 800, height: 400 });
 
