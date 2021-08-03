@@ -183,6 +183,7 @@ enum CanvasTask {
 }
 
 #[derive(Deserialize)]
+#[serde(rename_all = "lowercase")]
 enum CanvasFontPartial {
     Solid {
         color: CanvasColor,

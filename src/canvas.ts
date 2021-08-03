@@ -1,5 +1,6 @@
 import { decodeConn, encode, readStatus } from "./msg.ts";
 import { PixelFormat } from "./pixel.ts";
+import { FontRenderOptions } from "./font.ts";
 
 interface WindowOptions {
   title: String;
@@ -15,13 +16,13 @@ interface WindowOptions {
   maximized?: boolean;
 }
 
-interface WindowEvent extends Event {
-  detail?: any;
-}
-
 export interface Point {
   x: number;
   y: number;
+}
+
+export interface WindowEvent extends Event {
+  detail?: any;
 }
 
 export interface Rect extends Point {
@@ -29,20 +30,7 @@ export interface Rect extends Point {
   height: number;
 }
 
-export interface Color {
-  r: number;
-  g: number;
-  b: number;
-  a: number;
-}
-
-export interface FontRenderOptions {
-  solid?: Color;
-  shaded?: { color: Color; background: Color };
-  blended?: Color;
-}
-
-class Canvas extends EventTarget {
+export class Canvas extends EventTarget {
   #properties: WindowOptions;
   // Used internally.
   // @deno-lint-ignore allow-any
@@ -59,7 +47,8 @@ class Canvas extends EventTarget {
     this.#properties = properties;
     ["centered", "fullscreen", "hidden", "resizable", "minimized", "maximized"]
       .forEach((opt) => {
-        this.#properties[opt] = this.#properties[opt] || false;
+        (this.#properties as any)[opt] = (this.#properties as any)[opt] ||
+          false;
       });
   }
 
@@ -183,12 +172,17 @@ class Canvas extends EventTarget {
     return index;
   }
 
-  renderFont(font: number, text: string, options: FontRenderOptions) {
-    const _font = this.#fonts[font];
+  renderFont(
+    font: number,
+    text: string,
+    options: FontRenderOptions,
+    target?: Rect,
+  ) {
+    const _font = this.#fonts[font - 1];
     if (!_font) {
       throw new Error("Font not loaded. Did you forget to call `loadFont` ?");
     }
-    this.#tasks.push({ renderFont: { font, text, ...options, ..._font } });
+    this.#tasks.push({ renderFont: { font, text, options, target, ..._font } });
   }
 
   async start() {
@@ -248,60 +242,29 @@ class Canvas extends EventTarget {
 async function init(cb: (conn: Deno.Conn) => Promise<void>) {
   const listener = Deno.listen({ port: 34254, transport: "tcp" });
   // TODO: Spawn client process
-
+  const process = Deno.run({ cmd: ["target/debug/deno_sdl2"] });
   console.log("listening on 0.0.0.0:34254");
 
   for await (const conn of listener) {
     const reqBuf = await readStatus(conn);
-
     switch (reqBuf) {
       case 0:
         // VIDEO_READY
-        await cb(conn);
+        try {
+          await cb(conn);
+        } catch (e) {
+          const status = await process.status();
+          if (status.code !== 0) {
+            throw e;
+          } else {
+            return;
+          }
+        }
         break;
       default:
         break;
     }
   }
+
+  await process.status();
 }
-
-const canvas = new Canvas({
-  title: "Hello, Deno!",
-  height: 800,
-  width: 600,
-  centered: true,
-  fullscreen: false,
-  hidden: false,
-  resizable: false,
-  minimized: false,
-  maximized: false,
-});
-
-let i = 0;
-
-canvas.addEventListener("event", (e: WindowEvent) => {
-  i++;
-  canvas.setTitle(`i = ${i}`);
-
-  if (e.detail == "Quit") {
-    canvas.quit();
-  }
-
-  if (e.detail["MouseMotion"]) {
-    canvas.setDrawColor(255, 255, 255, 1);
-    canvas.fillRect(
-      e.detail["MouseMotion"].x,
-      e.detail["MouseMotion"].y,
-      10,
-      10,
-    );
-    canvas.present();
-  }
-});
-
-canvas.setDrawColor(0, 64, 255, 1);
-canvas.clear();
-
-canvas.present();
-
-await canvas.start();
