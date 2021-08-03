@@ -3,20 +3,28 @@
 Cross platform and stable bindings to [SDL2](https://www.libsdl.org/index.php).
 Have fun!
 
-![events](https://user-images.githubusercontent.com/34997667/127779178-a58d4cd6-2bf4-4d74-8e43-3b784799ab79.png)
+![canvas_font_demo](https://user-images.githubusercontent.com/34997667/127973999-d0212cac-0800-46c8-8817-7e401fec69a6.png)
+
+#### Features
+
+- Bindings to Graphics and Font subsystem.
+- API similar to `Rust-sdl2`
+- Not `--unstable`. Uses TCP instead of Deno's traditional plugin system.
+
+#### Usage
 
 ```typescript
-const window = new Window({ title: "Hello, Deno!", width: 800, height: 400 });
+const canvas = new Canvas({ title: "Hello, Deno!", width: 800, height: 400 });
 
-window.addEventListener("event", (e: WindowEvent) => {
+canvas.addEventListener("event", (e: WindowEvent) => {
   console.log(e.detail);
 });
 
-window.setDrawColor(0, 64, 255, 0);
-window.clear();
-window.present();
+canvas.setDrawColor(0, 64, 255, 0);
+canvas.clear();
+canvas.present();
 
-window.start();
+canvas.start();
 ```
 
 #### License
