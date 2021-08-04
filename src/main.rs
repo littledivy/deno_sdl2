@@ -450,7 +450,6 @@ fn main() -> Result<()> {
     let ttf_context = sdl2::ttf::init()?;
     // let audio_subsystem = sdl_context.audio().map_err(|e| anyhow!(e))?;
     // let mut audio_devices: Vec<AudioDevice<AudioManager>> = vec![];
-    let mut cursors: Vec<Cursor> = vec![];
 
     // Request VIDEO_READY
     stream.write(&[0])?;
@@ -664,9 +663,10 @@ fn main() -> Result<()> {
                 CanvasTask::SetCursor { path } => {
                     let surface = Surface::from_file(path).map_err(|e| anyhow!(e))?;
                     // TODO(@littledivy): Allow setting hotX and hotY.
-                    let cursor = Cursor::from_surface(surface, 0, 0).map_err(|e| anyhow!(e))?;
+                    let cursor = ManuallyDrop::new(
+                        Cursor::from_surface(surface, 0, 0).map_err(|e| anyhow!(e))?,
+                    );
                     cursor.set();
-                    cursors.push(cursor);
                 }
                 // TODO(@littledivy): Revisit this when we find a way to distinguish responses
                 // CanvasTask::CreateAudioDevice { freq, channels, samples } => {

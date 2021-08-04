@@ -299,7 +299,10 @@ export class Canvas extends EventTarget {
 
 async function init(cb: (conn: Deno.Conn) => Promise<void>) {
   const listener = Deno.listen({ port: 34254, transport: "tcp" });
-  // const process = Deno.run({ cmd: ["target/debug/deno_sdl2"] });
+  const process = Deno.run({
+    cmd: ["target/debug/deno_sdl2"],
+    stderr: "inherit",
+  });
   console.log("listening on 0.0.0.0:34254");
 
   for await (const conn of listener) {
@@ -314,5 +317,5 @@ async function init(cb: (conn: Deno.Conn) => Promise<void>) {
     }
   }
 
-  // await process.status();
+  await process.status();
 }
