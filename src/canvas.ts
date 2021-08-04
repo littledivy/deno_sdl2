@@ -16,6 +16,27 @@ interface WindowOptions {
   maximized?: boolean;
 }
 
+export enum AudioFormat {
+  AUDIO_U8 = 0x0008,
+  AUDIO_S8 = 0x8008,
+  AUDIO_U16LSB = 0x0010,
+  AUDIO_S16LSB = 0x8010,
+  AUDIO_U16MSB = 0x1010,
+  AUDIO_S16MSB = 0x9010,
+  AUDIO_U16 = AUDIO_U16LSB,
+  AUDIO_S16 = AUDIO_S16LSB,
+  AUDIO_S32LSB = 0x8020,
+  AUDIO_S32MSB = 0x9020,
+  AUDIO_S32 = AUDIO_S32LSB,
+  AUDIO_F32LSB = 0x8120,
+  AUDIO_F32MSB = 0x9120,
+  AUDIO_F32 = AUDIO_F32LSB,
+  AUDIO_U16SYS = AUDIO_U16LSB,
+  AUDIO_S16SYS = AUDIO_S16LSB,
+  AUDIO_S32SYS = AUDIO_S32LSB,
+  AUDIO_F32SYS = AUDIO_F32LSB,
+}
+
 export interface Point {
   x: number;
   y: number;
@@ -195,6 +216,19 @@ export class Canvas extends EventTarget {
   //   this.#audioCallback = callback;
   // }
 
+  openAudio(
+    frequency: number,
+    format: AudioFormat,
+    channels: number,
+    chunksize: number,
+  ) {
+    this.#tasks.push({ openAudio: { frequency, format, channels, chunksize } });
+  }
+
+  playMusic(path: string) {
+    this.#tasks.push({ playMusic: { path } });
+  }
+
   async start() {
     init(async (conn) => {
       const window = encode(this.#properties);
@@ -265,7 +299,7 @@ export class Canvas extends EventTarget {
 
 async function init(cb: (conn: Deno.Conn) => Promise<void>) {
   const listener = Deno.listen({ port: 34254, transport: "tcp" });
-  const process = Deno.run({ cmd: ["target/debug/deno_sdl2"] });
+  // const process = Deno.run({ cmd: ["target/debug/deno_sdl2"] });
   console.log("listening on 0.0.0.0:34254");
 
   for await (const conn of listener) {
@@ -280,5 +314,5 @@ async function init(cb: (conn: Deno.Conn) => Promise<void>) {
     }
   }
 
-  await process.status();
+  // await process.status();
 }
