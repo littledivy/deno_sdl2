@@ -1,6 +1,9 @@
 use std::io::prelude::*;
 use std::net::TcpStream;
 
+use sdl2::audio::AudioCallback;
+use sdl2::audio::AudioDevice;
+use sdl2::audio::AudioSpecDesired;
 use sdl2::event::Event;
 use sdl2::image::{InitFlag, LoadSurface};
 use sdl2::keyboard::Keycode;
@@ -190,6 +193,11 @@ enum CanvasTask {
     SetCursor {
         path: String,
     },
+    CreateAudioDevice {
+        freq: Option<i32>,
+        channels: Option<u8>,
+        samples: Option<u16>,
+    },
 }
 
 #[derive(Deserialize)]
@@ -345,6 +353,37 @@ macro_rules! read {
     }};
 }
 
+// struct AudioManager(TcpStream);
+
+// impl AudioCallback for AudioManager {
+//     type Channel = f32;
+
+//     fn callback(&mut self, buf: &mut [f32]) {
+//         let mut magic = [0; 2];
+//         self.0.write(&[5]);
+//          self.0.peek(&mut magic);
+//          if(magic[0] == 0) {
+//              println!("inside");
+//          self.0.read(&mut [0; 2]);
+//             self.0.write(&[5]); // AUDIO_CALLBACK
+//             self.0.write(&buf.len().to_le_bytes());
+
+//             let mut length = [0; 4];
+//             self.0.read(&mut length).unwrap();
+
+//             let mut recv = vec![0; u32::from_le_bytes(length) as usize];
+//             self.0.read(&mut recv).unwrap();
+
+//             let recv: Vec<f32> = serde_json::from_slice(&recv).unwrap();
+//             for (i, b) in buf.into_iter().enumerate() {
+//                 *b = recv[i];
+//             }
+//         } else {
+//             println!("skipped");
+//         }
+//     }
+// }
+
 fn build_canvas(window: Window, options: CanvasOptions) -> WindowCanvas {
     let mut canvas_builder = window.into_canvas();
     if options.software {
@@ -384,15 +423,16 @@ fn build_window(builder: &mut WindowBuilder, options: WindowOptions) -> Window {
 
 fn main() -> Result<()> {
     let mut stream = TcpStream::connect("127.0.0.1:34254")?;
-    //stream.set_nonblocking(true)?;
     let mut reader = BufReader::new(stream.try_clone()?);
     // let mut fonts: HashMap<u32, Font> = HashMap::new();
 
     let sdl_context = sdl2::init().map_err(|e| anyhow!(e))?;
     let video_subsystem = sdl_context.video().map_err(|e| anyhow!(e))?;
     let image_context = sdl2::image::init(InitFlag::PNG | InitFlag::JPG).map_err(|e| anyhow!(e))?;
-    let mut cursors: Vec<Cursor> = vec![];
     let ttf_context = sdl2::ttf::init()?;
+    // let audio_subsystem = sdl_context.audio().map_err(|e| anyhow!(e))?;
+    // let mut audio_devices: Vec<AudioDevice<AudioManager>> = vec![];
+    let mut cursors: Vec<Cursor> = vec![];
 
     // Request VIDEO_READY
     stream.write(&[0])?;
@@ -610,10 +650,23 @@ fn main() -> Result<()> {
                     cursor.set();
                     cursors.push(cursor);
                 }
+                // TODO(@littledivy): Revisit this when we find a way to distinguish responses
+                // CanvasTask::CreateAudioDevice { freq, channels, samples } => {
+                //     let desired_spec = AudioSpecDesired {
+                //         freq,
+                //         channels,
+                //         samples,
+                //     };
+                //     let mut audio_stream = stream.try_clone().unwrap();
+                //     let device = audio_subsystem.open_playback(None, &desired_spec, |spec| {
+                //         AudioManager(audio_stream)
+                //     }).unwrap();
+                //     device.resume();
+                //     audio_devices.push(device);
+                // }
                 _ => {}
             }
         }
-
         for event in event_pump.poll_iter() {
             // Send Event ping
             stream.write(&[3])?;

@@ -41,6 +41,7 @@ export class Canvas extends EventTarget {
   // Used internally. Too lazy to type.
   // @deno-lint-ignore allow-any
   #fonts: any[] = [];
+  #audioCallback: (buf: Float32Array) => void = (_) => {};
 
   constructor(properties: WindowOptions) {
     super();
@@ -189,10 +190,15 @@ export class Canvas extends EventTarget {
     this.#tasks.push({ setCursor: { path } });
   }
 
+  // createAudioDevice(callback: (buf: Float32Array) => void) {
+  //   this.#tasks.push({ createAudioDevice: {} })
+  //   this.#audioCallback = callback;
+  // }
+
   async start() {
     init(async (conn) => {
       const window = encode(this.#properties);
-      conn.write(window);
+      await conn.write(window);
 
       const videoReqBuf = await readStatus(conn);
 
@@ -202,7 +208,7 @@ export class Canvas extends EventTarget {
           const canvas = encode({
             software: true,
           });
-          conn.write(canvas);
+          await conn.write(canvas);
           // SDL event_pump
           while (true) {
             const canvasReqBuf = await readStatus(conn);
@@ -211,14 +217,16 @@ export class Canvas extends EventTarget {
               case 1:
                 // WINDOW_LOOP_ACTION
                 const windowTasks = encode(this.#windowTasks);
-                conn.write(windowTasks);
+
+                await conn.write(windowTasks);
                 this.#windowTasks = [];
                 // await conn.write(new Uint8Array(1));
                 break;
               case 2:
                 // CANVAS_LOOP_ACTION
                 const tasks = encode(this.#tasks);
-                conn.write(tasks);
+
+                await conn.write(tasks);
                 this.#tasks = [];
                 break;
               case 3:
@@ -227,8 +235,22 @@ export class Canvas extends EventTarget {
                 const event = new CustomEvent("event", { detail: e });
                 this.dispatchEvent(event);
                 break;
+              // case 5:
+              //   // AUDIO_CALLBACK
+              //   const eventLengthBuffer = new Uint8Array(4);
+              //   await conn.read(eventLengthBuffer);
+              //   const view = new DataView(eventLengthBuffer.buffer, 0);
+              //   const eventLength = view.getUint32(0, true);
+              //   const buf = new Float32Array(eventLength);
+
+              //   this.#audioCallback(buf);
+              //   await conn.write(new Uint8Array([0, 0]))
+              //   await conn.write(encode((Array.from(buf))));
+
+              //   break;
               default:
-                conn.write(encode(["none"]));
+                await conn.write(encode(["none"]));
+
                 break;
             }
           }
@@ -243,8 +265,7 @@ export class Canvas extends EventTarget {
 
 async function init(cb: (conn: Deno.Conn) => Promise<void>) {
   const listener = Deno.listen({ port: 34254, transport: "tcp" });
-  // TODO: Spawn client process
-  const process = Deno.run({ cmd: ["target/release/deno_sdl2"] });
+  const process = Deno.run({ cmd: ["target/debug/deno_sdl2"] });
   console.log("listening on 0.0.0.0:34254");
 
   for await (const conn of listener) {
@@ -252,16 +273,7 @@ async function init(cb: (conn: Deno.Conn) => Promise<void>) {
     switch (reqBuf) {
       case 0:
         // VIDEO_READY
-        try {
-          await cb(conn);
-        } catch (e) {
-          const status = await process.status();
-          if (status.code !== 0) {
-            throw e;
-          } else {
-            return;
-          }
-        }
+        await cb(conn);
         break;
       default:
         break;
