@@ -185,10 +185,14 @@ export class Canvas extends EventTarget {
     this.#tasks.push({ renderFont: { font, text, options, target, ..._font } });
   }
 
+  setCursor(path: string) {
+    this.#tasks.push({ setCursor: { path } });
+  }
+
   async start() {
     init(async (conn) => {
       const window = encode(this.#properties);
-      await conn.write(window);
+      conn.write(window);
 
       const videoReqBuf = await readStatus(conn);
 
@@ -196,9 +200,9 @@ export class Canvas extends EventTarget {
         case 1:
           // CANVAS_READY
           const canvas = encode({
-            software: false,
+            software: true,
           });
-          await conn.write(canvas);
+          conn.write(canvas);
           // SDL event_pump
           while (true) {
             const canvasReqBuf = await readStatus(conn);
@@ -207,14 +211,14 @@ export class Canvas extends EventTarget {
               case 1:
                 // WINDOW_LOOP_ACTION
                 const windowTasks = encode(this.#windowTasks);
-                await conn.write(windowTasks);
+                conn.write(windowTasks);
                 this.#windowTasks = [];
                 // await conn.write(new Uint8Array(1));
                 break;
               case 2:
                 // CANVAS_LOOP_ACTION
                 const tasks = encode(this.#tasks);
-                await conn.write(tasks);
+                conn.write(tasks);
                 this.#tasks = [];
                 break;
               case 3:
@@ -224,7 +228,7 @@ export class Canvas extends EventTarget {
                 this.dispatchEvent(event);
                 break;
               default:
-                await conn.write(encode(["none"]));
+                conn.write(encode(["none"]));
                 break;
             }
           }
@@ -240,7 +244,7 @@ export class Canvas extends EventTarget {
 async function init(cb: (conn: Deno.Conn) => Promise<void>) {
   const listener = Deno.listen({ port: 34254, transport: "tcp" });
   // TODO: Spawn client process
-  const process = Deno.run({ cmd: ["target/debug/deno_sdl2"] });
+  const process = Deno.run({ cmd: ["target/release/deno_sdl2"] });
   console.log("listening on 0.0.0.0:34254");
 
   for await (const conn of listener) {

@@ -13,7 +13,6 @@ const canvas = new Canvas({
 });
 
 let i = 0;
-let prevX = 0, prevY = 0;
 
 canvas.addEventListener("event", (e: WindowEvent) => {
   i++;
@@ -22,26 +21,9 @@ canvas.addEventListener("event", (e: WindowEvent) => {
   if (e.detail == "Quit") {
     canvas.quit();
   }
-
-  if (e.detail["MouseMotion"]) {
-    canvas.fillRect(prevX, prevY, 5, 5);
-
-    canvas.setDrawColor(255, 255, 255, 1);
-
-    canvas.fillRect(
-      e.detail["MouseMotion"].x,
-      e.detail["MouseMotion"].y,
-      5,
-      5,
-    );
-
-    prevX = e.detail["MouseMotion"].x;
-    prevY = e.detail["MouseMotion"].y;
-    canvas.present();
-    // Reset color
-    canvas.setDrawColor(0, 64, 255, 1);
-  }
 });
+
+canvas.setCursor("/home/divy/Downloads/cursor48.png");
 
 canvas.setDrawColor(0, 64, 255, 1);
 canvas.clear();

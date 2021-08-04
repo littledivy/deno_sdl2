@@ -2,13 +2,16 @@ use std::io::prelude::*;
 use std::net::TcpStream;
 
 use sdl2::event::Event;
+use sdl2::image::{InitFlag, LoadSurface};
 use sdl2::keyboard::Keycode;
+use sdl2::mouse::Cursor;
 use sdl2::pixels::Color;
 use sdl2::pixels::PixelFormatEnum;
 use sdl2::rect::Point;
 use sdl2::rect::Rect;
 use sdl2::render::CanvasBuilder;
 use sdl2::render::WindowCanvas;
+use sdl2::surface::Surface;
 use sdl2::ttf::Font;
 use sdl2::ttf::FontStyle;
 use sdl2::video::DisplayMode;
@@ -184,6 +187,9 @@ enum CanvasTask {
         size: u16,
         style: Option<CanvasFontSize>,
     },
+    SetCursor {
+        path: String,
+    },
 }
 
 #[derive(Deserialize)]
@@ -332,9 +338,9 @@ impl Into<CanvasEvent> for Event {
 macro_rules! read {
     ($stream: expr) => {{
         let mut length = [0; 4];
-        $stream.read_exact(&mut length)?;
+        $stream.read(&mut length)?;
         let mut buf = vec![0; u32::from_le_bytes(length) as usize];
-        $stream.read_exact(&mut buf)?;
+        $stream.read(&mut buf)?;
         buf
     }};
 }
@@ -378,11 +384,14 @@ fn build_window(builder: &mut WindowBuilder, options: WindowOptions) -> Window {
 
 fn main() -> Result<()> {
     let mut stream = TcpStream::connect("127.0.0.1:34254")?;
+    //stream.set_nonblocking(true)?;
     let mut reader = BufReader::new(stream.try_clone()?);
     // let mut fonts: HashMap<u32, Font> = HashMap::new();
 
     let sdl_context = sdl2::init().map_err(|e| anyhow!(e))?;
     let video_subsystem = sdl_context.video().map_err(|e| anyhow!(e))?;
+    let image_context = sdl2::image::init(InitFlag::PNG | InitFlag::JPG).map_err(|e| anyhow!(e))?;
+    let mut cursors: Vec<Cursor> = vec![];
     let ttf_context = sdl2::ttf::init()?;
 
     // Request VIDEO_READY
@@ -471,15 +480,6 @@ fn main() -> Result<()> {
             }
         }
 
-        for event in event_pump.poll_iter() {
-            // Send Event ping
-            stream.write(&[3])?;
-            // Send Event
-            let canvas_event: CanvasEvent = event.into();
-            let buf = serde_json::to_vec(&canvas_event)?;
-            stream.write(&(buf.len() as u32).to_le_bytes())?;
-            stream.write(&buf)?;
-        }
         // Request CANVAS_LOOP_ACTION
         stream.write(&[2])?;
         // Get canvas task
@@ -603,8 +603,25 @@ fn main() -> Result<()> {
                     };
                     canvas.copy(&texture, None, target).unwrap();
                 }
+                CanvasTask::SetCursor { path } => {
+                    let surface = Surface::from_file(path).map_err(|e| anyhow!(e))?;
+                    // TODO(@littledivy): Allow setting hotX and hotY.
+                    let cursor = Cursor::from_surface(surface, 0, 0).map_err(|e| anyhow!(e))?;
+                    cursor.set();
+                    cursors.push(cursor);
+                }
                 _ => {}
             }
+        }
+
+        for event in event_pump.poll_iter() {
+            // Send Event ping
+            stream.write(&[3])?;
+            // Send Event
+            let canvas_event: CanvasEvent = event.into();
+            let buf = serde_json::to_vec(&canvas_event)?;
+            stream.write(&(buf.len() as u32).to_le_bytes())?;
+            stream.write(&buf)?;
         }
     }
 
