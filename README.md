@@ -7,7 +7,7 @@ Have fun!
 
 #### Features
 
-- Bindings to Graphics and Font subsystem.
+- Bindings to Video, Graphics, Font and Mixer subsystems.
 - API similar to `Rust-sdl2`
 - Not `--unstable`. Uses TCP instead of Deno's traditional plugin system.
 
