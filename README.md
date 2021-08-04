@@ -3,7 +3,7 @@
 Cross platform and stable bindings to [SDL2](https://www.libsdl.org/index.php).
 Have fun!
 
-![canvas_font_demo](https://user-images.githubusercontent.com/34997667/127973999-d0212cac-0800-46c8-8817-7e401fec69a6.png)
+![demo](https://user-images.githubusercontent.com/34997667/128133087-d5a66ca2-b4c5-4654-8f4f-5d4a33bf6258.png)
 
 #### Features
 
