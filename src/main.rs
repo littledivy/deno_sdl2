@@ -16,6 +16,8 @@ use sdl2::pixels::PixelFormatEnum;
 use sdl2::rect::Point;
 use sdl2::rect::Rect;
 use sdl2::render::CanvasBuilder;
+use sdl2::render::Texture;
+use sdl2::render::TextureAccess;
 use sdl2::render::WindowCanvas;
 use sdl2::surface::Surface;
 use sdl2::ttf::Font;
@@ -86,50 +88,6 @@ struct CanvasColor {
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
-enum WindowTask {
-    // format is i32 representation of `sdl2::pixels::PixelFormatEnum`
-    SetDisplayMode {
-        width: i32,
-        height: i32,
-        rate: i32,
-        format: u32,
-    },
-    SetTitle {
-        title: String,
-    },
-    // Path to icon file. Surface is created under the hood
-    SetIcon {
-        icon: String,
-    },
-    // x and y should be `sdl2::video::WindowPos`
-    SetPosition {
-        x: i32,
-        y: i32,
-    },
-    SetSize {
-        width: u32,
-        height: u32,
-    },
-    SetMinimumSize {
-        width: u32,
-        height: u32,
-    },
-    Show,
-    Hide,
-    Raise,
-    Maximize,
-    Minimize,
-    Restore,
-    SetBrightness {
-        brightness: f64,
-    },
-    SetOpacity {
-        opacity: f32,
-    },
-}
-
-#[derive(Deserialize)]
-#[serde(rename_all = "camelCase")]
 enum CanvasTask {
     Present,
     SetDrawColor {
@@ -195,6 +153,8 @@ enum CanvasTask {
         style: Option<CanvasFontSize>,
     },
     SetCursor {
+        // Internal
+        index: u32,
         path: String,
     },
     // CreateAudioDevice {
@@ -211,6 +171,79 @@ enum CanvasTask {
     },
     PlayMusic {
         path: String,
+    },
+    CreateSurface {
+        width: u32,
+        height: u32,
+        // PixelFormatEnum
+        format: u32,
+        index: u32,
+    },
+    CreateSurfaceBitmap {
+        path: String,
+        index: u32,
+    },
+    CreateTexture {
+        // PixelFormatEnum
+        format: Option<u32>,
+        // TextureAccess
+        access: u32,
+        width: u32,
+        height: u32,
+        index: u32,
+    },
+    CreateTextureSurface {
+        // Internal indexs
+        surface: u32,
+        index: u32,
+    },
+    LoadTexture {
+        path: String,
+        index: u32,
+    },
+    CopyRect {
+        texture: u32,
+        rect1: Rectangle,
+        rect2: Rectangle,
+    },
+    // format is i32 representation of `sdl2::pixels::PixelFormatEnum`
+    SetDisplayMode {
+        width: i32,
+        height: i32,
+        rate: i32,
+        format: u32,
+    },
+    SetTitle {
+        title: String,
+    },
+    // Path to icon file. Surface is created under the hood
+    SetIcon {
+        icon: String,
+    },
+    // x and y should be `sdl2::video::WindowPos`
+    SetPosition {
+        x: i32,
+        y: i32,
+    },
+    SetSize {
+        width: u32,
+        height: u32,
+    },
+    SetMinimumSize {
+        width: u32,
+        height: u32,
+    },
+    Show,
+    Hide,
+    Raise,
+    Maximize,
+    Minimize,
+    Restore,
+    SetBrightness {
+        brightness: f64,
+    },
+    SetOpacity {
+        opacity: f32,
     },
 }
 
@@ -435,10 +468,15 @@ fn build_window(builder: &mut WindowBuilder, options: WindowOptions) -> Window {
     builder.build().unwrap()
 }
 
+enum Resource<'a> {
+    Cursor(Cursor),
+    Surface(Surface<'a>),
+    Texture(Texture<'a>),
+}
+
 fn main() -> Result<()> {
     let mut stream = TcpStream::connect("127.0.0.1:34254")?;
     let mut reader = BufReader::new(stream.try_clone()?);
-    // let mut fonts: HashMap<u32, Font> = HashMap::new();
 
     let sdl_context = sdl2::init().map_err(|e| anyhow!(e))?;
     let video_subsystem = sdl_context.video().map_err(|e| anyhow!(e))?;
@@ -447,6 +485,7 @@ fn main() -> Result<()> {
         MixerInitFlag::MP3 | MixerInitFlag::FLAC | MixerInitFlag::MOD | MixerInitFlag::OGG,
     )
     .map_err(|e| anyhow!(e))?;
+
     let ttf_context = sdl2::ttf::init()?;
     // let audio_subsystem = sdl_context.audio().map_err(|e| anyhow!(e))?;
     // let mut audio_devices: Vec<AudioDevice<AudioManager>> = vec![];
@@ -470,78 +509,17 @@ fn main() -> Result<()> {
     let canvas_options: CanvasOptions = serde_json::from_slice(&read!(reader))?;
 
     let mut canvas = build_canvas(window, canvas_options);
-
+    let texture_creator = canvas.texture_creator();
     let mut event_pump = sdl_context.event_pump().map_err(|e| anyhow!(e))?;
+
+    let mut resources: HashMap<u32, Resource> = HashMap::new();
     'running: loop {
-        stream.write(&[1])?;
-
-        let window_tasks: Vec<WindowTask> = serde_json::from_slice(&read!(reader))?;
-        for task in window_tasks {
-            let window = canvas.window_mut();
-            match task {
-                WindowTask::SetDisplayMode {
-                    width,
-                    height,
-                    rate,
-                    format,
-                } => {
-                    window
-                        .set_display_mode(DisplayMode::new(
-                            PixelFormatEnum::try_from(format)
-                                .map_err(|_| anyhow!("Invalid pixel format"))?,
-                            width,
-                            height,
-                            rate,
-                        ))
-                        .map_err(|e| anyhow!(e))?;
-                }
-                WindowTask::SetTitle { title } => {
-                    window.set_title(&title).map_err(|e| anyhow!(e))?;
-                }
-                WindowTask::SetIcon { icon } => {
-                    // TODO: Requires surface creation. Yet to decide the API
-                }
-                WindowTask::SetPosition { x, y } => {
-                    window.set_position(WindowPos::Positioned(x), WindowPos::Positioned(y));
-                }
-                WindowTask::SetSize { width, height } => {
-                    window.set_size(width, height)?;
-                }
-                WindowTask::SetMinimumSize { width, height } => {
-                    window.set_minimum_size(width, height)?;
-                }
-                WindowTask::Show => {
-                    window.show();
-                }
-                WindowTask::Hide => {
-                    window.hide();
-                }
-                WindowTask::Raise => {
-                    window.raise();
-                }
-                WindowTask::Maximize => {
-                    window.maximize();
-                }
-                WindowTask::Minimize => {
-                    window.minimize();
-                }
-                WindowTask::Restore => {
-                    window.restore();
-                }
-                WindowTask::SetBrightness { brightness } => {
-                    window.set_brightness(brightness).map_err(|e| anyhow!(e))?;
-                }
-                WindowTask::SetOpacity { opacity } => {
-                    window.set_opacity(opacity).map_err(|e| anyhow!(e))?;
-                }
-            }
-        }
-
         // Request CANVAS_LOOP_ACTION
-        stream.write(&[2])?;
+        stream.write(&[1])?;
         // Get canvas task
         let tasks: Vec<CanvasTask> = serde_json::from_slice(&read!(reader))?;
         for task in tasks {
+            let window = canvas.window_mut();
             match task {
                 CanvasTask::Quit => {
                     break 'running;
@@ -660,13 +638,13 @@ fn main() -> Result<()> {
                     };
                     canvas.copy(&texture, None, target).unwrap();
                 }
-                CanvasTask::SetCursor { path } => {
+                CanvasTask::SetCursor { path, index } => {
                     let surface = Surface::from_file(path).map_err(|e| anyhow!(e))?;
                     // TODO(@littledivy): Allow setting hotX and hotY.
-                    let cursor = ManuallyDrop::new(
-                        Cursor::from_surface(surface, 0, 0).map_err(|e| anyhow!(e))?,
-                    );
+                    let cursor = Cursor::from_surface(surface, 0, 0).map_err(|e| anyhow!(e))?;
                     cursor.set();
+
+                    resources.insert(index, Resource::Cursor(cursor));
                 }
                 // TODO(@littledivy): Revisit this when we find a way to distinguish responses
                 // CanvasTask::CreateAudioDevice { freq, channels, samples } => {
@@ -698,12 +676,138 @@ fn main() -> Result<()> {
                     );
                     music.play(1);
                 }
+                CanvasTask::CreateSurface {
+                    width,
+                    height,
+                    format,
+                    index,
+                } => {
+                    let surface = Surface::new(
+                        width,
+                        height,
+                        PixelFormatEnum::try_from(format)
+                            .map_err(|_| anyhow!("Invalid pixel format"))?,
+                    )
+                    .map_err(|e| anyhow!(e))?;
+                    resources.insert(index, Resource::Surface(surface));
+                }
+                CanvasTask::CreateSurfaceBitmap { path, index } => {
+                    let surface = Surface::load_bmp(&path).map_err(|e| anyhow!(e))?;
+                    resources.insert(index, Resource::Surface(surface));
+                }
+                CanvasTask::CreateTexture {
+                    format,
+                    access,
+                    width,
+                    height,
+                    index,
+                } => {
+                    let format: Option<PixelFormatEnum> = format.and_then(|f| {
+                        Some(
+                            PixelFormatEnum::try_from(f)
+                                .map_err(|_| anyhow!("Invalid pixel format"))
+                                .unwrap(),
+                        )
+                    });
+                    let texture = texture_creator.create_texture(
+                        format,
+                        TextureAccess::try_from(access)
+                            .map_err(|_| anyhow!("Invalid texture access"))?,
+                        width,
+                        height,
+                    )?;
+                    resources.insert(index, Resource::Texture(texture));
+                }
+                CanvasTask::CreateTextureSurface { surface, index } => {
+                    if let Some(surface) = resources.get(&surface) {
+                        match surface {
+                            Resource::Surface(surface) => {
+                                let texture =
+                                    texture_creator.create_texture_from_surface(surface)?;
+                                resources.insert(index, Resource::Texture(texture));
+                            }
+                            _ => {}
+                        }
+                    }
+                }
+                CanvasTask::CopyRect {
+                    texture,
+                    rect1,
+                    rect2,
+                } => {
+                    if let Some(texture) = resources.get(&texture) {
+                        match texture {
+                            Resource::Texture(texture) => {
+                                let rect1 = Rect::new(rect1.x, rect1.y, rect1.width, rect1.height);
+                                let rect2 = Rect::new(rect2.x, rect2.y, rect2.width, rect2.height);
+                                canvas.copy(texture, rect1, rect2).map_err(|e| anyhow!(e))?;
+                            }
+                            _ => {}
+                        }
+                    }
+                }
+                CanvasTask::SetDisplayMode {
+                    width,
+                    height,
+                    rate,
+                    format,
+                } => {
+                    window
+                        .set_display_mode(DisplayMode::new(
+                            PixelFormatEnum::try_from(format)
+                                .map_err(|_| anyhow!("Invalid pixel format"))?,
+                            width,
+                            height,
+                            rate,
+                        ))
+                        .map_err(|e| anyhow!(e))?;
+                }
+                CanvasTask::SetTitle { title } => {
+                    window.set_title(&title).map_err(|e| anyhow!(e))?;
+                }
+                CanvasTask::SetIcon { icon } => {
+                    // TODO: Requires surface creation. Yet to decide the API
+                }
+                CanvasTask::SetPosition { x, y } => {
+                    window.set_position(WindowPos::Positioned(x), WindowPos::Positioned(y));
+                }
+                CanvasTask::SetSize { width, height } => {
+                    window.set_size(width, height)?;
+                }
+                CanvasTask::SetMinimumSize { width, height } => {
+                    window.set_minimum_size(width, height)?;
+                }
+                CanvasTask::Show => {
+                    window.show();
+                }
+                CanvasTask::Hide => {
+                    window.hide();
+                }
+                CanvasTask::Raise => {
+                    window.raise();
+                }
+                CanvasTask::Maximize => {
+                    window.maximize();
+                }
+                CanvasTask::Minimize => {
+                    window.minimize();
+                }
+                CanvasTask::Restore => {
+                    window.restore();
+                }
+                CanvasTask::SetBrightness { brightness } => {
+                    window.set_brightness(brightness).map_err(|e| anyhow!(e))?;
+                }
+                CanvasTask::SetOpacity { opacity } => {
+                    window.set_opacity(opacity).map_err(|e| anyhow!(e))?;
+                }
                 _ => {}
             }
         }
+
         for event in event_pump.poll_iter() {
             // Send Event ping
-            stream.write(&[3])?;
+            stream.write(&[2])?;
             // Send Event
             let canvas_event: CanvasEvent = event.into();
             let buf = serde_json::to_vec(&canvas_event)?;

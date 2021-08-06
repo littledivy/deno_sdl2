@@ -39,7 +39,7 @@ canvas.renderFont(font, "Hello Deno", {
   blended: { color: { r: 0, g: 0, b: 0, a: 255 } },
 }, { x: 10, y: 10, width: 770 / 2, height: Math.round(169 / 2) });
 
-canvas.playMusic("/home/divy/Downloads/sine440.mp3");
+// canvas.playMusic("/home/divy/Downloads/sine440.mp3");
 canvas.present();
 
 await canvas.start();

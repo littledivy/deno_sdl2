@@ -56,13 +56,11 @@ export class Canvas extends EventTarget {
   // Used internally.
   // @deno-lint-ignore allow-any
   #tasks: any[] = [];
-  // Used internally.
-  // @deno-lint-ignore allow-any
-  #windowTasks: any[] = [];
   // Used internally. Too lazy to type.
   // @deno-lint-ignore allow-any
   #fonts: any[] = [];
   #audioCallback: (buf: Float32Array) => void = (_) => {};
+  #resources: any[] = [];
 
   constructor(properties: WindowOptions) {
     super();
@@ -132,59 +130,59 @@ export class Canvas extends EventTarget {
     rate: number,
     format: PixelFormat,
   ) {
-    this.#windowTasks.push({ setDisplayMode: { width, height, rate, format } });
+    this.#tasks.push({ setDisplayMode: { width, height, rate, format } });
   }
 
   setTitle(title: string) {
-    this.#windowTasks.push({ setTitle: { title } });
+    this.#tasks.push({ setTitle: { title } });
   }
 
   setIcon(icon: string) {
-    this.#windowTasks.push({ setIcon: { icon } });
+    this.#tasks.push({ setIcon: { icon } });
   }
 
   setPosition(x: number, y: number) {
-    this.#windowTasks.push({ setPosition: { x, y } });
+    this.#tasks.push({ setPosition: { x, y } });
   }
 
   setSize(width: number, height: number) {
-    this.#windowTasks.push({ setSize: { width, height } });
+    this.#tasks.push({ setSize: { width, height } });
   }
 
   setMinimumSize(width: number, height: number) {
-    this.#windowTasks.push({ setMinimumSize: { width, height } });
+    this.#tasks.push({ setMinimumSize: { width, height } });
   }
 
   setBrightness(brightness: number) {
-    this.#windowTasks.push({ setBrightness: { brightness } });
+    this.#tasks.push({ setBrightness: { brightness } });
   }
 
   setOpacity(opacity: number) {
-    this.#windowTasks.push({ setOpacity: { opacity } });
+    this.#tasks.push({ setOpacity: { opacity } });
   }
 
   show() {
-    this.#windowTasks.push("show");
+    this.#tasks.push("show");
   }
 
   hide() {
-    this.#windowTasks.push("hide");
+    this.#tasks.push("hide");
   }
 
   raise() {
-    this.#windowTasks.push("raise");
+    this.#tasks.push("raise");
   }
 
   maximize() {
-    this.#windowTasks.push("maximise");
+    this.#tasks.push("maximise");
   }
 
   minimize() {
-    this.#windowTasks.push("minimize");
+    this.#tasks.push("minimize");
   }
 
   restore() {
-    this.#windowTasks.push("restore");
+    this.#tasks.push("restore");
   }
 
   loadFont(path: string, size: number, opts?: { style: string }): number {
@@ -208,7 +206,8 @@ export class Canvas extends EventTarget {
   }
 
   setCursor(path: string) {
-    this.#tasks.push({ setCursor: { path } });
+    const index = this.#resources.push(this.#resources.length);
+    this.#tasks.push({ setCursor: { path, index } });
   }
 
   // createAudioDevice(callback: (buf: Float32Array) => void) {
@@ -229,6 +228,29 @@ export class Canvas extends EventTarget {
     this.#tasks.push({ playMusic: { path } });
   }
 
+  createSurface(width: number, height: number, format: PixelFormat) {
+    const index = this.#resources.push({ width, height, format });
+    this.#tasks.push({ createSurface: { width, height, format, index } });
+    return index;
+  }
+
+  loadBitmap(path: string) {
+    const index = this.#resources.push({ path });
+    this.#tasks.push({ createSurfaceBitmap: { path, index } });
+    return index;
+  }
+
+  createTextureFromSurface(surface: number) {
+    // TODO: Verify surface
+    const index = this.#resources.push({ surface });
+    this.#tasks.push({ createTextureSurface: { surface, index } });
+    return index;
+  }
+
+  copy(texture: number, rect1: Rect, rect2: Rect) {
+    this.#tasks.push({ copyRect: { texture, rect1, rect2 } });
+  }
+
   async start() {
     init(async (conn) => {
       const window = encode(this.#properties);
@@ -246,24 +268,15 @@ export class Canvas extends EventTarget {
           // SDL event_pump
           while (true) {
             const canvasReqBuf = await readStatus(conn);
-
             switch (canvasReqBuf) {
               case 1:
-                // WINDOW_LOOP_ACTION
-                const windowTasks = encode(this.#windowTasks);
-
-                await conn.write(windowTasks);
-                this.#windowTasks = [];
-                // await conn.write(new Uint8Array(1));
-                break;
-              case 2:
                 // CANVAS_LOOP_ACTION
                 const tasks = encode(this.#tasks);
-
                 await conn.write(tasks);
                 this.#tasks = [];
+                this.dispatchEvent(new Event("event"));
                 break;
-              case 3:
+              case 2:
                 // EVENT_PUMP
                 const e = await decodeConn(conn);
                 const event = new CustomEvent("event", { detail: e });
@@ -283,7 +296,7 @@ export class Canvas extends EventTarget {
 
               //   break;
               default:
-                await conn.write(encode(["none"]));
+                // await conn.write(encode(["none"]));
 
                 break;
             }
