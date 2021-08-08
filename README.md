@@ -2,7 +2,7 @@
 
 Cross platform and stable bindings to [SDL2](https://www.libsdl.org/index.php).
 Have fun!
-
+<img align="right" src= height="150px">
 ![demo](https://user-images.githubusercontent.com/34997667/128133087-d5a66ca2-b4c5-4654-8f4f-5d4a33bf6258.png)
 
 #### Features
