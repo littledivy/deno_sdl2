@@ -2,7 +2,7 @@ import { decodeConn, encode, readStatus } from "./msg.ts";
 import { PixelFormat } from "./pixel.ts";
 import { FontRenderOptions } from "./font.ts";
 
-interface WindowOptions {
+export interface WindowOptions {
   title: String;
   height: number;
   width: number;
@@ -35,6 +35,15 @@ export enum AudioFormat {
   AUDIO_S16SYS = AUDIO_S16LSB,
   AUDIO_S32SYS = AUDIO_S32LSB,
   AUDIO_F32SYS = AUDIO_F32LSB,
+}
+
+export enum MouseButton {
+  Unknown,
+  Left,
+  Middle,
+  Right,
+  X1,
+  X2,
 }
 
 export interface Point {

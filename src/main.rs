@@ -385,6 +385,20 @@ impl Into<CanvasEvent> for Event {
                 yrel,
                 state: mousestate.to_sdl_state(),
             },
+            Event::MouseButtonDown {
+                x,
+                y,
+                clicks,
+                which,
+                mouse_btn,
+                ..
+            } => CanvasEvent::MouseButtonDown {
+                x,
+                y,
+                clicks,
+                which,
+                button: mouse_btn as u8,
+            },
             _ => CanvasEvent::Unknown,
         }
     }
