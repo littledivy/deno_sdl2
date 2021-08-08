@@ -262,7 +262,7 @@ export class Canvas extends EventTarget {
         case 1:
           // CANVAS_READY
           const canvas = encode({
-            software: true,
+            software: false,
           });
           await conn.write(canvas);
           // SDL event_pump
@@ -274,13 +274,14 @@ export class Canvas extends EventTarget {
                 const tasks = encode(this.#tasks);
                 await conn.write(tasks);
                 this.#tasks = [];
-                this.dispatchEvent(new Event("event"));
                 break;
               case 2:
                 // EVENT_PUMP
-                const e = await decodeConn(conn);
-                const event = new CustomEvent("event", { detail: e });
-                this.dispatchEvent(event);
+                await decodeConn(conn).then((e: any) => {
+                  const event = new CustomEvent("event", { detail: e });
+                  this.dispatchEvent(event);
+                });
+
                 break;
               // case 5:
               //   // AUDIO_CALLBACK
@@ -296,10 +297,10 @@ export class Canvas extends EventTarget {
 
               //   break;
               default:
-                // await conn.write(encode(["none"]));
-
                 break;
             }
+
+            this.dispatchEvent(new Event("draw"));
           }
           break;
         // TODO(littledivy): CANVAS_ERR
@@ -313,7 +314,7 @@ export class Canvas extends EventTarget {
 async function init(cb: (conn: Deno.Conn) => Promise<void>) {
   const listener = Deno.listen({ port: 34254, transport: "tcp" });
   const process = Deno.run({
-    cmd: ["target/debug/deno_sdl2"],
+    cmd: ["target/release/deno_sdl2"],
     stderr: "inherit",
   });
   console.log("listening on 0.0.0.0:34254");

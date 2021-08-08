@@ -14,15 +14,21 @@ export function encode<T>(object: T): Uint8Array {
 const decoder = new TextDecoder();
 
 export async function decodeConn<T>(conn: Deno.Conn): Promise<T> {
+  // ~0.1 - 0.15ms
   const eventLengthBuffer = new Uint8Array(4);
   await conn.read(eventLengthBuffer);
+
+  // ~0.04ms
   const view = new DataView(eventLengthBuffer.buffer, 0);
   const eventLength = view.getUint32(0, true);
 
+  // ~0.05ms
   const eventBuffer = new Uint8Array(eventLength);
   await conn.read(eventBuffer);
 
+  // ~0.14ms
   const event = JSON.parse(decoder.decode(eventBuffer));
+
   return event as T;
 }
 

@@ -513,7 +513,17 @@ fn main() -> Result<()> {
     let mut event_pump = sdl_context.event_pump().map_err(|e| anyhow!(e))?;
 
     let mut resources: HashMap<u32, Resource> = HashMap::new();
+
+    stream.set_nodelay(true)?;
     'running: loop {
+        let events: Vec<CanvasEvent> = event_pump.poll_iter().map(|e| e.into()).collect();
+        if events.len() > 0 {
+            stream.write(&[2])?;
+            let buf = serde_json::to_vec(&events)?;
+            stream.write(&(buf.len() as u32).to_le_bytes())?;
+            stream.write(&buf)?;
+        }
+
         // Request CANVAS_LOOP_ACTION
         stream.write(&[1])?;
         // Get canvas task
@@ -803,16 +813,6 @@ fn main() -> Result<()> {
                 }
                 _ => {}
             }
-        }
-
-        for event in event_pump.poll_iter() {
-            // Send Event ping
-            stream.write(&[2])?;
-            // Send Event
-            let canvas_event: CanvasEvent = event.into();
-            let buf = serde_json::to_vec(&canvas_event)?;
-            stream.write(&(buf.len() as u32).to_le_bytes())?;
-            stream.write(&buf)?;
         }
     }
 
