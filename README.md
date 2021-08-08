@@ -2,7 +2,7 @@
 
 _Cross platform_ and _stable bindings_ to [SDL2](https://www.libsdl.org/index.php).
 Have fun!
-<img align="right" src=deno_sdl2(1).png height="240px">
+<img align="right" src=https://user-images.githubusercontent.com/62501544/128629307-7465c2ab-9cb1-448c-9ce6-84fca1959e09.png height="240px">
 
 #### Features
 
