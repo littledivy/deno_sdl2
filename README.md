@@ -2,7 +2,7 @@
 
 _Cross platform_ and _stable bindings_ to [SDL2](https://www.libsdl.org/index.php).
 Have fun!
-<img align="right" src=https://user-images.githubusercontent.com/62501544/128629307-7465c2ab-9cb1-448c-9ce6-84fca1959e09.png height="240px">
+
 
 #### Features
 
@@ -29,8 +29,7 @@ canvas.start();
 
 
 #### Demo
-
-Insert gif or link to demo!
+<img align="center" src=https://user-images.githubusercontent.com/62501544/128629366-9f5f4f23-5ec8-4246-b3a7-c540b7286a60.png height="400px">
     
 ### Authors
 
