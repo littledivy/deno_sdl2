@@ -22,10 +22,8 @@ jobs:
       
       - name: Build
         shell: bash
-        env:
-          CI_BUILD_FEATURES: "use-vcpkg static-link gfx image ttf mixer"    
         run: |
           set -xeuo pipefail
           rustc --version
           cargo --version
-          cargo build --release
+          cargo build --features "use-vcpkg" --release

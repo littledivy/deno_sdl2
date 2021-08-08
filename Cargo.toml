@@ -5,6 +5,10 @@ edition = "2018"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+[features]
+default = []
+use-vcpkg = ["sdl2/use-vcpkg", "sdl2/static-link"]
+
 [dependencies]
 sdl2 = { version = "0.34.5", features = ["ttf", "image", "mixer"] }
 serde = { version = "1", features = ["derive"] }
