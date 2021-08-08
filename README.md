@@ -1,9 +1,8 @@
-### Deno SDL2
+### `Deno SDL2`
 
-Cross platform and stable bindings to [SDL2](https://www.libsdl.org/index.php).
+_Cross platform_ and _stable bindings_ to [SDL2](https://www.libsdl.org/index.php).
 Have fun!
-<img align="right" src= height="150px">
-![demo](https://user-images.githubusercontent.com/34997667/128133087-d5a66ca2-b4c5-4654-8f4f-5d4a33bf6258.png)
+<img align="right" src=deno_sdl2(1).png height="240px">
 
 #### Features
 
@@ -11,8 +10,9 @@ Have fun!
 - API similar to `Rust-sdl2`
 - Not `--unstable`. Uses TCP instead of Deno's traditional plugin system.
 
-#### Usage
+#### Example
 
+##### Create canvas
 ```typescript
 const canvas = new Canvas({ title: "Hello, Deno!", width: 800, height: 400 });
 
@@ -27,6 +27,19 @@ canvas.present();
 canvas.start();
 ```
 
-#### License
 
-MIT License
+#### Demo
+
+Insert gif or link to demo!
+    
+### Authors
+
+- [@littledivy](https://www.github.com/littledivy)
+- [@breadA](https://www.github.com/dhairy-online)
+  
+### License
+[MIT](https://opensource.org/licenses/MIT)
+
+---
+
+  
