@@ -2,28 +2,29 @@ name: CI
 
 on:
   push:
+    branches: [master]
   pull_request:
 
 jobs:
-  linux:
-    name: Build (Linux)
-    runs-on: ubuntu-20.04
+  build:
+    name: Build ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
     strategy:
+      matrix:
+        os: [macos-latest, ubuntu-latest, windows-latest]
       fail-fast: false
     steps:
       - uses: actions/checkout@v2
       
+      - name: Install cargo-vcpkg
+        run: cargo install cargo-vcpkg
       - name: Install dependencies
-        run: |
-          sudo apt-get update -y -qq
-          sudo apt-get install -y libsdl2-dev libsdl2-mixer-dev libsdl2-gfx-dev libsdl2-image-dev libsdl2-ttf-dev
+        run: cargo vcpkg -v build
       
       - name: Build
         shell: bash
-        env:
-          CI_BUILD_FEATURES: "gfx image ttf mixer"    
         run: |
           set -xeuo pipefail
           rustc --version
           cargo --version
-          cargo build --release
+          cargo build --features "use-vcpkg" --release
