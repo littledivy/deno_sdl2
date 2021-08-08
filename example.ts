@@ -15,6 +15,7 @@ function checkCollision(
 
 let x = 0, y = 0, directionX = 0, directionY = 0;
 
+let win = false;
 let speed = 0;
 let prevTime = 0;
 
@@ -30,13 +31,35 @@ const canvas = new Canvas({
   maximized: false,
 });
 
-const surface = canvas.loadBitmap("test.bmp");
+const surface = canvas.loadBitmap("player.bmp");
 const texture = canvas.createTextureFromSurface(surface);
+
+const font = canvas.loadFont(
+  "/usr/share/fonts/JetBrainsMonoNL-Light.ttf",
+  128,
+  { style: "italic" },
+);
 
 canvas.addEventListener("draw", () => {
   let currTime = performance.now();
   speed = (currTime - prevTime) / 1000;
   prevTime = currTime;
+
+  if (win) {
+    const width = Math.round(770 / 20) * 3;
+    const height = Math.round(169 / 10) * 3;
+    canvas.renderFont(font, "Hit!", {
+      blended: { color: { r: 0, g: 255, b: 255, a: 255 } },
+    }, {
+      // Change direction on screen overflow
+      x: Math.floor(x) + 64,
+      y: Math.floor(y) + 64,
+      width,
+      height,
+    });
+    canvas.present();
+    return;
+  }
 
   if (x >= 800 - 30) {
     directionX = 1;
@@ -51,23 +74,24 @@ canvas.addEventListener("draw", () => {
   }
 
   if (directionX == 0) {
-    x += 1000 * speed;
+    x += 800 * speed;
   } else {
-    x -= 1000 * speed;
+    x -= 800 * speed;
   }
 
   if (directionY == 0) {
-    y += 1000 * speed;
+    y += 800 * speed;
   } else {
-    y -= 1000 * speed;
+    y -= 800 * speed;
   }
 
   canvas.clear();
-  canvas.copy(texture, { x: 0, y: 0, width: 30, height: 30 }, {
+
+  canvas.copy(texture, { x: 0, y: 0, width: 64, height: 64 }, {
     x: Math.floor(x),
     y: Math.floor(y),
-    width: 30,
-    height: 30,
+    width: 64,
+    height: 64,
   });
 
   canvas.present();
@@ -81,14 +105,14 @@ canvas.addEventListener("event", (e: WindowEvent) => {
     `currTime: ${prevTime} events: ${eventsRecv} speed: ${speed}`,
   );
 
-  const mouseBtnDown = e.detail.find((i: any) => i["MouseButtonDown"]);
-  if (mouseBtnDown) {
+  const mouseMove = e.detail.find((i: any) => i["MouseMotion"]);
+  if (mouseMove) {
     if (
       checkCollision(
-        mouseBtnDown.MouseButtonDown.x,
-        mouseBtnDown.MouseButtonDown.y,
-        10,
-        10,
+        mouseMove.MouseMotion.x,
+        mouseMove.MouseMotion.y,
+        30,
+        30,
         x,
         y,
         30,
@@ -96,6 +120,7 @@ canvas.addEventListener("event", (e: WindowEvent) => {
       )
     ) {
       console.log("Hit");
+      win = true;
     }
   }
 
