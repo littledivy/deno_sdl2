@@ -1,3 +1,4 @@
+import { EventEmitter } from "https://deno.land/x/event@2.0.0/mod.ts";
 import { decodeConn, encode, readStatus } from "./msg.ts";
 import { PixelFormat } from "./pixel.ts";
 import { FontRenderOptions } from "./font.ts";
@@ -51,8 +52,9 @@ export interface Point {
   y: number;
 }
 
-export interface WindowEvent extends Event {
-  detail?: any;
+type WindowEvent = {
+  event: [any];
+  draw: [];
 }
 
 export interface Rect extends Point {
@@ -60,7 +62,7 @@ export interface Rect extends Point {
   height: number;
 }
 
-export class Canvas extends EventTarget {
+export class Canvas extends EventEmitter<WindowEvent> {
   #properties: WindowOptions;
   // Used internally.
   // @deno-lint-ignore allow-any
@@ -287,8 +289,7 @@ export class Canvas extends EventTarget {
               case 2:
                 // EVENT_PUMP
                 await decodeConn(conn).then((e: any) => {
-                  const event = new CustomEvent("event", { detail: e });
-                  this.dispatchEvent(event);
+                  this.emit("event", e);
                 });
 
                 break;
@@ -309,7 +310,7 @@ export class Canvas extends EventTarget {
                 break;
             }
 
-            this.dispatchEvent(new Event("draw"));
+            this.emit("draw");
           }
           break;
         // TODO(littledivy): CANVAS_ERR
