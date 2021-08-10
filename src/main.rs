@@ -285,6 +285,7 @@ impl Into<FontStyle> for CanvasFontSize {
 }
 
 #[derive(Serialize)]
+#[serde(rename_all = "snake_case")]
 enum CanvasEvent {
     Quit,
     AppTerminating,

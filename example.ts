@@ -99,18 +99,17 @@ canvas.on("draw", () => {
 
 let eventsRecv = 0;
 
-canvas.on("event", e => {
+canvas.on("event", (e) => {
   eventsRecv += 1;
   canvas.setTitle(
     `currTime: ${prevTime} events: ${eventsRecv} speed: ${speed}`,
   );
-
-  const mouseMove = e.find((i: any) => i["MouseMotion"]);
-  if (mouseMove) {
+  
+  if (e.type == "mouse_motion") {
     if (
       checkCollision(
-        mouseMove.MouseMotion.x,
-        mouseMove.MouseMotion.y,
+        e.x,
+        e.y,
         30,
         30,
         x,
@@ -124,7 +123,7 @@ canvas.on("event", e => {
     }
   }
 
-  if (e.includes("Quit")) {
+  if (e.type == "quit") {
     canvas.quit();
   }
 });

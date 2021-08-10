@@ -52,10 +52,47 @@ export interface Point {
   y: number;
 }
 
+type Event = {
+  type:
+    | "quit"
+    | "app_terminating"
+    | "app_low_memory"
+    | "app_will_enter_background"
+    | "app_did_enter_background"
+    | "app_will_enter_foreground";
+} | {
+  type: "key_up" | "key_down";
+  keycode?: number;
+  scancode?: number;
+  mod: number;
+  repeat: boolean;
+} | {
+  type: "mouse_motion";
+  which: number;
+  x: number;
+  y: number;
+  xrel: number;
+  yrel: number;
+  state: number;
+} | {
+  type: "mouse_button_up" | "mouse_button_down";
+  which: number;
+  x: number;
+  y: number;
+  clicks: number;
+  button: number;
+} | {
+  type: "mouse_wheel";
+  x: number;
+  y: number;
+  which: number;
+  direction: number;
+} | { type: "unknown" };
+
 type WindowEvent = {
-  event: [any];
+  event: [Event];
   draw: [];
-}
+};
 
 export interface Rect extends Point {
   width: number;
@@ -64,11 +101,8 @@ export interface Rect extends Point {
 
 export class Canvas extends EventEmitter<WindowEvent> {
   #properties: WindowOptions;
-  // Used internally.
-  // @deno-lint-ignore allow-any
+  // Used internally. Too lazy to define types
   #tasks: any[] = [];
-  // Used internally. Too lazy to type.
-  // @deno-lint-ignore allow-any
   #fonts: any[] = [];
   #audioCallback: (buf: Float32Array) => void = (_) => {};
   #resources: any[] = [];
@@ -289,10 +323,16 @@ export class Canvas extends EventEmitter<WindowEvent> {
               case 2:
                 // EVENT_PUMP
                 await decodeConn(conn).then((e: any) => {
-                  this.emit("event", e);
+                  e.forEach((ev: any) => {
+                    const type = typeof ev == "string"
+                      ? ev
+                      : Object.keys(ev)[0];
+                    this.emit("event", { type, ...ev[type] });
+                  });
                 });
 
                 break;
+              // TODO(@littledivy): Personally would love to have this <3
               // case 5:
               //   // AUDIO_CALLBACK
               //   const eventLengthBuffer = new Uint8Array(4);
