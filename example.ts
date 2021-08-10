@@ -1,4 +1,4 @@
-import { Canvas, WindowEvent } from "./src/canvas.ts";
+import { Canvas } from "./src/canvas.ts";
 
 function checkCollision(
   x1: number,
@@ -40,7 +40,7 @@ const font = canvas.loadFont(
   { style: "italic" },
 );
 
-canvas.addEventListener("draw", () => {
+canvas.on("draw", () => {
   let currTime = performance.now();
   speed = (currTime - prevTime) / 1000;
   prevTime = currTime;
@@ -99,13 +99,13 @@ canvas.addEventListener("draw", () => {
 
 let eventsRecv = 0;
 
-canvas.addEventListener("event", (e: WindowEvent) => {
+canvas.on("event", e => {
   eventsRecv += 1;
   canvas.setTitle(
     `currTime: ${prevTime} events: ${eventsRecv} speed: ${speed}`,
   );
 
-  const mouseMove = e.detail.find((i: any) => i["MouseMotion"]);
+  const mouseMove = e.find((i: any) => i["MouseMotion"]);
   if (mouseMove) {
     if (
       checkCollision(
@@ -124,7 +124,7 @@ canvas.addEventListener("event", (e: WindowEvent) => {
     }
   }
 
-  if (e.detail.includes("Quit")) {
+  if (e.includes("Quit")) {
     canvas.quit();
   }
 });
