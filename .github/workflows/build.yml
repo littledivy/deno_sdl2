@@ -18,9 +18,7 @@ jobs:
       
       - name: Install cargo-vcpkg
         run: cargo install cargo-vcpkg
-      - name: Install dependencies
-        run: cargo vcpkg -v build
-
+     
       - name: Install yasm (Linux)
         if: matrix.os == 'ubuntu-latest'
         run: sudo apt install yasm
@@ -28,6 +26,9 @@ jobs:
       - name: Install yasm (Darwin)
         if: matrix.os == 'macos-latest'
         run: brew install yasm
+
+     - name: Install dependencies
+        run: cargo vcpkg -v build
 
       - name: Build
         shell: bash
