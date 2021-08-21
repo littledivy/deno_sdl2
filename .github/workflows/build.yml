@@ -28,9 +28,11 @@ jobs:
           rustc --version
           cargo --version
           cargo build --features "use-vcpkg" --release
-      - name: Renam artifacts
-        if: matrix.os !== 'windows-latest'
+
+      - name: Rename artifacts
+        if: matrix.os != 'windows-latest'
         run: cp target/release/deno_sdl2 deno_sdl2-${{ matrix.os }}
+          
       - name: Release
         uses: softprops/action-gh-release@master
         env:
