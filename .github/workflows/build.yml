@@ -41,7 +41,7 @@ jobs:
           tag_name: "release draft"
           draft: true
           files: |
-            target/release/deno_sdl2-ubuntu-latest
-            target/release/deno_sdl2-macos-latest
+            deno_sdl2-ubuntu-latest
+            deno_sdl2-macos-latest
             target/release/deno_sdl2.exe
 
