@@ -22,11 +22,11 @@ jobs:
         run: cargo vcpkg -v build
 
       - name: Install yasm (Linux)
-        if: matrix.os == "ubuntu-latest"
+        if: matrix.os == 'ubuntu-latest'
         run: sudo apt install yasm
 
       - name: Install yasm (Darwin)
-        if: matrix.os == "macos-latest"
+        if: matrix.os == 'macos-latest'
         run: brew install yasm
 
       - name: Build
