@@ -1,4 +1,5 @@
 import { EventEmitter } from "https://deno.land/x/event@2.0.0/mod.ts";
+import { exists } from "https://deno.land/x/std@0.105.0/fs/exists.ts";
 import { decodeConn, encode, readStatus } from "./msg.ts";
 import { PixelFormat } from "./pixel.ts";
 import { FontRenderOptions } from "./font.ts";
@@ -362,6 +363,11 @@ export class Canvas extends EventEmitter<WindowEvent> {
 }
 
 async function downloadRelease() {
+  let ext = Deno.build.os == "windows" ? ".exe" : "";
+  if (await exists(`deno_sdl2${ext}`)) {
+    return;
+  }
+  console.log("Downloading assets for", Deno.build.os);
   const resp = await fetch(
     "https://api.github.com/repos/littledivy/deno_sdl2/releases/latest",
   );
@@ -369,8 +375,13 @@ async function downloadRelease() {
   if (!meta.assets) {
     throw new TypeError("No release found.");
   } else {
-    let ext = Deno.build.os == "windows" ? ".exe" : "";
-    const asset = meta.assets.find((m: any) => m.name.endsWith(ext));
+    const asset = meta.assets.find((m: any) =>
+      Deno.build.os == "windows"
+        ? m.name.endsWith(ext)
+        : m.name.endsWith(
+          `${Deno.build.os == "linux" ? "ubuntu" : "macos"}-latest`,
+        )
+    );
     if (!asset) {
       throw new TypeError(`Release asset for ${Deno.build.os} not found.`);
     }
@@ -379,7 +390,12 @@ async function downloadRelease() {
         "Content-Type": "application/octet-stream",
       },
     });
-    const file = await Deno.open(`deno_sdl${ext}`);
+    const file = await Deno.open(`deno_sdl2${ext}`, {
+      write: true,
+      mode: 0o755,
+      create: true,
+      truncate: true,
+    });
     if (!bin.body) throw new TypeError("Response without body");
     for await (const chunk of bin.body) {
       await Deno.writeAll(file, chunk);
@@ -390,15 +406,15 @@ async function downloadRelease() {
 
 async function init(
   cb: (conn: Deno.Conn) => Promise<void>,
+  // TODO(@littledivy): Make this toggleable with a build script?
   dev: boolean = false,
 ) {
   if (!dev) await downloadRelease();
   const listener = Deno.listen({ port: 34254, transport: "tcp" });
   const process = Deno.run({
-    cmd: [dev ? "target/release/deno_sdl2" : "deno_sdl2"],
+    cmd: [dev ? "target/release/deno_sdl2" : "./deno_sdl2"],
     stderr: "inherit",
   });
-  // console.log("listening on 0.0.0.0:34254");
   for await (const conn of listener) {
     const reqBuf = await readStatus(conn);
     switch (reqBuf) {

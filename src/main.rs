@@ -490,16 +490,13 @@ enum Resource<'a> {
 }
 
 fn main() -> Result<()> {
-    let mut stream = TcpStream::connect("127.0.0.1:34254")?;
+    let mut stream = TcpStream::connect("0.0.0.0:34254")?;
     let mut reader = BufReader::new(stream.try_clone()?);
 
     let sdl_context = sdl2::init().map_err(|e| anyhow!(e))?;
     let video_subsystem = sdl_context.video().map_err(|e| anyhow!(e))?;
     let image_context = sdl2::image::init(InitFlag::PNG | InitFlag::JPG).map_err(|e| anyhow!(e))?;
-    let mixer_context = sdl2::mixer::init(
-        MixerInitFlag::MP3 | MixerInitFlag::FLAC | MixerInitFlag::MOD | MixerInitFlag::OGG,
-    )
-    .map_err(|e| anyhow!(e))?;
+    let mixer_context = sdl2::mixer::init(MixerInitFlag::MP3).map_err(|e| anyhow!(e))?;
 
     let ttf_context = sdl2::ttf::init()?;
     // let audio_subsystem = sdl_context.audio().map_err(|e| anyhow!(e))?;
