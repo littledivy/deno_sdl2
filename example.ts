@@ -104,7 +104,7 @@ canvas.on("event", (e) => {
   canvas.setTitle(
     `currTime: ${prevTime} events: ${eventsRecv} speed: ${speed}`,
   );
-  
+
   if (e.type == "mouse_motion") {
     if (
       checkCollision(

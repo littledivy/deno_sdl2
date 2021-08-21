@@ -28,3 +28,15 @@ jobs:
           rustc --version
           cargo --version
           cargo build --features "use-vcpkg" --release
+
+      - name: Release
+        uses: softprops/action-gh-release@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: "release draft"
+          draft: true
+          files: |
+            target/release/deno_sdl2
+            target/release/deno_sdl2.exe
+

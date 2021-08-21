@@ -361,14 +361,44 @@ export class Canvas extends EventEmitter<WindowEvent> {
   }
 }
 
-async function init(cb: (conn: Deno.Conn) => Promise<void>) {
+async function downloadRelease() {
+  const resp = await fetch(
+    "https://api.github.com/repos/littledivy/deno_sdl2/releases/latest",
+  );
+  const meta = await resp.json();
+  if (!meta.assets) {
+    throw new TypeError("No release found.");
+  } else {
+    let ext = Deno.build.os == "windows" ? ".exe" : "";
+    const asset = meta.assets.find((m: any) => m.name.endsWith(ext));
+    if (!asset) {
+      throw new TypeError(`Release asset for ${Deno.build.os} not found.`);
+    }
+    const bin = await fetch(asset.browser_download_url, {
+      headers: {
+        "Content-Type": "application/octet-stream",
+      },
+    });
+    const file = await Deno.open(`deno_sdl${ext}`);
+    if (!bin.body) throw new TypeError("Response without body");
+    for await (const chunk of bin.body) {
+      await Deno.writeAll(file, chunk);
+    }
+    file.close();
+  }
+}
+
+async function init(
+  cb: (conn: Deno.Conn) => Promise<void>,
+  dev: boolean = false,
+) {
+  if (!dev) await downloadRelease();
   const listener = Deno.listen({ port: 34254, transport: "tcp" });
   const process = Deno.run({
-    cmd: ["target/release/deno_sdl2"],
+    cmd: [dev ? "target/release/deno_sdl2" : "deno_sdl2"],
     stderr: "inherit",
   });
-  console.log("listening on 0.0.0.0:34254");
-
+  // console.log("listening on 0.0.0.0:34254");
   for await (const conn of listener) {
     const reqBuf = await readStatus(conn);
     switch (reqBuf) {
