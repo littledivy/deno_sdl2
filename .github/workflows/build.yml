@@ -28,7 +28,9 @@ jobs:
           rustc --version
           cargo --version
           cargo build --features "use-vcpkg" --release
-
+      - name: Renam artifacts
+        if: matrix.os !== 'windows-latest'
+        run: cp target/release/deno_sdl2 deno_sdl2-${{ matrix.os }}
       - name: Release
         uses: softprops/action-gh-release@master
         env:
@@ -37,6 +39,7 @@ jobs:
           tag_name: "release draft"
           draft: true
           files: |
-            target/release/deno_sdl2
+            target/release/deno_sdl2-ubuntu-latest
+            target/release/deno_sdl2-macos-latest
             target/release/deno_sdl2.exe
 
