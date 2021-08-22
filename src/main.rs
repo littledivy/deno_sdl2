@@ -496,7 +496,8 @@ fn main() -> Result<()> {
     let sdl_context = sdl2::init().map_err(|e| anyhow!(e))?;
     let video_subsystem = sdl_context.video().map_err(|e| anyhow!(e))?;
     let image_context = sdl2::image::init(InitFlag::PNG | InitFlag::JPG).map_err(|e| anyhow!(e))?;
-    let mixer_context = sdl2::mixer::init(MixerInitFlag::MP3).map_err(|e| anyhow!(e))?;
+    let mixer_flag = if cfg!(windows) { MixerInitFlag::empty() } else { MixerInitFlag::MP3 }; 
+    let mixer_context = sdl2::mixer::init(mixer_flag).map_err(|e| anyhow!(e))?;
 
     let ttf_context = sdl2::ttf::init()?;
     // let audio_subsystem = sdl_context.audio().map_err(|e| anyhow!(e))?;
