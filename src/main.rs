@@ -500,7 +500,11 @@ fn main() -> Result<()> {
     let sdl_context = sdl2::init().map_err(|e| anyhow!(e))?;
     let video_subsystem = sdl_context.video().map_err(|e| anyhow!(e))?;
     let image_context = sdl2::image::init(InitFlag::PNG | InitFlag::JPG).map_err(|e| anyhow!(e))?;
-    let mixer_flag = if cfg!(windows) { MixerInitFlag::empty() } else { MixerInitFlag::MP3 }; 
+    let mixer_flag = if cfg!(windows) {
+        MixerInitFlag::empty()
+    } else {
+        MixerInitFlag::MP3
+    };
     let mixer_context = sdl2::mixer::init(mixer_flag).map_err(|e| anyhow!(e))?;
 
     let ttf_context = sdl2::ttf::init()?;
@@ -758,7 +762,7 @@ fn main() -> Result<()> {
                     }
                 }
                 CanvasTask::LoadSurface { path, index } => {
-                    let surface = Surface::load_file(&path).map_err(|e| anyhow!(e))?;
+                    let surface = Surface::from_file(&path).map_err(|e| anyhow!(e))?;
                     resources.insert(index, Resource::Surface(surface));
                 }
                 CanvasTask::CopyRect {
