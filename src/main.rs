@@ -183,6 +183,10 @@ enum CanvasTask {
         path: String,
         index: u32,
     },
+    LoadSurface {
+        path: String,
+        index: u32,
+    },
     CreateTexture {
         // PixelFormatEnum
         format: Option<u32>,
@@ -752,6 +756,10 @@ fn main() -> Result<()> {
                             _ => {}
                         }
                     }
+                }
+                CanvasTask::LoadSurface { path, index } => {
+                    let surface = Surface::load_file(&path).map_err(|e| anyhow!(e))?;
+                    resources.insert(index, Resource::Surface(surface));
                 }
                 CanvasTask::CopyRect {
                     texture,

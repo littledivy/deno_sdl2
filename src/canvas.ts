@@ -289,6 +289,12 @@ export class Canvas extends EventEmitter<WindowEvent> {
     return index;
   }
 
+  loadSurface(path: string) {
+    const index = this.#resources.push({ path });
+    this.#tasks.push({ loadSurface: { path, index } });
+    return index;
+  }
+
   createTextureFromSurface(surface: number) {
     // TODO: Verify surface
     const index = this.#resources.push({ surface });
@@ -316,17 +322,18 @@ export class Canvas extends EventEmitter<WindowEvent> {
           });
           await conn.write(canvas);
           // SDL event_pump
-          event_loop: while (true) {
+          event_loop:
+          while (true) {
             const canvasReqBuf = await readStatus(conn);
             switch (canvasReqBuf) {
               case 1:
                 // CANVAS_LOOP_ACTION
                 const tasks = encode(this.#tasks);
                 await conn.write(tasks);
-		if(this.#closed) {
-		  conn.close();
-		  break event_loop;
-		}
+                if (this.#closed) {
+                  conn.close();
+                  break event_loop;
+                }
                 this.#tasks = [];
                 break;
               case 2:
@@ -384,11 +391,9 @@ async function downloadRelease() {
     throw new TypeError("No release found.");
   } else {
     const asset = meta.assets.find((m: any) =>
-      Deno.build.os == "windows"
-        ? m.name.endsWith(ext)
-        : m.name.endsWith(
-          `${Deno.build.os == "linux" ? "ubuntu" : "macos"}-latest`,
-        )
+      Deno.build.os == "windows" ? m.name.endsWith(ext) : m.name.endsWith(
+        `${Deno.build.os == "linux" ? "ubuntu" : "macos"}-latest`,
+      )
     );
     if (!asset) {
       throw new TypeError(`Release asset for ${Deno.build.os} not found.`);
