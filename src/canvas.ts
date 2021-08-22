@@ -420,13 +420,14 @@ async function downloadRelease() {
 async function init(
   cb: (conn: Deno.Conn) => Promise<void>,
   // TODO(@littledivy): Make this toggleable with a build script?
-  dev: boolean = false,
+  dev: boolean = true,
 ) {
   if (!dev) await downloadRelease();
   const listener = Deno.listen({ port: 34254, transport: "tcp" });
   const process = Deno.run({
-    cmd: [dev ? "target/release/deno_sdl2" : "./deno_sdl2"],
+    cmd: [dev ? "target/debug/deno_sdl2" : "./deno_sdl2"],
     stderr: "inherit",
+    stdout: "inherit",  
   });
   const conn = await listener.accept();
   const reqBuf = await readStatus(conn);
