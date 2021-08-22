@@ -107,6 +107,8 @@ export class Canvas extends EventEmitter<WindowEvent> {
   #fonts: any[] = [];
   #audioCallback: (buf: Float32Array) => void = (_) => {};
   #resources: any[] = [];
+  // TODO(@littledivy): Make this a read-only public?
+  #closed = true;
 
   constructor(properties: WindowOptions) {
     super();
@@ -168,6 +170,7 @@ export class Canvas extends EventEmitter<WindowEvent> {
 
   quit() {
     this.#tasks.push("quit");
+    this.#closed = true;
   }
 
   setDisplayMode(
@@ -298,6 +301,7 @@ export class Canvas extends EventEmitter<WindowEvent> {
   }
 
   async start() {
+    this.#closed = false;
     init(async (conn) => {
       const window = encode(this.#properties);
       await conn.write(window);
@@ -312,13 +316,17 @@ export class Canvas extends EventEmitter<WindowEvent> {
           });
           await conn.write(canvas);
           // SDL event_pump
-          while (true) {
+          event_loop: while (true) {
             const canvasReqBuf = await readStatus(conn);
             switch (canvasReqBuf) {
               case 1:
                 // CANVAS_LOOP_ACTION
                 const tasks = encode(this.#tasks);
                 await conn.write(tasks);
+		if(this.#closed) {
+		  conn.close();
+		  break event_loop;
+		}
                 this.#tasks = [];
                 break;
               case 2:
@@ -415,16 +423,15 @@ async function init(
     cmd: [dev ? "target/release/deno_sdl2" : "./deno_sdl2"],
     stderr: "inherit",
   });
-  for await (const conn of listener) {
-    const reqBuf = await readStatus(conn);
-    switch (reqBuf) {
-      case 0:
-        // VIDEO_READY
-        await cb(conn);
-        break;
-      default:
-        break;
-    }
+  const conn = await listener.accept();
+  const reqBuf = await readStatus(conn);
+  switch (reqBuf) {
+    case 0:
+      // VIDEO_READY
+      await cb(conn);
+      break;
+    default:
+      break;
   }
 
   await process.status();
