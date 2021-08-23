@@ -18,27 +18,6 @@ export interface WindowOptions {
   maximized?: boolean;
 }
 
-export enum AudioFormat {
-  AUDIO_U8 = 0x0008,
-  AUDIO_S8 = 0x8008,
-  AUDIO_U16LSB = 0x0010,
-  AUDIO_S16LSB = 0x8010,
-  AUDIO_U16MSB = 0x1010,
-  AUDIO_S16MSB = 0x9010,
-  AUDIO_U16 = AUDIO_U16LSB,
-  AUDIO_S16 = AUDIO_S16LSB,
-  AUDIO_S32LSB = 0x8020,
-  AUDIO_S32MSB = 0x9020,
-  AUDIO_S32 = AUDIO_S32LSB,
-  AUDIO_F32LSB = 0x8120,
-  AUDIO_F32MSB = 0x9120,
-  AUDIO_F32 = AUDIO_F32LSB,
-  AUDIO_U16SYS = AUDIO_U16LSB,
-  AUDIO_S16SYS = AUDIO_S16LSB,
-  AUDIO_S32SYS = AUDIO_S32LSB,
-  AUDIO_F32SYS = AUDIO_F32LSB,
-}
-
 export enum MouseButton {
   Unknown,
   Left,
@@ -264,15 +243,6 @@ export class Canvas extends EventEmitter<WindowEvent> {
   //   this.#audioCallback = callback;
   // }
 
-  openAudio(
-    frequency: number,
-    format: AudioFormat,
-    channels: number,
-    chunksize: number,
-  ) {
-    this.#tasks.push({ openAudio: { frequency, format, channels, chunksize } });
-  }
-
   playMusic(path: string) {
     this.#tasks.push({ playMusic: { path } });
   }
@@ -420,7 +390,7 @@ async function downloadRelease() {
 async function init(
   cb: (conn: Deno.Conn) => Promise<void>,
   // TODO(@littledivy): Make this toggleable with a build script?
-  dev: boolean = false,
+  dev: boolean = true,
 ) {
   if (!dev) await downloadRelease();
   const listener = Deno.listen({ port: 34254, transport: "tcp" });
