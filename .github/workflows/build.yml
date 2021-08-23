@@ -21,7 +21,7 @@ jobs:
      
       - name: Install yasm (Linux)
         if: matrix.os == 'ubuntu-latest'
-        run: sudo apt install yasm
+        run: sudo apt install yasm libasound2-dev
 
       - name: Install yasm (Darwin)
         if: matrix.os == 'macos-latest'
