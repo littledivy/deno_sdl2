@@ -1,15 +1,16 @@
+use std::fs::File;
 use std::io::prelude::*;
 use std::net::TcpStream;
 
+use rodio::source::Source;
+use rodio::Decoder;
+use rodio::OutputStream;
 use sdl2::audio::AudioCallback;
 use sdl2::audio::AudioDevice;
 use sdl2::audio::AudioSpecDesired;
 use sdl2::event::Event;
 use sdl2::image::{InitFlag, LoadSurface};
 use sdl2::keyboard::Keycode;
-use sdl2::mixer::InitFlag as MixerInitFlag;
-use sdl2::mixer::AUDIO_S16LSB;
-use sdl2::mixer::DEFAULT_CHANNELS;
 use sdl2::mouse::Cursor;
 use sdl2::pixels::Color;
 use sdl2::pixels::PixelFormatEnum;
@@ -162,13 +163,6 @@ enum CanvasTask {
     //     channels: Option<u8>,
     //     samples: Option<u16>,
     // },
-    OpenAudio {
-        frequency: i32,
-        // Maps to formats defined in sdl2::mixer
-        format: u16,
-        channels: i32,
-        chunksize: i32,
-    },
     PlayMusic {
         path: String,
     },
@@ -500,13 +494,6 @@ fn main() -> Result<()> {
     let sdl_context = sdl2::init().map_err(|e| anyhow!(e))?;
     let video_subsystem = sdl_context.video().map_err(|e| anyhow!(e))?;
     let image_context = sdl2::image::init(InitFlag::PNG | InitFlag::JPG).map_err(|e| anyhow!(e))?;
-    let mixer_flag = if cfg!(windows) {
-        MixerInitFlag::empty()
-    } else {
-        MixerInitFlag::MP3
-    };
-    let mixer_context = sdl2::mixer::init(mixer_flag).map_err(|e| anyhow!(e))?;
-
     let ttf_context = sdl2::ttf::init()?;
     // let audio_subsystem = sdl_context.audio().map_err(|e| anyhow!(e))?;
     // let mut audio_devices: Vec<AudioDevice<AudioManager>> = vec![];
@@ -691,21 +678,12 @@ fn main() -> Result<()> {
                 //     device.resume();
                 //     audio_devices.push(device);
                 // }
-                CanvasTask::OpenAudio {
-                    frequency,
-                    format,
-                    channels,
-                    chunksize,
-                } => {
-                    // Praise God! Finally don't have to deal to destructors here :D
-                    sdl2::mixer::open_audio(frequency, format, channels, chunksize)
-                        .map_err(|e| anyhow!(e))?;
-                }
                 CanvasTask::PlayMusic { path } => {
-                    let music = ManuallyDrop::new(
-                        sdl2::mixer::Music::from_file(path).map_err(|e| anyhow!(e))?,
-                    );
-                    music.play(1);
+                    let (_stream, stream_handle) = OutputStream::try_default()?;
+                    let _stream = ManuallyDrop::new(_stream);
+                    let stream_handle = ManuallyDrop::new(stream_handle);
+                    let decoder = Decoder::new(BufReader::new(File::open(path)?))?;
+                    stream_handle.play_raw(decoder.convert_samples())?;
                 }
                 CanvasTask::CreateSurface {
                     width,

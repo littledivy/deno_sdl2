@@ -1,4 +1,4 @@
-import { AudioFormat, Canvas } from "../src/canvas.ts";
+import { Canvas } from "../src/canvas.ts";
 
 const canvas = new Canvas({
   title: "Hello, Deno!",
@@ -12,7 +12,6 @@ const canvas = new Canvas({
   maximized: false,
 });
 
-canvas.openAudio(44_100, AudioFormat.AUDIO_S16LSB, 2, 1_024);
-const music = await canvas.playMusic("tests/sample_0.mp3");
+canvas.playMusic("tests/sample_0.mp3");
 
 await canvas.start();
