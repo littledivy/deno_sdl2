@@ -494,7 +494,7 @@ enum Resource<'a> {
 }
 
 fn main() -> Result<()> {
-    let mut stream = TcpStream::connect("0.0.0.0:34254")?;
+    let mut stream = TcpStream::connect("127.0.0.1:34254")?;
     let mut reader = BufReader::new(stream.try_clone()?);
 
     let sdl_context = sdl2::init().map_err(|e| anyhow!(e))?;
