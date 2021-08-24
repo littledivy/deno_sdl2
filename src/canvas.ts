@@ -123,7 +123,7 @@ export class Canvas extends EventEmitter<WindowEvent> {
     this.#tasks.push({ setScale: { x, y } });
   }
   /**
-   * Draws a point on the current rendering target. Errors if drawing fails for any reason.
+   * Draws a point on the current rendering target.
    * */
   drawPoint(x: number, y: number) {
     this.#tasks.push({ drawPoint: { x, y } });
