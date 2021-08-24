@@ -19,6 +19,7 @@ use sdl2::rect::Rect;
 use sdl2::render::CanvasBuilder;
 use sdl2::render::Texture;
 use sdl2::render::TextureAccess;
+use sdl2::render::TextureQuery;
 use sdl2::render::WindowCanvas;
 use sdl2::surface::Surface;
 use sdl2::ttf::Font;
@@ -77,6 +78,14 @@ struct Rectangle {
     y: i32,
     width: u32,
     height: u32,
+}
+
+#[derive(Deserialize)]
+struct OptionRectangle {
+    x: i32,
+    y: i32,
+    width: Option<u32>,
+    height: Option<u32>,
 }
 
 #[derive(Deserialize)]
@@ -148,7 +157,7 @@ enum CanvasTask {
     RenderFont {
         text: String,
         options: CanvasFontPartial,
-        target: Option<Rectangle>,
+        target: Option<OptionRectangle>,
         path: String,
         size: u16,
         style: Option<CanvasFontSize>,
@@ -651,7 +660,24 @@ fn main() -> Result<()> {
                         .create_texture_from_surface(&surface.unwrap())
                         .unwrap();
                     let target = match target {
-                        Some(r) => Some(Rect::new(r.x, r.y, r.width, r.height)),
+                        Some(r) => {
+                            let (width, height) = match (r.width, r.height) {
+                                (None, None) => {
+                                    let TextureQuery { width, height, .. } = texture.query();
+                                    (width, height)
+                                }
+                                (Some(width), None) => {
+                                    let TextureQuery { height, .. } = texture.query();
+                                    (width, height)
+                                }
+                                (None, Some(height)) => {
+                                    let TextureQuery { width, .. } = texture.query();
+                                    (width, height)
+                                }
+                                (Some(width), Some(height)) => (width, height),
+                            };
+                            Some(Rect::new(r.x, r.y, width, height))
+                        }
                         None => None,
                     };
                     canvas.copy(&texture, None, target).unwrap();
