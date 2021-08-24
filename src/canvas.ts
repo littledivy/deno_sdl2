@@ -129,7 +129,7 @@ export class Canvas extends EventEmitter<WindowEvent> {
     this.#tasks.push({ drawPoint: { x, y } });
   }
   /**
-   * Draws multiple points on the current rendering target. Errors if drawing fails for any reason.
+   * Draws multiple points on the current rendering target.
    * */
   drawPoints(points: Point[]) {
     this.#tasks.push({ drawPoints: { points } });
