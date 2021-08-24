@@ -111,7 +111,7 @@ export class Canvas extends EventEmitter<WindowEvent> {
     this.#tasks.push("clear");
   }
   /**
-   * Sets the color used for drawing operations (Rect, Line and Clear).
+   * Sets the color used for drawing operations (rect, line and clear).
    * */
   setDrawColor(r: number, g: number, b: number, a: number) {
     this.#tasks.push({ setDrawColor: { r, g, b, a } });
@@ -123,13 +123,13 @@ export class Canvas extends EventEmitter<WindowEvent> {
     this.#tasks.push({ setScale: { x, y } });
   }
   /**
-   * Draws a point on the current rendering target. Errors if drawing fails for any reason.
+   * Draws a point on the current rendering target.
    * */
   drawPoint(x: number, y: number) {
     this.#tasks.push({ drawPoint: { x, y } });
   }
   /**
-   * Draws multiple points on the current rendering target. Errors if drawing fails for any reason.
+   * Draws multiple points on the current rendering target.
    * */
   drawPoints(points: Point[]) {
     this.#tasks.push({ drawPoints: { points } });
