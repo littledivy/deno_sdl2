@@ -111,7 +111,7 @@ export class Canvas extends EventEmitter<WindowEvent> {
     this.#tasks.push("clear");
   }
   /**
-   * Sets the color used for drawing operations (Rect, Line and Clear).
+   * Sets the color used for drawing operations (rect, line and clear).
    * */
   setDrawColor(r: number, g: number, b: number, a: number) {
     this.#tasks.push({ setDrawColor: { r, g, b, a } });
