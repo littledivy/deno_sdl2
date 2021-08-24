@@ -217,6 +217,7 @@ export class Canvas extends EventEmitter<WindowEvent> {
   setBrightness(brightness: number) {
     this.#tasks.push({ setBrightness: { brightness } });
   }
+
   /**
    * Set the transparency of the window. The given value will be clamped internally between 0.0 (fully transparent),
    * and 1.0 (fully opaque).
@@ -250,15 +251,27 @@ export class Canvas extends EventEmitter<WindowEvent> {
     this.#tasks.push("restore");
   }
 
+  /**
+   * Load a font for rendering.
+   * @param path Relative path to the font
+   * @param size Size of the font. (eg: 128)
+   * @param opts Font options (eg: { italics: true })
+   * @returns A loaded font reference
+   */
   loadFont(path: string, size: number, opts?: { style: string }): number {
     const options = { path, size, ...opts };
     const index = this.#fonts.push(options);
     // this.#tasks.push({ loadFont: { ...options, index } });
     return index;
   }
+
   /**
-   * Render a loaded font.
-   * */
+   * Render a loaded font onto the current rendering target.
+   * @param font a font loaded with `loadFont`
+   * @param text Text to render.
+   * @param options Font rendering options.
+   * @param target Portion of the current rendering target.
+   */
   renderFont(
     font: number,
     text: string,
@@ -271,9 +284,11 @@ export class Canvas extends EventEmitter<WindowEvent> {
     }
     this.#tasks.push({ renderFont: { font, text, options, target, ..._font } });
   }
+
   /**
-   * Set Cursor's Icon.
-   * */
+   * Set the cursor icon.
+   * @param path Path to the source file
+   */
   setCursor(path: string) {
     const index = this.#resources.push(this.#resources.length);
     this.#tasks.push({ setCursor: { path, index } });
@@ -283,56 +298,78 @@ export class Canvas extends EventEmitter<WindowEvent> {
   //   this.#tasks.push({ createAudioDevice: {} })
   //   this.#audioCallback = callback;
   // }
+
   /**
    * Play a sound.
-   * */
+   * @param path Path of the source file
+   */
   playMusic(path: string) {
     this.#tasks.push({ playMusic: { path } });
   }
+
   /**
-   * Create a sprite/image surface.
-   * */
+   * Create a new surface.
+   * @param width width of the surface.
+   * @param height height of the surface.
+   * @param format pixel format of the surface.
+   * @returns a new surface
+   */
   createSurface(width: number, height: number, format: PixelFormat) {
     const index = this.#resources.push({ width, height, format });
     this.#tasks.push({ createSurface: { width, height, format, index } });
     return index;
   }
+
   /**
-   * Create surface from a bitmap.
-   * */
+   * Create a new surface from bitmap
+   * @param path Path to the source file
+   * @returns a new surface
+   */
   loadBitmap(path: string) {
     const index = this.#resources.push({ path });
     this.#tasks.push({ createSurfaceBitmap: { path, index } });
     return index;
   }
+
   /**
-   * Create Surface from image.
-   * */
+   * Creates a new surface with SDL2_Image. Supports PNG and JPEG.
+   * @param path Path to the source file
+   * @returns a new surface
+   */
   loadSurface(path: string) {
     const index = this.#resources.push({ path });
     this.#tasks.push({ loadSurface: { path, index } });
     return index;
   }
-  // TODO: (dhairy-online)
+
+  /**
+   * Creates a new texture from existing surface.
+   * @param surface A surface created from load/create surface methods
+   * @returns Texture
+   */
   createTextureFromSurface(surface: number) {
     // TODO: Verify surface
     const index = this.#resources.push({ surface });
     this.#tasks.push({ createTextureSurface: { surface, index } });
     return index;
   }
+
   /**
-   * Copies a portion of the texture to the current rendering target.
-   *
-   * If src is None, the entire texture is copied.
-   * If dst is None, the texture will be stretched to fill the given rectangle.
-   *
-   * Errors if drawing fails for any reason (e.g. driver failure), or if the provided texture does not belong to the renderer.
-   *
-   * */
-  copy(texture: number, rect1: Rect, rect2: Rect) {
-    this.#tasks.push({ copyRect: { texture, rect1, rect2 } });
+   * Copied a portion of the texture into the current rendering target.
+   * @param texture texture to be copied from
+   * @param src portion of the texture to copy.
+   * @param dest texture will be stretched on the given destination
+   */
+  copy(texture: number, src: Rect, dest: Rect) {
+    this.#tasks.push({ copyRect: { texture, rect1: src, rect2: dest } });
   }
 
+  /**
+   * Start the event. Under the hood, it fires up the Rust client, polls for events and send tasks.
+   * This function blocks rest of the JS event loop.
+   *
+   * Downloads the `deno_sdl2` client from Github releases on the first run.
+   */
   async start() {
     this.#closed = false;
     init(async (conn) => {
