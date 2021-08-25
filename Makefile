@@ -13,8 +13,8 @@ fmt:
 lint: fmt
 	deno lint --ignore=target/
 
-test: fmt lint
-	deno test tests/
+test: fmt 
+	deno run -A tests/mp3_flag.ts
 
 clean:
 	rm -rf deno_sdl2
