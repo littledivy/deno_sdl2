@@ -1,4 +1,3 @@
-import { EventEmitter } from "https://deno.land/x/event@2.0.0/mod.ts";
 import { exists } from "https://deno.land/x/std@0.105.0/fs/exists.ts";
 import { decodeConn, encode, readStatus } from "./msg.ts";
 import { PixelFormat } from "./pixel.ts";
@@ -69,17 +68,12 @@ type Event = {
   direction: number;
 } | { type: "unknown" };
 
-type WindowEvent = {
-  event: [Event];
-  draw: [];
-};
-
 export interface Rect extends Point {
   width: number;
   height: number;
 }
 
-export class Canvas extends EventEmitter<WindowEvent> {
+export class Canvas {
   #properties: WindowOptions;
   // Used internally. Too lazy to define types
   #tasks: any[] = [];
@@ -90,7 +84,6 @@ export class Canvas extends EventEmitter<WindowEvent> {
   #closed = true;
 
   constructor(properties: WindowOptions) {
-    super();
     this.#properties = properties;
     ["centered", "fullscreen", "hidden", "resizable", "minimized", "maximized"]
       .forEach((opt) => {
@@ -365,79 +358,78 @@ export class Canvas extends EventEmitter<WindowEvent> {
   }
 
   /**
-   * Start the event. Under the hood, it fires up the Rust client, polls for events and send tasks.
+   * Start the event loop. Under the hood, it fires up the Rust client, polls for events and send tasks.
    * This function blocks rest of the JS event loop.
    *
    * Downloads the `deno_sdl2` client from Github releases on the first run.
    */
-  async start() {
+  async *[Symbol.asyncIterator]() {
     this.#closed = false;
-    init(async (conn) => {
-      const window = encode(this.#properties);
-      await conn.write(window);
+    const conn = await init();
 
-      const videoReqBuf = await readStatus(conn);
+    const window = encode(this.#properties);
+    await conn.write(window);
 
-      switch (videoReqBuf) {
-        case 1:
-          // CANVAS_READY
-          const canvas = encode({
-            software: false,
-          });
-          await conn.write(canvas);
-          // SDL event_pump
-          event_loop:
-          while (true) {
-            const canvasReqBuf = await readStatus(conn);
-            switch (canvasReqBuf) {
-              case 1:
-                // CANVAS_LOOP_ACTION
-                const tasks = encode(this.#tasks);
-                await conn.write(tasks);
-                if (this.#closed) {
-                  conn.close();
-                  break event_loop;
-                }
-                this.#tasks = [];
-                break;
-              case 2:
-                // EVENT_PUMP
-                await decodeConn(conn).then((e: any) => {
-                  e.forEach((ev: any) => {
-                    const type = typeof ev == "string"
-                      ? ev
-                      : Object.keys(ev)[0];
-                    this.emit("event", { type, ...ev[type] });
-                  });
-                });
+    const videoReqBuf = await readStatus(conn);
 
-                break;
-              // TODO(@littledivy): Personally would love to have this <3
-              // case 5:
-              //   // AUDIO_CALLBACK
-              //   const eventLengthBuffer = new Uint8Array(4);
-              //   await conn.read(eventLengthBuffer);
-              //   const view = new DataView(eventLengthBuffer.buffer, 0);
-              //   const eventLength = view.getUint32(0, true);
-              //   const buf = new Float32Array(eventLength);
+    switch (videoReqBuf) {
+      case 1:
+        // CANVAS_READY
+        const canvas = encode({
+          software: false,
+        });
+        await conn.write(canvas);
+        // SDL event_pump
+        event_loop:
+        while (true) {
+          const canvasReqBuf = await readStatus(conn);
+          switch (canvasReqBuf) {
+            case 1:
+              // CANVAS_LOOP_ACTION
+              const tasks = encode(this.#tasks);
+              await conn.write(tasks);
+              if (this.#closed) {
+                conn.close();
+                break event_loop;
+              }
+              this.#tasks = [];
+              break;
+            case 2:
+              // EVENT_PUMP
+              const rawEvents: any[] = await decodeConn(conn);
+              for (const event of rawEvents) {
+                const type = typeof event == "string"
+                  ? event
+                  : Object.keys(event)[0];
+                yield { type, ...event[type] };
+              }
 
-              //   this.#audioCallback(buf);
-              //   await conn.write(new Uint8Array([0, 0]))
-              //   await conn.write(encode((Array.from(buf))));
+              break;
+            // TODO(@littledivy): Personally would love to have this <3
+            // case 5:
+            //   // AUDIO_CALLBACK
+            //   const eventLengthBuffer = new Uint8Array(4);
+            //   await conn.read(eventLengthBuffer);
+            //   const view = new DataView(eventLengthBuffer.buffer, 0);
+            //   const eventLength = view.getUint32(0, true);
+            //   const buf = new Float32Array(eventLength);
 
-              //   break;
-              default:
-                break;
-            }
+            //   this.#audioCallback(buf);
+            //   await conn.write(new Uint8Array([0, 0]))
+            //   await conn.write(encode((Array.from(buf))));
 
-            this.emit("draw");
+            //   break;
+            default:
+              break;
           }
-          break;
-        // TODO(littledivy): CANVAS_ERR
-        default:
-          break;
-      }
-    });
+
+          yield { type: "draw" };
+        }
+        break;
+      // TODO(littledivy): CANVAS_ERR
+      default:
+        break;
+    }
   }
 }
 
@@ -481,15 +473,11 @@ async function downloadRelease() {
   }
 }
 
-async function init(
-  cb: (conn: Deno.Conn) => Promise<void>,
-  // TODO(@littledivy): Make this toggleable with a build script?
-  dev: boolean = false,
-) {
-  if (!dev) await downloadRelease();
+async function init(): Promise<Deno.Conn> {
+  await downloadRelease();
   const listener = Deno.listen({ port: 34254, transport: "tcp" });
   const process = Deno.run({
-    cmd: [dev ? "target/debug/deno_sdl2" : "./deno_sdl2"],
+    cmd: ["./deno_sdl2"],
     stderr: "inherit",
     stdout: "inherit",
   });
@@ -498,11 +486,8 @@ async function init(
   switch (reqBuf) {
     case 0:
       // VIDEO_READY
-      await cb(conn);
-      break;
+      return conn;
     default:
-      break;
+      throw new TypeError("Invalid request");
   }
-
-  await process.status();
 }

@@ -7,8 +7,8 @@ Have fun!
 
 #### Features
 
-- Bindings to Video, Graphics, Font and Mixer subsystems.
-- API similar to `Rust-sdl2`
+- Bindings to Video, Graphics, Font and Mixer subsystems. (Uses rodio instead of
+  SDL2_Mixer)
 - Not `--unstable`. Uses TCP instead of Deno's traditional plugin system.
 
 #### Example
@@ -18,17 +18,29 @@ import { Canvas } from "https://deno.land/x/sdl2/mod.ts";
 
 const canvas = new Canvas({ title: "Hello, Deno!", width: 800, height: 400 });
 
-canvas.addEventListener("event", (e: WindowEvent) => {
-  console.log(e.detail);
-});
-
-canvas.setDrawColor(0, 64, 255, 0);
+canvas.setDrawColor(0, 64, 255, 255);
 canvas.clear();
 canvas.present();
 
-canvas.start();
+for await (const event of canvas) {
+  switch (event.type) {
+    case "draw":
+      // Your game logic
+      // ...
+      break;
+    case "mouse_motion":
+      // Mouse stuff
+      break;
+    case "key_down":
+      // Keyboard stuff
+      break;
+    // ...
+    default:
+      break;
+  }
+}
 ```
 
 ### License
 
-- MIT
+MIT
