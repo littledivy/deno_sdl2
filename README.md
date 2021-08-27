@@ -14,7 +14,7 @@ Have fun!
 #### Example
 
 ```typescript
-import { Canvas } from "https://deno.land/x/sdl2/mod.ts";
+import { Canvas } from "https://deno.land/x/sdl2/src/canvas.ts";
 
 const canvas = new Canvas({ title: "Hello, Deno!", width: 800, height: 400 });
 
