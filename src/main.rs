@@ -514,8 +514,8 @@ fn main() -> Result<()> {
 
     let mut window_builder = video_subsystem.window(
         &window_options.title,
-        window_options.height,
         window_options.width,
+        window_options.height,
     );
     let window = build_window(&mut window_builder, window_options);
     // TODO: `sdl2::video::Window` method mapping will be useful too
