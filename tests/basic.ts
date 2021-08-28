@@ -12,12 +12,11 @@ const canvas = new Canvas({
   maximized: false,
 });
 canvas.clear();
-      canvas.present();
+canvas.present();
 // Fire up the event loop
 for await (const event of canvas) {
-    
-  if(event.type == "draw") {
-      canvas.clear();
-      canvas.present();
+  if (event.type == "draw") {
+    canvas.clear();
+    canvas.present();
   }
 }

@@ -21,7 +21,7 @@ canvas.copy(texture, { x: 0, y: 0, width: 480, height: 480 }, {
   width: 480,
   height: 480,
 });
-canvas.present()
+canvas.present();
 // Fire up the event loop
 for await (const _ of canvas) {
   continue;
