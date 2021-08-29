@@ -2,7 +2,7 @@
 const encoder = Deno.core?.encode || new TextEncoder().encode;
 
 let encodeu8 = new Uint8Array(1024);
-const encodeu32 = new Uint32Array(encodeu8.buffer);
+let encodeu32 = new Uint32Array(encodeu8.buffer);
 
 export function encode<T>(object: T): Uint8Array {
   // ~0.02ms
@@ -10,7 +10,11 @@ export function encode<T>(object: T): Uint8Array {
 
   // ~0.17ms - ~0.02ms
   const len = 4 + payload.length;
-  if (len > encodeu8.length) encodeu8 = new Uint8Array(len);
+
+  if (len > encodeu8.length) {
+    encodeu8 = new Uint8Array(Math.ceil(len / 4) * 4);
+    encodeu32 = new Uint32Array(encodeu8.buffer);
+  }
   const buf = encodeu8.subarray(0, len);
   encodeu32[0] = payload.byteLength;
 

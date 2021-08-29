@@ -407,6 +407,20 @@ impl Into<CanvasEvent> for Event {
                 which,
                 button: mouse_btn as u8,
             },
+            Event::MouseButtonUp {
+                x,
+                y,
+                clicks,
+                which,
+                mouse_btn,
+                ..
+            } => CanvasEvent::MouseButtonUp {
+                x,
+                y,
+                clicks,
+                which,
+                button: mouse_btn as u8,
+            },
             _ => CanvasEvent::Unknown,
         }
     }
