@@ -1,0 +1,3 @@
+[submodule "examples/dino"]
+	path = examples/dino
+	url = https://github.com/dhairy-online/dino-deno
