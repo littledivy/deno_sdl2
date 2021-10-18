@@ -3,6 +3,9 @@ import { decodeConn, encode, readStatus } from "./msg.ts";
 import { PixelFormat } from "./pixel.ts";
 import { FontRenderOptions } from "./font.ts";
 
+/**
+ * An interface of window states.
+ */
 export interface WindowOptions {
   title: String;
   height: number;
@@ -16,7 +19,9 @@ export interface WindowOptions {
   minimized?: boolean;
   maximized?: boolean;
 }
-
+/**
+ * An enum for mouse buttons.
+ */
 export enum MouseButton {
   Unknown,
   Left,
@@ -72,7 +77,11 @@ export interface Rect extends Point {
   width: number;
   height: number;
 }
-
+/**
+ * A window instance
+ * 
+ * Create a window with WindowOptions
+ */
 export class Canvas {
   #properties: WindowOptions;
   // Used internally. Too lazy to define types
@@ -105,58 +114,60 @@ export class Canvas {
   }
   /**
    * Sets the color used for drawing operations (rect, line and clear).
-   * @param r
-   * @param g
-   * @param b
-   * @param a
+   * 
+   * Color Model
+   * @param {number} r 
+   * @param {number} g
+   * @param {number} b
+   * @param {number} a
    * */
   setDrawColor(r: number, g: number, b: number, a: number) {
     this.#tasks.push({ setDrawColor: { r, g, b, a } });
   }
   /**
-   * Sets the drawing scale for rendering on the current target.
-   * @param x
-   * @param y
+   * Sets the number scale for rendering on the current target.
+   * @param {number} x X Axis
+   * @param {number} y Y Axis
    * */
   setScale(x: number, y: number) {
     this.#tasks.push({ setScale: { x, y } });
   }
   /**
    * Draws a point on the current rendering target.
-   * @param x
-   * @param y
+   * @param {number} x X Axis
+   * @param {number} y Y Axis
    * */
   drawPoint(x: number, y: number) {
     this.#tasks.push({ drawPoint: { x, y } });
   }
   /**
    * Draws multiple points on the current rendering target.
-   * @param points
+   * @param {Point[]} points
    * */
   drawPoints(points: Point[]) {
     this.#tasks.push({ drawPoints: { points } });
   }
   /**
    * Draws a line on the current rendering target.
-   * @param p1
-   * @param p2
+   * @param {Point} p1 Origin Point
+   * @param {Point} p2 End Point
    * */
   drawLine(p1: Point, p2: Point) {
     this.#tasks.push({ drawLine: { p1, p2 } });
   }
   /**
    * Draws a series of connected lines on the current rendering target. 
-   * @param points
+   * @param {Point[]} points
    * */
   drawLines(points: Point[]) {
     this.#tasks.push({ drawLines: { points } });
   }
   /**
    * Draws a rectangle on the current rendering target.
-   * @param x
-   * @param y
-   * @param width
-   * @param height
+   * @param {number} x X Axis
+   * @param {number} y Y Axis
+   * @param {number} width Width of the Rect
+   * @param {number} height Height of the Rect
    * */
   drawRect(x: number, y: number, width: number, height: number) {
     this.#tasks.push({ drawRect: { x, y, width, height } });
@@ -171,10 +182,10 @@ export class Canvas {
   /**
    * Fills a rectangle on the current rendering target with the drawing color.
    * Passing None will fill the entire rendering target.
-   * @param x
-   * @param y
-   * @param width
-   * @param height
+   * @param {number} x X Axis
+   * @param {number} y Y Axis
+   * @param {number} width Width of the Rect
+   * @param {number} height Height of the Rect
    * */
   fillRect(x: number, y: number, width: number, height: number) {
     this.#tasks.push({ fillRect: { x, y, width, height } });
@@ -187,7 +198,7 @@ export class Canvas {
     this.#tasks.push({ fillRects: { rects } });
   }
   /**
-   * Exit from canvas.
+   * Quit from the canvas.
    * */
   quit() {
     this.#tasks.push("quit");
@@ -195,10 +206,10 @@ export class Canvas {
   }
   /**
    * Set the display mode to use when a window is visible at fullscreen.
-   * @param {number} width 
-   * @param {number} height 
-   * @param {number} rate 
-   * @param {PixelFormat} format - Pixel format
+   * @param {number} width Width of the window
+   * @param {number} height Height of the window
+   * @param {number} rate Refresh rate 
+   * @param {PixelFormat} format Pixel format Enum
    */
   setDisplayMode(
     width: number,
@@ -210,14 +221,14 @@ export class Canvas {
   }
   /**
    * Set title of the canvas.
-   * @param {string} title
+   * @param title 
    * */
   setTitle(title: string) {
     this.#tasks.push({ setTitle: { title } });
   }
   /**
    * Use this function to set the icon for a window.
-   * @param {string} icon
+   * @param {string} icon Path to the source file
    * */
   setIcon(icon: string) {
     this.#tasks.push({ setIcon: { icon } });
@@ -225,24 +236,24 @@ export class Canvas {
   /**
    * Set the position of a window.
    * The window coordinate origin is the upper left of the display.
-   * @param {number} x
-   * @param {number} y
+   * @param {number} x X Axis
+   * @param {number} y Y Axis
    * */
   setPosition(x: number, y: number) {
     this.#tasks.push({ setPosition: { x, y } });
   }
   /**
    * Set the size of a window's client area.
-   * @param {number} width 
-   * @param {number} height 
+   * @param {number} width
+   * @param {number} height
    */
   setSize(width: number, height: number) {
     this.#tasks.push({ setSize: { width, height } });
   }
   /**
    * Set the minimum size of a window's client area.
-   * @param {number} width 
-   * @param {number} height 
+   * @param {number} width
+   * @param {number} height
    */
   setMinimumSize(width: number, height: number) {
     this.#tasks.push({ setMinimumSize: { width, height } });
