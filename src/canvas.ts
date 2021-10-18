@@ -3,6 +3,9 @@ import { decodeConn, encode, readStatus } from "./msg.ts";
 import { PixelFormat } from "./pixel.ts";
 import { FontRenderOptions } from "./font.ts";
 
+/**
+ * An interface of window states.
+ */
 export interface WindowOptions {
   title: String;
   height: number;
@@ -16,7 +19,9 @@ export interface WindowOptions {
   minimized?: boolean;
   maximized?: boolean;
 }
-
+/**
+ * An enum for mouse buttons.
+ */
 export enum MouseButton {
   Unknown,
   Left,
@@ -72,7 +77,11 @@ export interface Rect extends Point {
   width: number;
   height: number;
 }
-
+/**
+ * A window instance
+ * 
+ * Create a window with WindowOptions
+ */
 export class Canvas {
   #properties: WindowOptions;
   // Used internally. Too lazy to define types
@@ -105,75 +114,103 @@ export class Canvas {
   }
   /**
    * Sets the color used for drawing operations (rect, line and clear).
+   * 
+   * Color Model
+   * @param {number} r 
+   * @param {number} g
+   * @param {number} b
+   * @param {number} a
    * */
   setDrawColor(r: number, g: number, b: number, a: number) {
     this.#tasks.push({ setDrawColor: { r, g, b, a } });
   }
   /**
-   * Sets the drawing scale for rendering on the current target.
+   * Sets the number scale for rendering on the current target.
+   * @param {number} x X Axis
+   * @param {number} y Y Axis
    * */
   setScale(x: number, y: number) {
     this.#tasks.push({ setScale: { x, y } });
   }
   /**
    * Draws a point on the current rendering target.
+   * @param {number} x X Axis
+   * @param {number} y Y Axis
    * */
   drawPoint(x: number, y: number) {
     this.#tasks.push({ drawPoint: { x, y } });
   }
   /**
    * Draws multiple points on the current rendering target.
+   * @param {Point[]} points
    * */
   drawPoints(points: Point[]) {
     this.#tasks.push({ drawPoints: { points } });
   }
   /**
-   * Draws a line on the current rendering target. Errors if drawing fails for any reason.
+   * Draws a line on the current rendering target.
+   * @param {Point} p1 Origin Point
+   * @param {Point} p2 End Point
    * */
   drawLine(p1: Point, p2: Point) {
     this.#tasks.push({ drawLine: { p1, p2 } });
   }
   /**
-   * Draws a series of connected lines on the current rendering target. Errors if drawing fails for any reason.
+   * Draws a series of connected lines on the current rendering target. 
+   * @param {Point[]} points
    * */
   drawLines(points: Point[]) {
     this.#tasks.push({ drawLines: { points } });
   }
   /**
-   * Draws a rectangle on the current rendering target. Errors if drawing fails for any reason.
+   * Draws a rectangle on the current rendering target.
+   * @param {number} x X Axis
+   * @param {number} y Y Axis
+   * @param {number} width Width of the Rect
+   * @param {number} height Height of the Rect
    * */
   drawRect(x: number, y: number, width: number, height: number) {
     this.#tasks.push({ drawRect: { x, y, width, height } });
   }
   /**
    * Draws some number of rectangles on the current rendering target.
-   * Errors if drawing fails for any reason.
+   * @param {Rect[]} rects
    * */
   drawRects(rects: Rect[]) {
     this.#tasks.push({ drawRects: { rects } });
   }
   /**
    * Fills a rectangle on the current rendering target with the drawing color.
-   * Passing None will fill the entire rendering target. Errors if drawing fails for any reason.
+   * Passing None will fill the entire rendering target.
+   * @param {number} x X Axis
+   * @param {number} y Y Axis
+   * @param {number} width Width of the Rect
+   * @param {number} height Height of the Rect
    * */
   fillRect(x: number, y: number, width: number, height: number) {
     this.#tasks.push({ fillRect: { x, y, width, height } });
   }
   /**
    * Fills some number of rectangles on the current rendering target with the drawing color.
-   * Errors if drawing fails for any reason
+   * @param {Rect[]} rects
    * */
   fillRects(rects: Rect[]) {
     this.#tasks.push({ fillRects: { rects } });
   }
   /**
-   * Exit from canvas.
+   * Quit from the canvas.
    * */
   quit() {
     this.#tasks.push("quit");
     this.#closed = true;
   }
-  // TODO: (dhairy-online)
+  /**
+   * Set the display mode to use when a window is visible at fullscreen.
+   * @param {number} width Width of the window
+   * @param {number} height Height of the window
+   * @param {number} rate Refresh rate 
+   * @param {PixelFormat} format Pixel format Enum
+   */
   setDisplayMode(
     width: number,
     height: number,
@@ -184,29 +221,47 @@ export class Canvas {
   }
   /**
    * Set title of the canvas.
+   * @param title 
    * */
   setTitle(title: string) {
     this.#tasks.push({ setTitle: { title } });
   }
   /**
    * Use this function to set the icon for a window.
+   * @param {string} icon Path to the source file
    * */
   setIcon(icon: string) {
     this.#tasks.push({ setIcon: { icon } });
   }
-
+  /**
+   * Set the position of a window.
+   * The window coordinate origin is the upper left of the display.
+   * @param {number} x X Axis
+   * @param {number} y Y Axis
+   * */
   setPosition(x: number, y: number) {
     this.#tasks.push({ setPosition: { x, y } });
   }
-
+  /**
+   * Set the size of a window's client area.
+   * @param {number} width
+   * @param {number} height
+   */
   setSize(width: number, height: number) {
     this.#tasks.push({ setSize: { width, height } });
   }
-
+  /**
+   * Set the minimum size of a window's client area.
+   * @param {number} width
+   * @param {number} height
+   */
   setMinimumSize(width: number, height: number) {
     this.#tasks.push({ setMinimumSize: { width, height } });
   }
-
+  /**
+   * Set the brightness (gamma multiplier) for a given window's display.
+   * @param {number} brightness 
+   */
   setBrightness(brightness: number) {
     this.#tasks.push({ setBrightness: { brightness } });
   }
@@ -215,31 +270,44 @@ export class Canvas {
    * Set the transparency of the window. The given value will be clamped internally between 0.0 (fully transparent),
    * and 1.0 (fully opaque).
    * This method returns an error if opacity isn't supported by the current platform.
+   * @param {number} opacity
    * */
   setOpacity(opacity: number) {
     this.#tasks.push({ setOpacity: { opacity } });
   }
-
+  /**
+   * Show a window.
+   */
   show() {
     this.#tasks.push("show");
   }
-
+  /**
+   * Hide a window.
+   */
   hide() {
     this.#tasks.push("hide");
   }
-
+  /**
+   * Raise a window above other windows and set the input focus.
+   */
   raise() {
     this.#tasks.push("raise");
   }
-
+  /**
+   * Make a window as large as possible.
+   */
   maximize() {
     this.#tasks.push("maximise");
   }
-
+  /**
+   * Minimize a window to an iconic representation.
+   */
   minimize() {
     this.#tasks.push("minimize");
   }
-
+  /**
+   * Restore the size and position of a minimized or maximized window.
+   */
   restore() {
     this.#tasks.push("restore");
   }
