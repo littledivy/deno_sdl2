@@ -3,9 +3,19 @@ import { drawMap, Sprite } from "./util.ts";
 
 const canvasSize = { width: 400, height: 400 };
 
-const canv = new Canvas({ title: "Deno run!", ...canvasSize });
+const canv = new Canvas({
+  title: "Deno run!",
+  ...canvasSize,
+  centered: true,
+  fullscreen: false,
+  hidden: false,
+  resizable: true,
+  minimized: false,
+  maximized: false,
+  flags: null,
+});
 
-const surface = canv.loadSurface("./sprite.png");
+const surface = canv.loadSurface("./examples/sprite/sprite.png");
 const texture = canv.createTextureFromSurface(surface);
 
 const map = [
@@ -63,19 +73,18 @@ function frame() {
     // make deno jump
     deno.z = Math.abs(Math.sin(cnt / 10) * 16) | 0;
 
-    if((cnt / 20 | 0) % 2 === 0) {
+    if ((cnt / 20 | 0) % 2 === 0) {
       if (deno.vx > 0) {
         deno.index = 2;
       } else {
         deno.index = 0;
       }
-    }else{
+    } else {
       if (deno.vx > 0) {
         deno.index = 3;
       } else {
         deno.index = 1;
       }
-
     }
 
     cnt++;

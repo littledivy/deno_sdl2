@@ -10,6 +10,7 @@ const canvas = new Canvas({
   resizable: true,
   minimized: false,
   maximized: false,
+  flags: null,
 });
 
 const boxes: any[] = [];
@@ -43,8 +44,8 @@ function checkCollision(
 async function frame() {
   canvas.setDrawColor(0, 0, 0, 255);
   canvas.clear();
-
   canvas.setDrawColor(255, 255, 255, 255);
+  canvas.present();
   for (let i = 0; i < num_boxes; i++) {
     // Gravity
     boxes[i].dy += 2;
@@ -116,7 +117,6 @@ async function frame() {
   canvas.present();
   Deno.sleepSync(10);
 }
-
 // Fire up the event loop
 for await (const event of canvas) {
   switch (event.type) {
