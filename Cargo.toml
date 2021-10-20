@@ -8,12 +8,17 @@ repository = "https://github.com/littledivy/deno_sdl2"
 default = []
 use-vcpkg = ["sdl2/use-vcpkg", "sdl2/static-link"]
 
+[lib]
+crate-type = ["cdylib"]
+
 [dependencies]
 sdl2 = { version = "0.34.5", features = ["ttf", "image"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
+deno_bindgen = "0.2"
 anyhow = "1.0.42"
 rodio = "0.14.0"
+lazy_static = "1.4.0"
 
 [package.metadata.vcpkg]
 dependencies = ["sdl2", "sdl2-image[libjpeg-turbo,tiff,libwebp]", "sdl2-ttf", "sdl2-gfx"]
