@@ -1,4 +1,4 @@
-CARGO_BUILD := cargo build --features "use-vcpkg"
+CARGO_BUILD := deno_bindgen -- --features "use-vcpkg"
 TARGET := deno_sdl2
 
 RUST_SOURCE := src/main.rs
@@ -9,6 +9,7 @@ $(TARGET): $(RUST_SOURCE)
 
 fmt:
 	deno fmt --ignore=target/
+	cargo fmt
 
 lint: fmt
 	deno lint --ignore=target/
@@ -20,4 +21,3 @@ clean:
 	rm -rf deno_sdl2
 
 .PHONY: fmt lint test
-

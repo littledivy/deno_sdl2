@@ -36,12 +36,8 @@ jobs:
           set -xeuo pipefail
           rustc --version
           cargo --version
-          cargo build --features "use-vcpkg" --release
+          deno_bindgen --release -- --features "use-vcpkg"
 
-      - name: Rename artifacts
-        if: matrix.os != 'windows-latest'
-        run: cp target/release/deno_sdl2 deno_sdl2-${{ matrix.os }}
-          
       - name: Release
         uses: softprops/action-gh-release@master
         env:
@@ -50,7 +46,6 @@ jobs:
           tag_name: "release draft"
           draft: true
           files: |
-            deno_sdl2-ubuntu-latest
-            deno_sdl2-macos-latest
-            target/release/deno_sdl2.exe
-
+            target/release/libdeno_sdl2.so
+            target/release/libdeno_sdl2.dylib
+            target/release/deno_sdl2.dll

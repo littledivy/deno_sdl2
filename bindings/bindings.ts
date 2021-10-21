@@ -9,8 +9,8 @@ const opts = {
   url: "target/release",
 };
 const _lib = await Plug.prepare(opts, {
-  init: {
-    parameters: ["buffer", "usize", "buffer", "usize"],
+  do_task: {
+    parameters: ["buffer", "usize"],
     result: "void",
     nonblocking: false,
   },
@@ -19,38 +19,13 @@ const _lib = await Plug.prepare(opts, {
     result: "void",
     nonblocking: false,
   },
-  do_task: {
-    parameters: ["buffer", "usize"],
+  init: {
+    parameters: ["buffer", "usize", "buffer", "usize"],
     result: "void",
     nonblocking: false,
   },
   poll_events: { parameters: [], result: "usize", nonblocking: false },
 });
-export type CanvasFontSize =
-  | "normal"
-  | "bold"
-  | "italic"
-  | "underline"
-  | "strikethrough";
-export type CanvasColor = {
-  r: number;
-  g: number;
-  b: number;
-  a: number;
-};
-export type CanvasPoint = {
-  x: number;
-  y: number;
-};
-export type OptionRectangle = {
-  x: number;
-  y: number;
-  width: number | undefined | null;
-  height: number | undefined | null;
-};
-export type CanvasTasks = {
-  tasks: Array<CanvasTask>;
-};
 export type Rectangle = {
   x: number;
   y: number;
@@ -58,21 +33,29 @@ export type Rectangle = {
   height: number;
 };
 /**
- * https://docs.rs/sdl2/0.34.5/sdl2/video/struct.WindowBuilder.htm
- * Window Builder configuration
+ * https://rust-sdl2.github.io/rust-sdl2/sdl2/render/struct.CanvasBuilder.html
+ * Canvas Builder configuration
  */
-export type WindowOptions = {
-  title: string;
-  height: number;
-  width: number;
-  flags: number | undefined | null;
-  centered: boolean;
-  fullscreen: boolean;
-  hidden: boolean;
-  resizable: boolean;
-  minimized: boolean;
-  maximized: boolean;
+export type CanvasOptions = {
+  software: boolean;
 };
+export type CanvasFontPartial =
+  | {
+    solid: {
+      color: CanvasColor;
+    };
+  }
+  | {
+    shaded: {
+      color: CanvasColor;
+      background: CanvasColor;
+    };
+  }
+  | {
+    blended: {
+      color: CanvasColor;
+    };
+  };
 export type CanvasTask =
   | "present"
   | {
@@ -261,30 +244,52 @@ export type CanvasTask =
       opacity: number;
     };
   };
-export type CanvasFontPartial =
-  | {
-    solid: {
-      color: CanvasColor;
-    };
-  }
-  | {
-    shaded: {
-      color: CanvasColor;
-      background: CanvasColor;
-    };
-  }
-  | {
-    blended: {
-      color: CanvasColor;
-    };
-  };
-/**
- * https://rust-sdl2.github.io/rust-sdl2/sdl2/render/struct.CanvasBuilder.html
- * Canvas Builder configuration
- */
-export type CanvasOptions = {
-  software: boolean;
+export type OptionRectangle = {
+  x: number;
+  y: number;
+  width: number | undefined | null;
+  height: number | undefined | null;
 };
+export type CanvasFontSize =
+  | "normal"
+  | "bold"
+  | "italic"
+  | "underline"
+  | "strikethrough";
+export type CanvasPoint = {
+  x: number;
+  y: number;
+};
+/**
+ * https://docs.rs/sdl2/0.34.5/sdl2/video/struct.WindowBuilder.htm
+ * Window Builder configuration
+ */
+export type WindowOptions = {
+  title: string;
+  height: number;
+  width: number;
+  flags: number | undefined | null;
+  centered: boolean;
+  fullscreen: boolean;
+  hidden: boolean;
+  resizable: boolean;
+  minimized: boolean;
+  maximized: boolean;
+};
+export type CanvasColor = {
+  r: number;
+  g: number;
+  b: number;
+  a: number;
+};
+export function do_task(a0: CanvasTask) {
+  const a0_buf = encode(JSON.stringify(a0));
+  return _lib.symbols.do_task(a0_buf, a0_buf.byteLength) as null;
+}
+export function fill_events(a0: Uint8Array) {
+  const a0_buf = encode(a0);
+  return _lib.symbols.fill_events(a0_buf, a0_buf.byteLength) as null;
+}
 export function init(a0: WindowOptions, a1: CanvasOptions) {
   const a0_buf = encode(JSON.stringify(a0));
   const a1_buf = encode(JSON.stringify(a1));
@@ -294,14 +299,6 @@ export function init(a0: WindowOptions, a1: CanvasOptions) {
     a1_buf,
     a1_buf.byteLength,
   ) as null;
-}
-export function fill_events(a0: Uint8Array) {
-  const a0_buf = encode(a0);
-  return _lib.symbols.fill_events(a0_buf, a0_buf.byteLength) as null;
-}
-export function do_task(a0: CanvasTasks) {
-  const a0_buf = encode(JSON.stringify(a0));
-  return _lib.symbols.do_task(a0_buf, a0_buf.byteLength) as null;
 }
 export function poll_events() {
   return _lib.symbols.poll_events() as number;

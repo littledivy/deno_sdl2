@@ -289,16 +289,23 @@ impl Into<FontStyle> for CanvasFontSize {
 use std::cell::RefCell;
 use std::collections::HashMap;
 
-enum Resource<'a> {
+enum Resource {
   Cursor(Cursor),
-  Surface(Surface<'a>),
-  Texture(Texture<'a>),
+  Surface(Surface<'static>),
+  Texture(Texture),
+}
+
+#[derive(Default)]
+struct LocalStore {
+  resources: HashMap<u32, Resource>,
+  texture_creator:
+    Option<sdl2::render::TextureCreator<sdl2::video::WindowContext>>,
 }
 
 thread_local! {
   static WINDOW: RefCell<Option<WindowCanvas>> = RefCell::new(None);
   static TTF_CTX: RefCell<Option<sdl2::ttf::Sdl2TtfContext>> = RefCell::new(None);
-  static RESOURCES: RefCell<HashMap<u32, Resource<'static>>> = RefCell::new(HashMap::new());
+  static RESOURCES: RefCell<LocalStore> = RefCell::new(LocalStore::default());
   static EVENT_BUF: RefCell<Vec<u8>> = RefCell::new(vec![]);
   static EVENTLOOP: RefCell<Option<sdl2::EventPump>> = RefCell::new(None);
 }
@@ -352,6 +359,10 @@ pub fn init(options: WindowOptions, canvas_options: CanvasOptions) {
   let window = build_window(&mut window_builder, options);
   let canvas = build_canvas(window, canvas_options);
 
+  let texture_creator = canvas.texture_creator();
+  RESOURCES.with(|cell| {
+    cell.borrow_mut().texture_creator = Some(texture_creator);
+  });
   WINDOW.with(|cell| {
     *cell.borrow_mut() = Some(canvas);
   });
@@ -533,342 +544,369 @@ pub fn fill_events(buf: &mut [u8]) {
 }
 
 #[deno_bindgen]
-struct CanvasTasks {
-  tasks: Vec<CanvasTask>,
-}
+pub fn do_task(task: CanvasTask) {
+  let mut should_quit = false;
+  WINDOW.with(|cell| {
+    if let Some(ref mut canvas) = *cell.borrow_mut() {
+      match task {
+        CanvasTask::Quit => {
+          should_quit = true;
+        }
+        CanvasTask::Present => {
+          canvas.present();
+        }
+        CanvasTask::Clear => {
+          canvas.clear();
+        }
+        CanvasTask::SetDrawColor { r, g, b, a } => {
+          canvas.set_draw_color((r, g, b, a));
+        }
+        CanvasTask::SetScale { x, y } => {
+          canvas.set_scale(x, y).unwrap();
+        }
+        CanvasTask::DrawPoint { x, y } => {
+          canvas.draw_point(Point::new(x, y)).unwrap();
+        }
+        CanvasTask::DrawPoints { points } => {
+          let points: Vec<Point> =
+            points.iter().map(|p| Point::new(p.x, p.y)).collect();
+          canvas.draw_points(points.as_slice()).unwrap();
+        }
+        CanvasTask::DrawLine { p1, p2 } => {
+          canvas
+            .draw_line(Point::new(p1.x, p1.y), Point::new(p2.x, p2.y))
+            .unwrap();
+        }
+        CanvasTask::DrawLines { points } => {
+          let points: Vec<Point> =
+            points.iter().map(|p| Point::new(p.x, p.y)).collect();
+          canvas.draw_lines(points.as_slice()).unwrap();
+        }
+        CanvasTask::DrawRect {
+          x,
+          y,
+          width,
+          height,
+        } => {
+          canvas.draw_rect(Rect::new(x, y, width, height)).unwrap();
+        }
+        CanvasTask::DrawRects { rects } => {
+          let rects: Vec<Rect> = rects
+            .iter()
+            .map(|r| Rect::new(r.x, r.y, r.width, r.height))
+            .collect();
+          canvas.draw_rects(rects.as_slice()).unwrap();
+        }
+        CanvasTask::FillRect {
+          x,
+          y,
+          width,
+          height,
+        } => {
+          canvas
+            .fill_rect(Some(Rect::new(x, y, width, height)))
+            .unwrap();
+        }
+        CanvasTask::FillRects { rects } => {
+          let rects: Vec<Rect> = rects
+            .iter()
+            .map(|r| Rect::new(r.x, r.y, r.width, r.height))
+            .collect();
+          canvas.fill_rects(rects.as_slice()).unwrap();
+        }
+        // CanvasTask::LoadFont { path, size, style, index } => {
+        //     let mut font = ttf_context.load_font(path, size).unwrap();
+        //     if let Some(font_style) = style {
+        //         font.set_style(font_style.into());
+        //     }
+        //     fonts.insert(index, font);
+        // }
+        CanvasTask::RenderFont {
+          path,
+          size,
+          style,
+          text,
+          options,
+          target,
+        } => {
+          RESOURCES.with(|rcell| {
+            let mut resources = rcell.borrow_mut();
 
-#[deno_bindgen]
-pub fn do_task(tasks: CanvasTasks) {
-  RESOURCES.with(|rcell| {
-    let mut should_quit = false;
-    WINDOW.with(|cell| {
-      let mut resources = rcell.borrow_mut();
-      if let Some(ref mut canvas) = *cell.borrow_mut() {
-        for task in tasks.tasks {
-          match task {
-            CanvasTask::Quit => {
-              should_quit = true;
-              break;
-            }
-            CanvasTask::Present => {
-              canvas.present();
-            }
-            CanvasTask::Clear => {
-              canvas.clear();
-            }
-            CanvasTask::SetDrawColor { r, g, b, a } => {
-              canvas.set_draw_color((r, g, b, a));
-            }
-            CanvasTask::SetScale { x, y } => {
-              canvas.set_scale(x, y).unwrap();
-            }
-            CanvasTask::DrawPoint { x, y } => {
-              canvas.draw_point(Point::new(x, y)).unwrap();
-            }
-            CanvasTask::DrawPoints { points } => {
-              let points: Vec<Point> =
-                points.iter().map(|p| Point::new(p.x, p.y)).collect();
-              canvas.draw_points(points.as_slice()).unwrap();
-            }
-            CanvasTask::DrawLine { p1, p2 } => {
-              canvas
-                .draw_line(Point::new(p1.x, p1.y), Point::new(p2.x, p2.y))
+            TTF_CTX.with(|cell| {
+              let ttf_context = cell.borrow_mut();
+              let mut font =
+                ttf_context.as_ref().unwrap().load_font(path, size).unwrap();
+              if let Some(font_style) = style {
+                font.set_style(font_style.into());
+              }
+              let partial = font.render(&text);
+              let surface = match options {
+                CanvasFontPartial::Solid { color } => {
+                  partial.solid(Color::RGBA(color.r, color.g, color.b, color.a))
+                }
+                CanvasFontPartial::Shaded { color, background } => partial
+                  .shaded(
+                    Color::RGBA(color.r, color.g, color.b, color.a),
+                    Color::RGBA(
+                      background.r,
+                      background.g,
+                      background.b,
+                      background.a,
+                    ),
+                  ),
+                CanvasFontPartial::Blended { color } => partial
+                  .blended(Color::RGBA(color.r, color.g, color.b, color.a)),
+              };
+              let texture = resources
+                .texture_creator
+                .as_ref()
+                .unwrap()
+                .create_texture_from_surface(&surface.unwrap())
                 .unwrap();
-            }
-            CanvasTask::DrawLines { points } => {
-              let points: Vec<Point> =
-                points.iter().map(|p| Point::new(p.x, p.y)).collect();
-              canvas.draw_lines(points.as_slice()).unwrap();
-            }
-            CanvasTask::DrawRect {
-              x,
-              y,
-              width,
-              height,
-            } => {
-              canvas.draw_rect(Rect::new(x, y, width, height)).unwrap();
-            }
-            CanvasTask::DrawRects { rects } => {
-              let rects: Vec<Rect> = rects
-                .iter()
-                .map(|r| Rect::new(r.x, r.y, r.width, r.height))
-                .collect();
-              canvas.draw_rects(rects.as_slice()).unwrap();
-            }
-            CanvasTask::FillRect {
-              x,
-              y,
-              width,
-              height,
-            } => {
-              canvas
-                .fill_rect(Some(Rect::new(x, y, width, height)))
-                .unwrap();
-            }
-            CanvasTask::FillRects { rects } => {
-              let rects: Vec<Rect> = rects
-                .iter()
-                .map(|r| Rect::new(r.x, r.y, r.width, r.height))
-                .collect();
-              canvas.fill_rects(rects.as_slice()).unwrap();
-            }
-            // CanvasTask::LoadFont { path, size, style, index } => {
-            //     let mut font = ttf_context.load_font(path, size).unwrap();
-            //     if let Some(font_style) = style {
-            //         font.set_style(font_style.into());
-            //     }
-            //     fonts.insert(index, font);
-            // }
-            // CanvasTask::RenderFont {
-            //     path,
-            //     size,
-            //     style,
-            //     text,
-            //     options,
-            //     target,
-            // } => {
-            //     let texture_creator = canvas.texture_creator();
+              let target = match target {
+                Some(r) => {
+                  let (width, height) = match (r.width, r.height) {
+                    (None, None) => {
+                      let TextureQuery { width, height, .. } = texture.query();
+                      (width, height)
+                    }
+                    (Some(width), None) => {
+                      let TextureQuery { height, .. } = texture.query();
+                      (width, height)
+                    }
+                    (None, Some(height)) => {
+                      let TextureQuery { width, .. } = texture.query();
+                      (width, height)
+                    }
+                    (Some(width), Some(height)) => (width, height),
+                  };
+                  Some(Rect::new(r.x, r.y, width, height))
+                }
+                None => None,
+              };
+              canvas.copy(&texture, None, target).unwrap();
+            });
+          });
+        }
+        CanvasTask::SetCursor { path, index } => {
+          RESOURCES.with(|rcell| {
+            let mut resources = rcell.borrow_mut();
+            let surface = Surface::from_file(path).unwrap();
+            // TODO(@littledivy): Allow setting hotX and hotY.
+            let cursor = Cursor::from_surface(surface, 0, 0).unwrap();
+            cursor.set();
 
-            //     TTF_CTX.with(|cell| {
-            //     let ttf_context = cell.borrow_mut().as_mut().unwrap();
-            //     let mut font = ttf_context.load_font(path, size).unwrap();
-            //     if let Some(font_style) = style {
-            //         font.set_style(font_style.into());
-            //     }
-            //     let partial = font.render(&text);
-            //     let surface = match options {
-            //         CanvasFontPartial::Solid { color } => {
-            //             partial.solid(Color::RGBA(color.r, color.g, color.b, color.a))
-            //         }
-            //         CanvasFontPartial::Shaded { color, background } => partial.shaded(
-            //             Color::RGBA(color.r, color.g, color.b, color.a),
-            //             Color::RGBA(
-            //                 background.r,
-            //                 background.g,
-            //                 background.b,
-            //                 background.a,
-            //             ),
-            //         ),
-            //         CanvasFontPartial::Blended { color } => {
-            //             partial.blended(Color::RGBA(color.r, color.g, color.b, color.a))
-            //         }
-            //     };
-            //     let texture = texture_creator
-            //         .create_texture_from_surface(&surface.unwrap())
-            //         .unwrap();
-            //     let target = match target {
-            //         Some(r) => {
-            //             let (width, height) = match (r.width, r.height) {
-            //                 (None, None) => {
-            //                     let TextureQuery { width, height, .. } =
-            //                         texture.query();
-            //                     (width, height)
-            //                 }
-            //                 (Some(width), None) => {
-            //                     let TextureQuery { height, .. } = texture.query();
-            //                     (width, height)
-            //                 }
-            //                 (None, Some(height)) => {
-            //                     let TextureQuery { width, .. } = texture.query();
-            //                     (width, height)
-            //                 }
-            //                 (Some(width), Some(height)) => (width, height),
-            //             };
-            //             Some(Rect::new(r.x, r.y, width, height))
-            //         }
-            //         None => None,
-            //     };
-            //     canvas.copy(&texture, None, target).unwrap();
-            //     });
-            // }
-            CanvasTask::SetCursor { path, index } => {
-              let surface = Surface::from_file(path).unwrap();
-              // TODO(@littledivy): Allow setting hotX and hotY.
-              let cursor = Cursor::from_surface(surface, 0, 0).unwrap();
-              cursor.set();
-
-              resources.insert(index, Resource::Cursor(cursor));
-            }
-            // TODO(@littledivy): Revisit this when we find a way to distinguish responses
-            // CanvasTask::CreateAudioDevice { freq, channels, samples } => {
-            //     let desired_spec = AudioSpecDesired {
-            //         freq,
-            //         channels,
-            //         samples,
-            //     };
-            //     let mut audio_stream = stream.try_clone().unwrap();
-            //     let device = audio_subsystem.open_playback(None, &desired_spec, |spec| {
-            //         AudioManager(audio_stream)
-            //     }).unwrap();
-            //     device.resume();
-            //     audio_devices.push(device);
-            // }
-            CanvasTask::PlayMusic { path } => {
-              let (_stream, stream_handle) =
-                OutputStream::try_default().unwrap();
-              let _stream = ManuallyDrop::new(_stream);
-              let stream_handle = ManuallyDrop::new(stream_handle);
-              let decoder =
-                Decoder::new(BufReader::new(File::open(path).unwrap()))
-                  .unwrap();
-              stream_handle.play_raw(decoder.convert_samples()).unwrap();
-            }
-            CanvasTask::CreateSurface {
+            resources.resources.insert(index, Resource::Cursor(cursor));
+          });
+        }
+        // TODO(@littledivy): Revisit this when we find a way to distinguish responses
+        // CanvasTask::CreateAudioDevice { freq, channels, samples } => {
+        //     let desired_spec = AudioSpecDesired {
+        //         freq,
+        //         channels,
+        //         samples,
+        //     };
+        //     let mut audio_stream = stream.try_clone().unwrap();
+        //     let device = audio_subsystem.open_playback(None, &desired_spec, |spec| {
+        //         AudioManager(audio_stream)
+        //     }).unwrap();
+        //     device.resume();
+        //     audio_devices.push(device);
+        // }
+        CanvasTask::PlayMusic { path } => {
+          let (_stream, stream_handle) = OutputStream::try_default().unwrap();
+          let _stream = ManuallyDrop::new(_stream);
+          let stream_handle = ManuallyDrop::new(stream_handle);
+          let decoder =
+            Decoder::new(BufReader::new(File::open(path).unwrap())).unwrap();
+          stream_handle.play_raw(decoder.convert_samples()).unwrap();
+        }
+        CanvasTask::CreateSurface {
+          width,
+          height,
+          format,
+          index,
+        } => {
+          RESOURCES.with(|rcell| {
+            let mut resources = rcell.borrow_mut();
+            let surface = Surface::new(
               width,
               height,
-              format,
-              index,
-            } => {
-              let surface = Surface::new(
+              PixelFormatEnum::try_from(format).unwrap(),
+            )
+            .unwrap();
+            resources
+              .resources
+              .insert(index, Resource::Surface(surface));
+          });
+        }
+        CanvasTask::CreateSurfaceBitmap { path, index } => {
+          RESOURCES.with(|rcell| {
+            let mut resources = rcell.borrow_mut();
+            let surface = Surface::load_bmp(&path).unwrap();
+            resources
+              .resources
+              .insert(index, Resource::Surface(surface));
+          });
+        }
+        CanvasTask::CreateTexture {
+          format,
+          access,
+          width,
+          height,
+          index,
+        } => {
+          RESOURCES.with(|rcell| {
+            let mut resources = rcell.borrow_mut();
+
+            let format: Option<PixelFormatEnum> =
+              format.and_then(|f| Some(PixelFormatEnum::try_from(f).unwrap()));
+
+            let texture = resources
+              .texture_creator
+              .as_ref()
+              .unwrap()
+              .create_texture(
+                format,
+                TextureAccess::try_from(access).unwrap(),
                 width,
                 height,
-                PixelFormatEnum::try_from(format).unwrap(),
               )
               .unwrap();
-              resources.insert(index, Resource::Surface(surface));
-            }
-            CanvasTask::CreateSurfaceBitmap { path, index } => {
-              let surface = Surface::load_bmp(&path).unwrap();
-              resources.insert(index, Resource::Surface(surface));
-            }
-            // CanvasTask::CreateTexture {
-            //     format,
-            //     access,
-            //     width,
-            //     height,
-            //     index,
-            // } => {
-            // let texture_creator = canvas.texture_creator();
-            //     let format: Option<PixelFormatEnum> =
-            //         format.and_then(|f| Some(PixelFormatEnum::try_from(f).unwrap()));
-            //     let texture = texture_creator
-            //         .create_texture(
-            //             format,
-            //             TextureAccess::try_from(access).unwrap(),
-            //             width,
-            //             height,
-            //         )
-            //         .unwrap();
-            //     resources.insert(index, Resource::Texture(texture));
-            // }
-            // CanvasTask::CreateTextureSurface { surface, index } => {
-            //     if let Some(surface) = resources.get(&surface) {
-            //         match surface {
-            //             Resource::Surface(surface) => {
-            // let texture_creator = canvas.texture_creator();
-            //                 let texture = texture_creator
-            //                     .create_texture_from_surface(surface)
-            //                     .unwrap();
-            //                 resources.insert(index, Resource::Texture(texture));
-            //             }
-            //             _ => {}
-            //         }
-            //     }
-            // }
-            CanvasTask::LoadSurface { path, index } => {
-              let surface = Surface::from_file(&path).unwrap();
-              resources.insert(index, Resource::Surface(surface));
-            }
-            CanvasTask::CopyRect {
-              texture,
-              rect1,
-              rect2,
-            } => {
-              if let Some(texture) = resources.get(&texture) {
-                match texture {
-                  Resource::Texture(texture) => {
-                    let rect1 =
-                      Rect::new(rect1.x, rect1.y, rect1.width, rect1.height);
-                    let rect2 =
-                      Rect::new(rect2.x, rect2.y, rect2.width, rect2.height);
-                    canvas.copy(texture, rect1, rect2).unwrap();
-                  }
-                  _ => {}
+            (*resources)
+              .resources
+              .insert(index, Resource::Texture(texture));
+          });
+        }
+        CanvasTask::CreateTextureSurface { surface, index } => {
+          RESOURCES.with(|rcell| {
+            let mut resources = rcell.borrow_mut();
+            if let Some(surface) = resources.resources.get(&surface) {
+              match surface {
+                Resource::Surface(surface) => {
+                  let texture = resources
+                    .texture_creator
+                    .as_ref()
+                    .unwrap()
+                    .create_texture_from_surface(surface)
+                    .unwrap();
+                  (*resources)
+                    .resources
+                    .insert(index, Resource::Texture(texture));
                 }
+                _ => {}
               }
             }
-            CanvasTask::SetDisplayMode {
+          });
+        }
+        CanvasTask::LoadSurface { path, index } => {
+          RESOURCES.with(|rcell| {
+            let mut resources = rcell.borrow_mut();
+            let surface = Surface::from_file(&path).unwrap();
+            resources
+              .resources
+              .insert(index, Resource::Surface(surface));
+          });
+        }
+        CanvasTask::CopyRect {
+          texture,
+          rect1,
+          rect2,
+        } => {
+          RESOURCES.with(|rcell| {
+            let mut resources = rcell.borrow_mut();
+            if let Some(texture) = resources.resources.get(&texture) {
+              match texture {
+                Resource::Texture(texture) => {
+                  let rect1 =
+                    Rect::new(rect1.x, rect1.y, rect1.width, rect1.height);
+                  let rect2 =
+                    Rect::new(rect2.x, rect2.y, rect2.width, rect2.height);
+                  canvas.copy(&texture, rect1, rect2).unwrap();
+                }
+                _ => {}
+              }
+            }
+          });
+        }
+        CanvasTask::SetDisplayMode {
+          width,
+          height,
+          rate,
+          format,
+        } => {
+          let window = canvas.window_mut();
+          window
+            .set_display_mode(DisplayMode::new(
+              PixelFormatEnum::try_from(format).unwrap(),
               width,
               height,
               rate,
-              format,
-            } => {
-              let window = canvas.window_mut();
-              window
-                .set_display_mode(DisplayMode::new(
-                  PixelFormatEnum::try_from(format).unwrap(),
-                  width,
-                  height,
-                  rate,
-                ))
-                .unwrap();
-            }
-            CanvasTask::SetTitle { title } => {
-              let window = canvas.window_mut();
-              window.set_title(&title).unwrap();
-            }
-            CanvasTask::SetIcon { icon } => {
-              // TODO: Requires surface creation. Yet to decide the API
-            }
-            CanvasTask::SetPosition { x, y } => {
-              let window = canvas.window_mut();
-              window.set_position(
-                WindowPos::Positioned(x),
-                WindowPos::Positioned(y),
-              );
-            }
-            CanvasTask::SetSize { width, height } => {
-              let window = canvas.window_mut();
-              window.set_size(width, height).unwrap();
-            }
-            CanvasTask::SetMinimumSize { width, height } => {
-              let window = canvas.window_mut();
-              window.set_minimum_size(width, height).unwrap();
-            }
-            CanvasTask::Show => {
-              let window = canvas.window_mut();
-              window.show();
-            }
-            CanvasTask::Hide => {
-              let window = canvas.window_mut();
-              window.hide();
-            }
-            CanvasTask::Raise => {
-              let window = canvas.window_mut();
-              window.raise();
-            }
-            CanvasTask::Maximize => {
-              let window = canvas.window_mut();
-              window.maximize();
-            }
-            CanvasTask::Minimize => {
-              let window = canvas.window_mut();
-              window.minimize();
-            }
-            CanvasTask::Restore => {
-              let window = canvas.window_mut();
-              window.restore();
-            }
-            CanvasTask::SetBrightness { brightness } => {
-              let window = canvas.window_mut();
-              window.set_brightness(brightness).unwrap();
-            }
-            CanvasTask::SetOpacity { opacity } => {
-              let window = canvas.window_mut();
-              window.set_opacity(opacity).unwrap();
-            }
-            _ => {}
-          }
+            ))
+            .unwrap();
         }
+        CanvasTask::SetTitle { title } => {
+          let window = canvas.window_mut();
+          window.set_title(&title).unwrap();
+        }
+        CanvasTask::SetIcon { icon } => {
+          // TODO: Requires surface creation. Yet to decide the API
+        }
+        CanvasTask::SetPosition { x, y } => {
+          let window = canvas.window_mut();
+          window
+            .set_position(WindowPos::Positioned(x), WindowPos::Positioned(y));
+        }
+        CanvasTask::SetSize { width, height } => {
+          let window = canvas.window_mut();
+          window.set_size(width, height).unwrap();
+        }
+        CanvasTask::SetMinimumSize { width, height } => {
+          let window = canvas.window_mut();
+          window.set_minimum_size(width, height).unwrap();
+        }
+        CanvasTask::Show => {
+          let window = canvas.window_mut();
+          window.show();
+        }
+        CanvasTask::Hide => {
+          let window = canvas.window_mut();
+          window.hide();
+        }
+        CanvasTask::Raise => {
+          let window = canvas.window_mut();
+          window.raise();
+        }
+        CanvasTask::Maximize => {
+          let window = canvas.window_mut();
+          window.maximize();
+        }
+        CanvasTask::Minimize => {
+          let window = canvas.window_mut();
+          window.minimize();
+        }
+        CanvasTask::Restore => {
+          let window = canvas.window_mut();
+          window.restore();
+        }
+        CanvasTask::SetBrightness { brightness } => {
+          let window = canvas.window_mut();
+          window.set_brightness(brightness).unwrap();
+        }
+        CanvasTask::SetOpacity { opacity } => {
+          let window = canvas.window_mut();
+          window.set_opacity(opacity).unwrap();
+        }
+        _ => {}
       }
+    }
 
-      if should_quit {
-        let mut cell = cell.borrow_mut();
-        *cell = None;
-        drop(cell);
-        EVENTLOOP.with(|cell| *cell.borrow_mut() = None);
-        return;
-      }
-    });
+    if should_quit {
+      let mut cell = cell.borrow_mut();
+      *cell = None;
+      drop(cell);
+      EVENTLOOP.with(|cell| *cell.borrow_mut() = None);
+      return;
+    }
   });
 }

@@ -1,10 +1,3 @@
-export interface Color {
-  r: number;
-  g: number;
-  b: number;
-  a: number;
-}
-
 export enum PixelFormat {
   Unknown = 0,
   Index1LSB = 286261504,

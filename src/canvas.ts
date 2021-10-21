@@ -13,7 +13,7 @@ export type { Rectangle } from "../bindings/bindings.ts";
 
 import { PixelFormat } from "./pixel.ts";
 
-const exec = (t: CanvasTask) => do_task({ tasks: [t] });
+const exec = (t: CanvasTask) => do_task(t);
 
 export class Canvas {
   #properties: WindowOptions;

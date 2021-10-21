@@ -1,17 +1,18 @@
 ### Deno SDL2
 
-Cross platform and stable bindings to [SDL2](https://www.libsdl.org/index.php).
-Have fun!
+Cross platform bindings to [SDL2](https://www.libsdl.org/index.php). Have fun!
 
-<img align="center" src=https://user-images.githubusercontent.com/62501544/128629366-9f5f4f23-5ec8-4246-b3a7-c540b7286a60.png width="450px">
+<p align="center">
+  <img src="examples/sprite/demo.png" data-tooltip="Ad" width="450px" style="border-radius: 15px">
+</p>
 
-#### Features
+### Features
 
 - Bindings to Video, Graphics, Font and Mixer subsystems. (Uses rodio instead of
   SDL2_Mixer)
-- Not `--unstable`. Uses TCP instead of Deno's traditional plugin system.
+- Built on top of Deno's FFI API. Previous versions used TCP streams.
 
-#### Example
+### Example
 
 ```typescript
 import { Canvas } from "https://deno.land/x/sdl2/src/canvas.ts";
@@ -40,6 +41,12 @@ for await (const event of canvas) {
   }
 }
 ```
+
+### Projects using `deno_sdl2`
+
+- https://github.com/dhairy-online/dino-deno
+- https://github.com/dhairy-online/flappybird
+- ...insert your project here
 
 ### License
 
