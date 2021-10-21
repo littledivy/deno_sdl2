@@ -120,7 +120,7 @@ export class Canvas {
    * Set the display mode to use when a window is visible at fullscreen.
    * @param {number} width Width of the window
    * @param {number} height Height of the window
-   * @param {number} rate Refresh rate 
+   * @param {number} rate Refresh rate
    * @param {PixelFormat} format Pixel format Enum
    */
   setDisplayMode(
@@ -148,7 +148,7 @@ export class Canvas {
    * The window coordinate origin is the upper left of the display.
    * @param {number} x X Axis
    * @param {number} y Y Axis
-   * */
+   */
   setPosition(x: number, y: number) {
     exec({ setPosition: { x, y } });
   }
@@ -170,7 +170,7 @@ export class Canvas {
   }
   /**
    * Set the brightness (gamma multiplier) for a given window's display.
-   * @param {number} brightness 
+   * @param {number} brightness
    */
   setBrightness(brightness: number) {
     exec({ setBrightness: { brightness } });
