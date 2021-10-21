@@ -116,7 +116,13 @@ export class Canvas {
     exec("quit");
     this.#closed = true;
   }
-  // TODO: (dhairy-online)
+  /**
+   * Set the display mode to use when a window is visible at fullscreen.
+   * @param {number} width Width of the window
+   * @param {number} height Height of the window
+   * @param {number} rate Refresh rate 
+   * @param {PixelFormat} format Pixel format Enum
+   */
   setDisplayMode(
     width: number,
     height: number,
@@ -137,19 +143,35 @@ export class Canvas {
   setIcon(icon: string) {
     exec({ setIcon: { icon } });
   }
-
+  /**
+   * Set the position of a window.
+   * The window coordinate origin is the upper left of the display.
+   * @param {number} x X Axis
+   * @param {number} y Y Axis
+   * */
   setPosition(x: number, y: number) {
     exec({ setPosition: { x, y } });
   }
-
+  /**
+   * Set the size of a window's client area.
+   * @param {number} width
+   * @param {number} height
+   */
   setSize(width: number, height: number) {
     exec({ setSize: { width, height } });
   }
-
+  /**
+   * Set the minimum size of a window's client area.
+   * @param {number} width
+   * @param {number} height
+   */
   setMinimumSize(width: number, height: number) {
     exec({ setMinimumSize: { width, height } });
   }
-
+  /**
+   * Set the brightness (gamma multiplier) for a given window's display.
+   * @param {number} brightness 
+   */
   setBrightness(brightness: number) {
     exec({ setBrightness: { brightness } });
   }
@@ -162,27 +184,39 @@ export class Canvas {
   setOpacity(opacity: number) {
     exec({ setOpacity: { opacity } });
   }
-
+  /**
+   * Show a window.
+   */
   show() {
     exec("show");
   }
-
+  /**
+   * Hide a window.
+   */
   hide() {
     exec("hide");
   }
-
+  /**
+   * Raise a window above other windows and set the input focus.
+   */
   raise() {
     exec("raise");
   }
-
+  /**
+   * Make a window as large as possible.
+   */
   maximize() {
     exec("maximize");
   }
-
+  /**
+   * Minimize a window to an iconic representation.
+   */
   minimize() {
     exec("minimize");
   }
-
+  /**
+   * Restore the size and position of a minimized or maximized window.
+   */
   restore() {
     exec("restore");
   }
