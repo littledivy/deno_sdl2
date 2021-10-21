@@ -10,6 +10,7 @@ const canvas = new Canvas({
   resizable: true,
   minimized: false,
   maximized: false,
+  flags: null,
 });
 
 const surface = canvas.loadSurface("tests/sample.gif");

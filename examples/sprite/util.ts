@@ -1,10 +1,10 @@
-import { Canvas, Rect } from "../../src/canvas.ts";
+import { Canvas, Rectangle } from "../../src/canvas.ts";
 
 export function drawMap(
   texture: number,
   canvas: Canvas,
   map: number[][],
-  chipSize: number
+  chipSize: number,
 ) {
   for (let i = 0; i < map.length; i++) {
     for (let j = 0; j < map[i].length; j++) {
@@ -23,7 +23,7 @@ export function drawMap(
           y: i * chipSize * 4,
           width: chipSize * 4,
           height: chipSize * 4,
-        }
+        },
       );
     }
   }
@@ -39,10 +39,10 @@ export class Sprite {
   originY = 0;
   scale = 1;
   texture: number;
-  frames: Rect[];
+  frames: Rectangle[];
   index = 0;
 
-  constructor(texture: number, frames: Rect[]) {
+  constructor(texture: number, frames: Rectangle[]) {
     this.texture = texture;
     this.frames = frames;
   }

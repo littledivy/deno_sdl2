@@ -10,6 +10,7 @@ const canvas = new Canvas({
   resizable: true,
   minimized: false,
   maximized: false,
+  flags: null,
 });
 
 canvas.playMusic("tests/sample_0.mp3");

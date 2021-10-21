@@ -1,16 +1,3 @@
-/**
- * An interface that represents a color.
- */
-export interface Color {
-  r: number;
-  g: number;
-  b: number;
-  a: number;
-}
-
-/**
- * An Enum that contains pixel format information.
- */
 export enum PixelFormat {
   Unknown = 0,
   Index1LSB = 286261504,

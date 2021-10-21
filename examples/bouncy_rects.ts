@@ -1,4 +1,5 @@
 import { Canvas } from "../src/canvas.ts";
+import { FPS } from "./utils.ts";
 
 const canvas = new Canvas({
   title: "Hello, Deno!",
@@ -10,6 +11,7 @@ const canvas = new Canvas({
   resizable: true,
   minimized: false,
   maximized: false,
+  flags: null,
 });
 
 const boxes: any[] = [];
@@ -40,10 +42,12 @@ function checkCollision(
   return !(x2 > w1 + x1 || x1 > w2 + x2 || y2 > h1 + y1 || y1 > h2 + y2);
 }
 
+// 60 FPS cap
+const stepFrame = FPS(60);
+
 async function frame() {
   canvas.setDrawColor(0, 0, 0, 255);
   canvas.clear();
-
   canvas.setDrawColor(255, 255, 255, 255);
   for (let i = 0; i < num_boxes; i++) {
     // Gravity
@@ -68,10 +72,6 @@ async function frame() {
       boxes[i].x = 20;
       boxes[i].dx = Math.abs(boxes[i].dx);
     }
-
-    // Dampening
-    boxes[i].dy -= boxes[i].dy <= 0 ? 0 : 1;
-    boxes[i].dx -= boxes[i].dx <= 0 ? 0 : 1;
 
     // Collision with other boxes
     for (let j = 0; j < num_boxes; j++) {
@@ -111,10 +111,14 @@ async function frame() {
     }
 
     canvas.fillRect(boxes[i].x, boxes[i].y, 20, 20);
+
+    // Dampening
+    boxes[i].dy -= boxes[i].dy <= 0 ? 0 : 1;
+    boxes[i].dx -= boxes[i].dx <= 0 ? 0 : 1;
   }
 
   canvas.present();
-  Deno.sleepSync(10);
+  stepFrame();
 }
 
 // Fire up the event loop
