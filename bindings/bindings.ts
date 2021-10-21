@@ -6,10 +6,14 @@ function encode(v: string | Uint8Array): Uint8Array {
 }
 const opts = {
   name: "deno_sdl2",
-  url: "target/debug",
+  url: "https://github.com/littledivy/deno_sdl2/releases/download/0.2-alpha.1",
 };
 const _lib = await Plug.prepare(opts, {
-  poll_events: { parameters: [], result: "usize", nonblocking: false },
+  fill_events: {
+    parameters: ["buffer", "usize"],
+    result: "void",
+    nonblocking: false,
+  },
   init: {
     parameters: ["buffer", "usize", "buffer", "usize"],
     result: "void",
@@ -20,76 +24,14 @@ const _lib = await Plug.prepare(opts, {
     result: "void",
     nonblocking: false,
   },
-  fill_events: {
-    parameters: ["buffer", "usize"],
-    result: "void",
-    nonblocking: false,
-  },
+  poll_events: { parameters: [], result: "usize", nonblocking: false },
 });
-export type CanvasPoint = {
-  x: number;
-  y: number;
+export type CanvasColor = {
+  r: number;
+  g: number;
+  b: number;
+  a: number;
 };
-export type CanvasEvent =
-  | "quit"
-  | "app_terminating"
-  | "app_low_memory"
-  | "app_will_enter_background"
-  | "app_did_enter_background"
-  | "app_will_enter_foreground"
-  | {
-    key_up: {
-      keycode: number | undefined | null;
-      scancode: number | undefined | null;
-      r_mod: number;
-      repeat: boolean;
-    };
-  }
-  | {
-    key_down: {
-      keycode: number | undefined | null;
-      scancode: number | undefined | null;
-      r_mod: number;
-      repeat: boolean;
-    };
-  }
-  | {
-    mouse_motion: {
-      which: number;
-      x: number;
-      y: number;
-      xrel: number;
-      yrel: number;
-      state: number;
-    };
-  }
-  | {
-    mouse_button_up: {
-      x: number;
-      y: number;
-      clicks: number;
-      which: number;
-      button: number;
-    };
-  }
-  | {
-    mouse_button_down: {
-      x: number;
-      y: number;
-      clicks: number;
-      which: number;
-      button: number;
-    };
-  }
-  | {
-    mouse_wheel: {
-      x: number;
-      y: number;
-      which: number;
-      direction: number;
-    };
-  }
-  | "unknown";
 export type CanvasTask =
   | "present"
   | {
@@ -278,47 +220,12 @@ export type CanvasTask =
       opacity: number;
     };
   };
-export type CanvasColor = {
-  r: number;
-  g: number;
-  b: number;
-  a: number;
-};
-export type OptionRectangle = {
-  x: number;
-  y: number;
-  width: number | undefined | null;
-  height: number | undefined | null;
-};
-/**
- * https://docs.rs/sdl2/0.34.5/sdl2/video/struct.WindowBuilder.htm
- * Window Builder configuration
- */
-export type WindowOptions = {
-  title: string;
-  height: number;
-  width: number;
-  flags: number | undefined | null;
-  centered: boolean;
-  fullscreen: boolean;
-  hidden: boolean;
-  resizable: boolean;
-  minimized: boolean;
-  maximized: boolean;
-};
-/**
- * https://rust-sdl2.github.io/rust-sdl2/sdl2/render/struct.CanvasBuilder.html
- * Canvas Builder configuration
- */
-export type CanvasOptions = {
-  software: boolean;
-};
-export type Rectangle = {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-};
+export type CanvasFontSize =
+  | "normal"
+  | "bold"
+  | "italic"
+  | "underline"
+  | "strikethrough";
 export type CanvasFontPartial =
   | {
     solid: {
@@ -336,14 +243,108 @@ export type CanvasFontPartial =
       color: CanvasColor;
     };
   };
-export type CanvasFontSize =
-  | "normal"
-  | "bold"
-  | "italic"
-  | "underline"
-  | "strikethrough";
-export function poll_events() {
-  return _lib.symbols.poll_events() as number;
+export type CanvasEvent =
+  | "quit"
+  | "app_terminating"
+  | "app_low_memory"
+  | "app_will_enter_background"
+  | "app_did_enter_background"
+  | "app_will_enter_foreground"
+  | {
+    key_up: {
+      keycode: number | undefined | null;
+      scancode: number | undefined | null;
+      r_mod: number;
+      repeat: boolean;
+    };
+  }
+  | {
+    key_down: {
+      keycode: number | undefined | null;
+      scancode: number | undefined | null;
+      r_mod: number;
+      repeat: boolean;
+    };
+  }
+  | {
+    mouse_motion: {
+      which: number;
+      x: number;
+      y: number;
+      xrel: number;
+      yrel: number;
+      state: number;
+    };
+  }
+  | {
+    mouse_button_up: {
+      x: number;
+      y: number;
+      clicks: number;
+      which: number;
+      button: number;
+    };
+  }
+  | {
+    mouse_button_down: {
+      x: number;
+      y: number;
+      clicks: number;
+      which: number;
+      button: number;
+    };
+  }
+  | {
+    mouse_wheel: {
+      x: number;
+      y: number;
+      which: number;
+      direction: number;
+    };
+  }
+  | "unknown";
+export type OptionRectangle = {
+  x: number;
+  y: number;
+  width: number | undefined | null;
+  height: number | undefined | null;
+};
+export type Rectangle = {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+};
+/**
+ * https://rust-sdl2.github.io/rust-sdl2/sdl2/render/struct.CanvasBuilder.html
+ * Canvas Builder configuration
+ */
+export type CanvasOptions = {
+  software: boolean;
+};
+/**
+ * https://docs.rs/sdl2/0.34.5/sdl2/video/struct.WindowBuilder.htm
+ * Window Builder configuration
+ */
+export type WindowOptions = {
+  title: string;
+  height: number;
+  width: number;
+  flags: number | undefined | null;
+  centered: boolean;
+  fullscreen: boolean;
+  hidden: boolean;
+  resizable: boolean;
+  minimized: boolean;
+  maximized: boolean;
+};
+export type CanvasPoint = {
+  x: number;
+  y: number;
+};
+export function fill_events(a0: Uint8Array) {
+  const a0_buf = encode(a0);
+  return _lib.symbols.fill_events(a0_buf, a0_buf.byteLength) as null;
 }
 export function init(a0: WindowOptions, a1: CanvasOptions) {
   const a0_buf = encode(JSON.stringify(a0));
@@ -359,7 +360,6 @@ export function do_task(a0: CanvasTask) {
   const a0_buf = encode(JSON.stringify(a0));
   return _lib.symbols.do_task(a0_buf, a0_buf.byteLength) as null;
 }
-export function fill_events(a0: Uint8Array) {
-  const a0_buf = encode(a0);
-  return _lib.symbols.fill_events(a0_buf, a0_buf.byteLength) as null;
+export function poll_events() {
+  return _lib.symbols.poll_events() as number;
 }
