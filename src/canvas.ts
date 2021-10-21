@@ -1,4 +1,5 @@
 import {
+  CanvasEvent,
   CanvasFontPartial as FontRenderOptions,
   CanvasPoint as Point,
   CanvasTask,
@@ -346,11 +347,17 @@ export class Canvas {
       if (len > 0) {
         const u8 = new Uint8Array(len);
         fill_events(u8);
-        // @ts-ignore
-        const rawEvents = JSON.parse(Deno.core?.decode(u8));
+        const rawEvents = JSON.parse(
+          // @ts-ignore
+          Deno.core?.decode(u8),
+        ) as CanvasEvent[];
         for (const event of rawEvents) {
           const type = typeof event == "string" ? event : Object.keys(event)[0];
-          yield { type, ...event[type] };
+          yield {
+            type,
+            // @ts-ignore this is why typescript sucks, i know what i'm doing.
+            ...event[type],
+          };
         }
       }
       yield { type: "draw" };

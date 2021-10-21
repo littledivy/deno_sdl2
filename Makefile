@@ -1,11 +1,10 @@
 CARGO_BUILD := deno_bindgen -- --features "use-vcpkg"
 TARGET := deno_sdl2
 
-RUST_SOURCE := src/main.rs
+RUST_SOURCE := src/lib.rs
 
 $(TARGET): $(RUST_SOURCE)
-	$(CARGO_BUILD) \
-	&& cp target/debug/$(TARGET) .
+	$(CARGO_BUILD)
 
 fmt:
 	deno fmt --ignore=target/

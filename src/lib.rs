@@ -377,6 +377,7 @@ pub fn init(options: WindowOptions, canvas_options: CanvasOptions) {
   });
 }
 
+#[deno_bindgen]
 #[derive(Serialize)]
 #[serde(rename_all = "snake_case")]
 enum CanvasEvent {
