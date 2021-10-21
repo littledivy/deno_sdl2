@@ -27,6 +27,13 @@ jobs:
         if: matrix.os == 'macos-latest'
         run: brew install yasm
 
+      - uses: denoland/setup-deno@v1
+        with:
+          deno-version: canary
+
+      - name: Install deno_bindgen
+        run: deno install -Afq -n deno_bindgen https://raw.githubusercontent.com/littledivy/deno_bindgen/main/cli.ts
+
       - name: Install dependencies
         run: cargo vcpkg -v build
 
