@@ -152,10 +152,10 @@ enum CanvasTask {
   RenderFont {
     text: String,
     options: CanvasFontPartial,
-    target: Option<OptionRectangle>,
     path: String,
     size: u16,
     style: Option<CanvasFontSize>,
+    index: u32,
   },
   SetCursor {
     // Internal
@@ -544,6 +544,30 @@ pub fn fill_events(buf: &mut [u8]) {
   });
 }
 
+macro_rules! query_texture_fn {
+  ($name: ident, $attr: ident) => {
+    #[deno_bindgen]
+    pub fn $name(texture: u32) -> i32 {
+      RESOURCES.with(|cell| {
+        let resources = cell.borrow();
+        if let Some(Resource::Texture(texture)) =
+          resources.resources.get(&texture)
+        {
+          let query = texture.query();
+          query.$attr as i32
+        } else {
+          0
+        }
+      })
+    }
+  };
+}
+
+query_texture_fn!(query_texture_height, height);
+query_texture_fn!(query_texture_width, width);
+query_texture_fn!(query_texture_access, access);
+query_texture_fn!(query_texture_format, format);
+
 #[deno_bindgen]
 pub fn do_task(task: CanvasTask) {
   let mut should_quit = false;
@@ -628,7 +652,7 @@ pub fn do_task(task: CanvasTask) {
           style,
           text,
           options,
-          target,
+          index,
         } => {
           RESOURCES.with(|rcell| {
             let mut resources = rcell.borrow_mut();
@@ -658,34 +682,10 @@ pub fn do_task(task: CanvasTask) {
                 CanvasFontPartial::Blended { color } => partial
                   .blended(Color::RGBA(color.r, color.g, color.b, color.a)),
               };
-              let texture = resources
-                .texture_creator
-                .as_ref()
-                .unwrap()
-                .create_texture_from_surface(&surface.unwrap())
-                .unwrap();
-              let target = match target {
-                Some(r) => {
-                  let (width, height) = match (r.width, r.height) {
-                    (None, None) => {
-                      let TextureQuery { width, height, .. } = texture.query();
-                      (width, height)
-                    }
-                    (Some(width), None) => {
-                      let TextureQuery { height, .. } = texture.query();
-                      (width, height)
-                    }
-                    (None, Some(height)) => {
-                      let TextureQuery { width, .. } = texture.query();
-                      (width, height)
-                    }
-                    (Some(width), Some(height)) => (width, height),
-                  };
-                  Some(Rect::new(r.x, r.y, width, height))
-                }
-                None => None,
-              };
-              canvas.copy(&texture, None, target).unwrap();
+
+              resources
+                .resources
+                .insert(index, Resource::Surface(surface.unwrap()));
             });
           });
         }

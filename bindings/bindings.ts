@@ -6,12 +6,12 @@ function encode(v: string | Uint8Array): Uint8Array {
 }
 const opts = {
   name: "deno_sdl2",
-  url: "https://github.com/littledivy/deno_sdl2/releases/download/0.2-alpha.1",
+  url: "target/debug",
 };
 const _lib = await Plug.prepare(opts, {
-  fill_events: {
-    parameters: ["buffer", "usize"],
-    result: "void",
+  query_texture_height: {
+    parameters: ["u32"],
+    result: "i32",
     nonblocking: false,
   },
   init: {
@@ -19,18 +19,61 @@ const _lib = await Plug.prepare(opts, {
     result: "void",
     nonblocking: false,
   },
+  query_texture_access: {
+    parameters: ["u32"],
+    result: "i32",
+    nonblocking: false,
+  },
+  fill_events: {
+    parameters: ["buffer", "usize"],
+    result: "void",
+    nonblocking: false,
+  },
+  query_texture_width: {
+    parameters: ["u32"],
+    result: "i32",
+    nonblocking: false,
+  },
+  query_texture_format: {
+    parameters: ["u32"],
+    result: "i32",
+    nonblocking: false,
+  },
+  poll_events: { parameters: [], result: "usize", nonblocking: false },
   do_task: {
     parameters: ["buffer", "usize"],
     result: "void",
     nonblocking: false,
   },
-  poll_events: { parameters: [], result: "usize", nonblocking: false },
 });
-export type CanvasColor = {
-  r: number;
-  g: number;
-  b: number;
-  a: number;
+/**
+ * https://docs.rs/sdl2/0.34.5/sdl2/video/struct.WindowBuilder.htm
+ * Window Builder configuration
+ */
+export type WindowOptions = {
+  title: string;
+  height: number;
+  width: number;
+  flags: number | undefined | null;
+  centered: boolean;
+  fullscreen: boolean;
+  hidden: boolean;
+  resizable: boolean;
+  minimized: boolean;
+  maximized: boolean;
+};
+export type CanvasFontSize =
+  | "normal"
+  | "bold"
+  | "italic"
+  | "underline"
+  | "strikethrough";
+/**
+ * https://rust-sdl2.github.io/rust-sdl2/sdl2/render/struct.CanvasBuilder.html
+ * Canvas Builder configuration
+ */
+export type CanvasOptions = {
+  software: boolean;
 };
 export type CanvasTask =
   | "present"
@@ -103,10 +146,10 @@ export type CanvasTask =
     renderFont: {
       text: string;
       options: CanvasFontPartial;
-      target: OptionRectangle | undefined | null;
       path: string;
       size: number;
       style: CanvasFontSize | undefined | null;
+      index: number;
     };
   }
   | {
@@ -220,29 +263,18 @@ export type CanvasTask =
       opacity: number;
     };
   };
-export type CanvasFontSize =
-  | "normal"
-  | "bold"
-  | "italic"
-  | "underline"
-  | "strikethrough";
-export type CanvasFontPartial =
-  | {
-    solid: {
-      color: CanvasColor;
-    };
-  }
-  | {
-    shaded: {
-      color: CanvasColor;
-      background: CanvasColor;
-    };
-  }
-  | {
-    blended: {
-      color: CanvasColor;
-    };
-  };
+export type OptionRectangle = {
+  x: number;
+  y: number;
+  width: number | undefined | null;
+  height: number | undefined | null;
+};
+export type Rectangle = {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+};
 export type CanvasEvent =
   | "quit"
   | "app_terminating"
@@ -303,48 +335,35 @@ export type CanvasEvent =
     };
   }
   | "unknown";
-export type OptionRectangle = {
-  x: number;
-  y: number;
-  width: number | undefined | null;
-  height: number | undefined | null;
-};
-export type Rectangle = {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-};
-/**
- * https://rust-sdl2.github.io/rust-sdl2/sdl2/render/struct.CanvasBuilder.html
- * Canvas Builder configuration
- */
-export type CanvasOptions = {
-  software: boolean;
-};
-/**
- * https://docs.rs/sdl2/0.34.5/sdl2/video/struct.WindowBuilder.htm
- * Window Builder configuration
- */
-export type WindowOptions = {
-  title: string;
-  height: number;
-  width: number;
-  flags: number | undefined | null;
-  centered: boolean;
-  fullscreen: boolean;
-  hidden: boolean;
-  resizable: boolean;
-  minimized: boolean;
-  maximized: boolean;
-};
 export type CanvasPoint = {
   x: number;
   y: number;
 };
-export function fill_events(a0: Uint8Array) {
-  const a0_buf = encode(a0);
-  return _lib.symbols.fill_events(a0_buf, a0_buf.byteLength) as null;
+export type CanvasColor = {
+  r: number;
+  g: number;
+  b: number;
+  a: number;
+};
+export type CanvasFontPartial =
+  | {
+    solid: {
+      color: CanvasColor;
+    };
+  }
+  | {
+    shaded: {
+      color: CanvasColor;
+      background: CanvasColor;
+    };
+  }
+  | {
+    blended: {
+      color: CanvasColor;
+    };
+  };
+export function query_texture_height(a0: number) {
+  return _lib.symbols.query_texture_height(a0) as number;
 }
 export function init(a0: WindowOptions, a1: CanvasOptions) {
   const a0_buf = encode(JSON.stringify(a0));
@@ -356,10 +375,23 @@ export function init(a0: WindowOptions, a1: CanvasOptions) {
     a1_buf.byteLength,
   ) as null;
 }
-export function do_task(a0: CanvasTask) {
-  const a0_buf = encode(JSON.stringify(a0));
-  return _lib.symbols.do_task(a0_buf, a0_buf.byteLength) as null;
+export function query_texture_access(a0: number) {
+  return _lib.symbols.query_texture_access(a0) as number;
+}
+export function fill_events(a0: Uint8Array) {
+  const a0_buf = encode(a0);
+  return _lib.symbols.fill_events(a0_buf, a0_buf.byteLength) as null;
+}
+export function query_texture_width(a0: number) {
+  return _lib.symbols.query_texture_width(a0) as number;
+}
+export function query_texture_format(a0: number) {
+  return _lib.symbols.query_texture_format(a0) as number;
 }
 export function poll_events() {
   return _lib.symbols.poll_events() as number;
+}
+export function do_task(a0: CanvasTask) {
+  const a0_buf = encode(JSON.stringify(a0));
+  return _lib.symbols.do_task(a0_buf, a0_buf.byteLength) as null;
 }

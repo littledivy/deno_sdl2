@@ -7,6 +7,10 @@ import {
   fill_events,
   init,
   poll_events,
+  query_texture_access,
+  query_texture_format,
+  query_texture_height,
+  query_texture_width,
   Rectangle as Rect,
   WindowOptions,
 } from "../bindings/bindings.ts";
@@ -247,13 +251,14 @@ export class Canvas {
     font: number,
     text: string,
     options: FontRenderOptions,
-    target?: Rect,
   ) {
     const _font = this.#fonts[font - 1];
     if (!_font) {
       throw new Error("Font not loaded. Did you forget to call `loadFont` ?");
     }
-    exec({ renderFont: { font, text, options, target, ..._font } });
+    const index = this.#resources.push(options);
+    exec({ renderFont: { font, text, options, index, ..._font } });
+    return index;
   }
 
   /**
@@ -335,6 +340,14 @@ export class Canvas {
     exec({ copyRect: { texture, rect1: src, rect2: dest } });
   }
 
+  queryTexture(texture: number) {
+    return {
+      width: query_texture_width(texture),
+      height: query_texture_height(texture),
+      access: query_texture_access(texture),
+      format: query_texture_format(texture),
+    };
+  }
   /**
    * Start the event loop. Under the hood, it fires up the Rust client, polls for events and send tasks.
    * This function blocks rest of the JS event loop.
