@@ -249,7 +249,7 @@ dependencies = [
 [[package]]
 name = "deno_bindgen"
 version = "0.2.0"
-source = "git+https://github.com/littledivy/deno_bindgen?rev=67be13d#67be13dc0a215d219ff355d674e1a53b51aeb898"
+source = "git+https://github.com/littledivy/deno_bindgen?rev=60a6f8a#60a6f8a4d4977bbd3f18883ca639d18b1e8ccda9"
 dependencies = [
  "deno_bindgen_macro",
  "serde",
@@ -259,7 +259,7 @@ dependencies = [
 [[package]]
 name = "deno_bindgen_macro"
 version = "0.2.0"
-source = "git+https://github.com/littledivy/deno_bindgen?rev=67be13d#67be13dc0a215d219ff355d674e1a53b51aeb898"
+source = "git+https://github.com/littledivy/deno_bindgen?rev=60a6f8a#60a6f8a4d4977bbd3f18883ca639d18b1e8ccda9"
 dependencies = [
  "Inflector",
  "proc-macro2",
