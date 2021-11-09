@@ -4,7 +4,7 @@ A sample app showing how to use sprites / tilemap.
 
 # Usage
 
-> deno run --unstable --allow-read --allow-net --allow-run main.ts
+> deno run --unstable -A main.ts
 
 # Author
 
