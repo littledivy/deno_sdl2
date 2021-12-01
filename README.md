@@ -80,6 +80,8 @@ deno_bindgen -- --features "use_vcpkg"
 
 - https://github.com/dhairy-online/dino-deno
 - https://github.com/dhairy-online/flappybird
+- https://github.com/load1n9/caviar
+
 - ...insert your project here
 
 ### License
