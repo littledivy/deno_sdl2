@@ -1,4 +1,4 @@
-import { Canvas } from "../src/canvas.ts";
+import { Canvas } from "../mod.ts";
 
 const canvas = new Canvas({
   title: "Hello, Deno!",
