@@ -111,9 +111,9 @@ await outputBuffer.mapAsync(1)
 const buf = new Uint8Array(outputBuffer.getMappedRange())
 const buffer = new Uint8Array(unpadded * dimensions.height);
 for (let i = 0; i < dimensions.height; i++) {
-  const slice = buf
-    .slice(i * padded, (i + 1) * padded)
-    .slice(0, unpadded);
+    const slice = buf
+        .slice(i * padded, (i + 1) * padded)
+        .slice(0, unpadded);
 
     buffer.set(slice, i * unpadded);
 }
@@ -126,6 +126,11 @@ canvas.present()
 event_loop:
 for await (const event of canvas) {
     switch (event.type) {
+        case "resized":
+            canvas.copy(sdl2texture, rect,
+                { x: 0, y: 0, width: event.width, height: event.height })
+            canvas.present()
+            break
         case "quit":
             break event_loop;
         case "key_down":

@@ -7,6 +7,7 @@ import {
   fill_events,
   init,
   poll_events,
+  query_window_height,
   Rectangle as Rect,
   WindowOptions,
 } from "../bindings/bindings.ts";
@@ -351,6 +352,14 @@ export class Canvas {
    */
   copy(texture: Texture, src: Rect, dest: Rect) {
     exec({ copyRect: { texture: texture.index, rect1: src, rect2: dest } });
+  }
+
+  get height() {
+    return query_window_height()
+  }
+
+  get width() {
+    return query_window_height()
   }
 
   /**

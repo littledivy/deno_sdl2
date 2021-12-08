@@ -1,7 +1,8 @@
-use serde::Serialize;
 use deno_bindgen::deno_bindgen;
+use serde::Serialize;
 
 use sdl2::event::Event;
+use sdl2::event::WindowEvent;
 
 #[deno_bindgen]
 #[derive(Serialize)]
@@ -13,7 +14,10 @@ pub enum CanvasEvent {
   AppWillEnterBackground,
   AppDidEnterBackground,
   AppWillEnterForeground,
-  // Window { window_event: CanvasWindowEvent }
+  Resized {
+    width: i32,
+    height: i32,
+  },
   KeyUp {
     keycode: Option<i32>,
     scancode: Option<i32>,
@@ -137,6 +141,12 @@ impl Into<CanvasEvent> for Event {
         clicks,
         which,
         button: mouse_btn as u8,
+      },
+      Event::Window { win_event, .. } => match win_event {
+        WindowEvent::Resized(width, height) => {
+          CanvasEvent::Resized { width, height }
+        },
+        _ => CanvasEvent::Unknown,
       },
       _ => CanvasEvent::Unknown,
     }

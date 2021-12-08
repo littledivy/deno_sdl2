@@ -220,3 +220,28 @@ pub fn update_texture(
     };
   });
 }
+
+
+#[deno_bindgen]
+pub fn query_window_width() -> u32 {
+  WINDOW.with(|cell| {
+    if let Some(ref mut canvas) = *cell.borrow_mut() {
+      let (width, _) = canvas.window().size();
+      return width
+    }
+    0
+  });
+  0
+}
+
+#[deno_bindgen]
+pub fn query_window_height() -> u32 {
+  WINDOW.with(|cell| {
+    if let Some(ref mut canvas) = *cell.borrow_mut() {
+      let (_, height) = canvas.window().size();
+      return height
+    }
+    0
+  });
+  0
+}
