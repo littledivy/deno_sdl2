@@ -1,4 +1,4 @@
-import { Canvas, PixelFormat, TextureAccess } from "../mod.ts";
+import { Canvas, PixelFormat, TextureAccess } from "../../mod.ts";
 
 const canvas = new Canvas({
     title: "Hello, Deno!",
@@ -19,7 +19,7 @@ const texture = canvas.createTexture(
     1024,
     1024
 )
-const buf = Deno.readFileSync("examples/logo.yuv")
+const buf = Deno.readFileSync("texture/examples/logo.yuv")
 texture.update(buf)
 const rect = { x: 0, y: 0, width: 1024, height: 1024 }
 const screen = { x: 0, y: 0, width: 1024, height: 1024 }

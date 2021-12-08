@@ -1,4 +1,4 @@
-import { Canvas } from "../../src/canvas.ts";
+import { Canvas } from "../../mod.ts";
 import { drawMap, Sprite } from "./util.ts";
 
 const canvasSize = { width: 400, height: 400 };
