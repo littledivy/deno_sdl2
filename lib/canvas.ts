@@ -7,16 +7,13 @@ import {
   fill_events,
   init,
   poll_events,
-  query_texture_access,
-  query_texture_format,
-  query_texture_height,
-  query_texture_width,
   Rectangle as Rect,
   WindowOptions,
 } from "../bindings/bindings.ts";
 export type { Rectangle } from "../bindings/bindings.ts";
 
 import { PixelFormat } from "./pixel.ts";
+import { Texture, TextureAccess } from "./texture.ts";
 
 const exec = (t: CanvasTask) => do_task(t);
 
@@ -24,7 +21,7 @@ export class Canvas {
   #properties: WindowOptions;
   // Used internally. Too lazy to define types
   #fonts: any[] = [];
-  #audioCallback: (buf: Float32Array) => void = (_) => {};
+  #audioCallback: (buf: Float32Array) => void = (_) => { };
   #resources: any[] = [];
   // TODO(@littledivy): Make this a read-only public?
   #closed = true;
@@ -325,9 +322,25 @@ export class Canvas {
    */
   createTextureFromSurface(surface: number) {
     // TODO: Verify surface
-    const index = this.#resources.push({ surface });
+    const texture = new Texture(this.#resources.length + 1)
+    const index = this.#resources.push(texture);
     exec({ createTextureSurface: { surface, index } });
-    return index;
+    return texture;
+  }
+
+  /**
+   * Creates a new texture.
+   * @param {PixelFormat} format Pixel format of the texture.
+   * @param {TextureAccess} format Type of the texture.
+   * @param {number} width
+   * @param {number} height
+   * @returns {Texture}
+   */
+  createTexture(format: PixelFormat, access: TextureAccess, width: number, height: number): Texture {
+    const texture = new Texture(this.#resources.length + 1)
+    const index = this.#resources.push(texture);
+    exec({ createTexture: { format, access, width, height, index } });
+    return texture;
   }
 
   /**
@@ -336,18 +349,10 @@ export class Canvas {
    * @param src portion of the texture to copy.
    * @param dest texture will be stretched on the given destination
    */
-  copy(texture: number, src: Rect, dest: Rect) {
-    exec({ copyRect: { texture, rect1: src, rect2: dest } });
+  copy(texture: Texture, src: Rect, dest: Rect) {
+    exec({ copyRect: { texture: texture.index, rect1: src, rect2: dest } });
   }
 
-  queryTexture(texture: number) {
-    return {
-      width: query_texture_width(texture),
-      height: query_texture_height(texture),
-      access: query_texture_access(texture),
-      format: query_texture_format(texture),
-    };
-  }
   /**
    * Start the event loop. Under the hood, it fires up the Rust client, polls for events and send tasks.
    * This function blocks rest of the JS event loop.

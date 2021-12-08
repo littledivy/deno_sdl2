@@ -15,27 +15,6 @@ const _lib = await prepare(opts, {
     result: "void",
     nonblocking: false,
   },
-  fill_events: {
-    parameters: ["buffer", "usize"],
-    result: "void",
-    nonblocking: false,
-  },
-  poll_events: { parameters: [], result: "usize", nonblocking: false },
-  query_texture_format: {
-    parameters: ["u32"],
-    result: "i32",
-    nonblocking: false,
-  },
-  query_texture_width: {
-    parameters: ["u32"],
-    result: "i32",
-    nonblocking: false,
-  },
-  query_texture_height: {
-    parameters: ["u32"],
-    result: "i32",
-    nonblocking: false,
-  },
   init: {
     parameters: ["buffer", "usize", "buffer", "usize"],
     result: "void",
@@ -46,7 +25,45 @@ const _lib = await prepare(opts, {
     result: "i32",
     nonblocking: false,
   },
+  query_texture_height: {
+    parameters: ["u32"],
+    result: "i32",
+    nonblocking: false,
+  },
+  query_texture_width: {
+    parameters: ["u32"],
+    result: "i32",
+    nonblocking: false,
+  },
+  query_texture_format: {
+    parameters: ["u32"],
+    result: "i32",
+    nonblocking: false,
+  },
+  update_texture: {
+    parameters: ["buffer", "usize", "usize", "u32"],
+    result: "void",
+    nonblocking: false,
+  },
+  fill_events: {
+    parameters: ["buffer", "usize"],
+    result: "void",
+    nonblocking: false,
+  },
+  poll_events: { parameters: [], result: "usize", nonblocking: false },
 })
+export type CanvasFontSize =
+  | "normal"
+  | "bold"
+  | "italic"
+  | "underline"
+  | "strikethrough"
+export type Rectangle = {
+  x: number
+  y: number
+  width: number
+  height: number
+}
 /**
  * https://docs.rs/sdl2/0.34.5/sdl2/video/struct.WindowBuilder.htm
  * Window Builder configuration
@@ -63,34 +80,71 @@ export type WindowOptions = {
   minimized: boolean
   maximized: boolean
 }
-export type Rectangle = {
-  x: number
-  y: number
-  width: number
-  height: number
-}
-/**
- * https://rust-sdl2.github.io/rust-sdl2/sdl2/render/struct.CanvasBuilder.html
- * Canvas Builder configuration
- */
-export type CanvasOptions = {
-  software: boolean
-}
-export type CanvasPoint = {
-  x: number
-  y: number
-}
-export type CanvasFontSize =
-  | "normal"
-  | "bold"
-  | "italic"
-  | "underline"
-  | "strikethrough"
-export type OptionRectangle = {
-  x: number
-  y: number
-  width: number | undefined | null
-  height: number | undefined | null
+export type CanvasEvent =
+  | "quit"
+  | "app_terminating"
+  | "app_low_memory"
+  | "app_will_enter_background"
+  | "app_did_enter_background"
+  | "app_will_enter_foreground"
+  | {
+    key_up: {
+      keycode: number | undefined | null
+      scancode: number | undefined | null
+      r_mod: number
+      repeat: boolean
+    }
+  }
+  | {
+    key_down: {
+      keycode: number | undefined | null
+      scancode: number | undefined | null
+      r_mod: number
+      repeat: boolean
+    }
+  }
+  | {
+    mouse_motion: {
+      which: number
+      x: number
+      y: number
+      xrel: number
+      yrel: number
+      state: number
+    }
+  }
+  | {
+    mouse_button_up: {
+      x: number
+      y: number
+      clicks: number
+      which: number
+      button: number
+    }
+  }
+  | {
+    mouse_button_down: {
+      x: number
+      y: number
+      clicks: number
+      which: number
+      button: number
+    }
+  }
+  | {
+    mouse_wheel: {
+      x: number
+      y: number
+      which: number
+      direction: number
+    }
+  }
+  | "unknown"
+export type CanvasColor = {
+  r: number
+  g: number
+  b: number
+  a: number
 }
 export type CanvasTask =
   | "present"
@@ -280,11 +334,15 @@ export type CanvasTask =
       opacity: number
     }
   }
-export type CanvasColor = {
-  r: number
-  g: number
-  b: number
-  a: number
+export type OptionRectangle = {
+  x: number
+  y: number
+  width: number | undefined | null
+  height: number | undefined | null
+}
+export type CanvasPoint = {
+  x: number
+  y: number
 }
 export type CanvasFontPartial =
   | {
@@ -303,85 +361,16 @@ export type CanvasFontPartial =
       color: CanvasColor
     }
   }
-export type CanvasEvent =
-  | "quit"
-  | "app_terminating"
-  | "app_low_memory"
-  | "app_will_enter_background"
-  | "app_did_enter_background"
-  | "app_will_enter_foreground"
-  | {
-    key_up: {
-      keycode: number | undefined | null
-      scancode: number | undefined | null
-      r_mod: number
-      repeat: boolean
-    }
-  }
-  | {
-    key_down: {
-      keycode: number | undefined | null
-      scancode: number | undefined | null
-      r_mod: number
-      repeat: boolean
-    }
-  }
-  | {
-    mouse_motion: {
-      which: number
-      x: number
-      y: number
-      xrel: number
-      yrel: number
-      state: number
-    }
-  }
-  | {
-    mouse_button_up: {
-      x: number
-      y: number
-      clicks: number
-      which: number
-      button: number
-    }
-  }
-  | {
-    mouse_button_down: {
-      x: number
-      y: number
-      clicks: number
-      which: number
-      button: number
-    }
-  }
-  | {
-    mouse_wheel: {
-      x: number
-      y: number
-      which: number
-      direction: number
-    }
-  }
-  | "unknown"
+/**
+ * https://rust-sdl2.github.io/rust-sdl2/sdl2/render/struct.CanvasBuilder.html
+ * Canvas Builder configuration
+ */
+export type CanvasOptions = {
+  software: boolean
+}
 export function do_task(a0: CanvasTask) {
   const a0_buf = encode(JSON.stringify(a0))
   return _lib.symbols.do_task(a0_buf, a0_buf.byteLength) as null
-}
-export function fill_events(a0: Uint8Array) {
-  const a0_buf = encode(a0)
-  return _lib.symbols.fill_events(a0_buf, a0_buf.byteLength) as null
-}
-export function poll_events() {
-  return _lib.symbols.poll_events() as number
-}
-export function query_texture_format(a0: number) {
-  return _lib.symbols.query_texture_format(a0) as number
-}
-export function query_texture_width(a0: number) {
-  return _lib.symbols.query_texture_width(a0) as number
-}
-export function query_texture_height(a0: number) {
-  return _lib.symbols.query_texture_height(a0) as number
 }
 export function init(a0: WindowOptions, a1: CanvasOptions) {
   const a0_buf = encode(JSON.stringify(a0))
@@ -395,4 +384,24 @@ export function init(a0: WindowOptions, a1: CanvasOptions) {
 }
 export function query_texture_access(a0: number) {
   return _lib.symbols.query_texture_access(a0) as number
+}
+export function query_texture_height(a0: number) {
+  return _lib.symbols.query_texture_height(a0) as number
+}
+export function query_texture_width(a0: number) {
+  return _lib.symbols.query_texture_width(a0) as number
+}
+export function query_texture_format(a0: number) {
+  return _lib.symbols.query_texture_format(a0) as number
+}
+export function update_texture(a0: Uint8Array, a1: number, a2: number) {
+  const a0_buf = encode(a0)
+  return _lib.symbols.update_texture(a0_buf, a0_buf.byteLength, a1, a2) as null
+}
+export function fill_events(a0: Uint8Array) {
+  const a0_buf = encode(a0)
+  return _lib.symbols.fill_events(a0_buf, a0_buf.byteLength) as null
+}
+export function poll_events() {
+  return _lib.symbols.poll_events() as number
 }

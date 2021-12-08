@@ -14,6 +14,7 @@ use sdl2::surface::Surface;
 use sdl2::video::Window;
 use sdl2::video::WindowBuilder;
 
+use shapes::Rectangle;
 use update::update;
 use events::CanvasEvent;
 use tasks::CanvasTask;
@@ -201,5 +202,21 @@ pub fn do_task(task: CanvasTask) {
       EVENTLOOP.with(|cell| *cell.borrow_mut() = None);
       return;
     }
+  });
+}
+
+//TODO: deno_bindgen doesnt support slices so yea
+#[deno_bindgen]
+pub fn update_texture(
+  // rect: Option<Rectangle>,
+  pixel_data: &[u8],
+  pitch: usize,
+  index: u32,
+) {
+  RESOURCES.with(|rcell| {
+    let mut resources = rcell.borrow_mut();
+    if let Some(Resource::Texture(texture)) = resources.resources.get_mut(&index) {
+      texture.update(None, pixel_data, pitch);
+    };
   });
 }
