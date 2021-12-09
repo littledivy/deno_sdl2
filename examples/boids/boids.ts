@@ -15,6 +15,10 @@ class Boids {
         width: 800,
         height: 800,
     }
+    screenDimensions = {
+        width: 800,
+        height: 800,
+    }
     texture: GPUTexture;
     outputBuffer: GPUBuffer;
 
@@ -299,7 +303,7 @@ class Boids {
         }
         this.sdl2texture.update(buffer, this.dimensions.width * 4)
         const rect = { x: 0, y: 0, ...this.dimensions }
-        const screen = { x: 0, y: 0, ...this.dimensions }
+        const screen = { x: 0, y: 0, ...this.screenDimensions }
         this.canvas.copy(this.sdl2texture, rect, screen)
         this.canvas.present()
         this.outputBuffer.unmap()
@@ -362,7 +366,7 @@ function getRowPadding(width: number) {
 }
 
 const boids = new Boids({
-    particleCount: 100, 
+    particleCount: 100,
     particlesPerGroup: 64,
 }, await getDevice());
 boids.init();
@@ -371,11 +375,14 @@ boids.init();
 event_loop:
 for await (const event of boids.canvas) {
     switch (event.type) {
-        case "resized":
-            boids.canvas.copy(boids.sdl2texture, { x: 0, y: 0, ...boids.dimensions },
-                { x: 0, y: 0, width: event.width, height: event.height })
+        case "resized": {
+            const { width, height } = event
+            boids.canvas.copy(boids.sdl2texture, { x: 0, y: 0, width, height },
+                { x: 0, y: 0, width, height })
+            boids.screenDimensions = { width, height }
             boids.canvas.present()
             break
+        }
         case "draw":
             await boids.update();
             break
