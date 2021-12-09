@@ -33,7 +33,7 @@ export class Texture {
         return query_texture_format(this.index)
     }
 
-    update(data: Uint8Array, pitch: number = this.width) {
+    update(data: Uint8Array, pitch: number = this.width * 4) {
         update_texture(data, pitch, this.index)
     }
 }

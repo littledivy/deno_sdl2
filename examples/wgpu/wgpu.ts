@@ -104,7 +104,7 @@ const canvas = new Canvas({
 const sdl2texture = canvas.createTexture(
     PixelFormat.ABGR8888,
     TextureAccess.Streaming,
-    800,
+    200,
     200
 )
 await outputBuffer.mapAsync(1)
