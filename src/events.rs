@@ -145,7 +145,7 @@ impl Into<CanvasEvent> for Event {
       Event::Window { win_event, .. } => match win_event {
         WindowEvent::Resized(width, height) => {
           CanvasEvent::Resized { width, height }
-        },
+        }
         _ => CanvasEvent::Unknown,
       },
       _ => CanvasEvent::Unknown,

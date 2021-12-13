@@ -1,7 +1,7 @@
 use deno_bindgen::deno_bindgen;
 
+use super::fonts::{CanvasFontPartial, CanvasFontSize};
 use super::shapes::{CanvasPoint, Rectangle};
-use super::fonts::{CanvasFontSize, CanvasFontPartial};
 
 #[deno_bindgen]
 #[serde(rename_all = "camelCase")]

@@ -1,7 +1,7 @@
 mod events;
-mod tasks;
 mod fonts;
 mod shapes;
+mod tasks;
 mod update;
 
 use deno_bindgen::deno_bindgen;
@@ -14,10 +14,10 @@ use sdl2::surface::Surface;
 use sdl2::video::Window;
 use sdl2::video::WindowBuilder;
 
-use shapes::Rectangle;
-use update::update;
 use events::CanvasEvent;
+use shapes::Rectangle;
 use tasks::CanvasTask;
+use update::update;
 
 use std::cell::RefCell;
 use std::collections::HashMap;
@@ -215,19 +215,20 @@ pub fn update_texture(
 ) {
   RESOURCES.with(|rcell| {
     let mut resources = rcell.borrow_mut();
-    if let Some(Resource::Texture(texture)) = resources.resources.get_mut(&index) {
+    if let Some(Resource::Texture(texture)) =
+      resources.resources.get_mut(&index)
+    {
       texture.update(None, pixel_data, pitch);
     };
   });
 }
-
 
 #[deno_bindgen]
 pub fn query_window_width() -> u32 {
   WINDOW.with(|cell| {
     if let Some(ref mut canvas) = *cell.borrow_mut() {
       let (width, _) = canvas.window().size();
-      return width
+      return width;
     }
     0
   });
@@ -239,7 +240,7 @@ pub fn query_window_height() -> u32 {
   WINDOW.with(|cell| {
     if let Some(ref mut canvas) = *cell.borrow_mut() {
       let (_, height) = canvas.window().size();
-      return height
+      return height;
     }
     0
   });

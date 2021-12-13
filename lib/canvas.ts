@@ -22,7 +22,7 @@ export class Canvas {
   #properties: WindowOptions;
   // Used internally. Too lazy to define types
   #fonts: any[] = [];
-  #audioCallback: (buf: Float32Array) => void = (_) => { };
+  #audioCallback: (buf: Float32Array) => void = (_) => {};
   #resources: any[] = [];
   // TODO(@littledivy): Make this a read-only public?
   #closed = true;
@@ -323,7 +323,7 @@ export class Canvas {
    */
   createTextureFromSurface(surface: number) {
     // TODO: Verify surface
-    const texture = new Texture(this.#resources.length + 1)
+    const texture = new Texture(this.#resources.length + 1);
     const index = this.#resources.push(texture);
     exec({ createTextureSurface: { surface, index } });
     return texture;
@@ -337,8 +337,13 @@ export class Canvas {
    * @param {number} height
    * @returns {Texture}
    */
-  createTexture(format: PixelFormat, access: TextureAccess, width: number, height: number): Texture {
-    const texture = new Texture(this.#resources.length + 1)
+  createTexture(
+    format: PixelFormat,
+    access: TextureAccess,
+    width: number,
+    height: number,
+  ): Texture {
+    const texture = new Texture(this.#resources.length + 1);
     const index = this.#resources.push(texture);
     exec({ createTexture: { format, access, width, height, index } });
     return texture;
@@ -355,11 +360,11 @@ export class Canvas {
   }
 
   get height() {
-    return query_window_height()
+    return query_window_height();
   }
 
   get width() {
-    return query_window_height()
+    return query_window_height();
   }
 
   /**
