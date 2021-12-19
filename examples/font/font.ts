@@ -1,5 +1,5 @@
-import { Canvas } from "../src/canvas.ts";
-import { FPS } from "./utils.ts";
+import { Canvas } from "../../mod.ts";
+import { FPS } from "../utils.ts";
 
 const stepFrame = FPS(100);
 const canvas = new Canvas({
@@ -15,7 +15,7 @@ const canvas = new Canvas({
   flags: null,
 });
 
-const font = canvas.loadFont("./examples/jetbrains-mono.ttf", 128, {
+const font = canvas.loadFont("./examples/font/jetbrains-mono.ttf", 128, {
   style: "normal",
 });
 
@@ -30,7 +30,7 @@ const surface = canvas.renderFont(font, Deno.args[0] || "Hello there!", {
   },
 });
 const texture = canvas.createTextureFromSurface(surface);
-const { width, height } = canvas.queryTexture(texture);
+const { width, height } = texture;
 
 async function frame() {
   canvas.clear();

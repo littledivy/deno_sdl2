@@ -1,4 +1,4 @@
-import { Canvas } from "../src/canvas.ts";
+import { Canvas } from "../mod.ts";
 import { FPS } from "./utils.ts";
 
 const canvas = new Canvas({

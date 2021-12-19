@@ -1,7 +1,7 @@
-import { Canvas, Rectangle } from "../../src/canvas.ts";
+import { Canvas, Rectangle, Texture } from "../../mod.ts";
 
 export function drawMap(
-  texture: number,
+  texture: Texture,
   canvas: Canvas,
   map: number[][],
   chipSize: number,
@@ -38,11 +38,11 @@ export class Sprite {
   originX = 0;
   originY = 0;
   scale = 1;
-  texture: number;
+  texture: Texture;
   frames: Rectangle[];
   index = 0;
 
-  constructor(texture: number, frames: Rectangle[]) {
+  constructor(texture: Texture, frames: Rectangle[]) {
     this.texture = texture;
     this.frames = frames;
   }
