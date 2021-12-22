@@ -11,7 +11,7 @@ const opts = {
 };
 const _lib = await prepare(opts, {
   fill_events: {
-    parameters: ["buffer", "usize"],
+    parameters: ["pointer", "usize"],
     result: "void",
     nonblocking: false,
   },
@@ -21,14 +21,14 @@ const _lib = await prepare(opts, {
     nonblocking: false,
   },
   do_task: {
-    parameters: ["buffer", "usize"],
+    parameters: ["pointer", "usize"],
     result: "void",
     nonblocking: false,
   },
   poll_events: { parameters: [], result: "usize", nonblocking: false },
   query_window_width: { parameters: [], result: "u32", nonblocking: false },
   update_texture: {
-    parameters: ["buffer", "usize", "usize", "u32"],
+    parameters: ["pointer", "usize", "usize", "u32"],
     result: "void",
     nonblocking: false,
   },
@@ -39,7 +39,7 @@ const _lib = await prepare(opts, {
   },
   query_window_height: { parameters: [], result: "u32", nonblocking: false },
   init: {
-    parameters: ["buffer", "usize", "buffer", "usize"],
+    parameters: ["pointer", "usize", "pointer", "usize"],
     result: "void",
     nonblocking: false,
   },
