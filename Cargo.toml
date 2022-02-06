@@ -1,7 +1,9 @@
 [package]
 name = "deno_sdl2"
-version = "0.2.0"
+version = "0.3.0"
 edition = "2018"
+description = "SDL2 Bindings to Deno"
+license = "MIT"
 repository = "https://github.com/littledivy/deno_sdl2"
 
 [features]

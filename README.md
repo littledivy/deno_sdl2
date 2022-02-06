@@ -64,7 +64,7 @@ You need:
 - `pkg-config` (on *nix) => `brew install pkg-config`
 
 ```bash
-deno install -Afq -n deno_bindgen https://raw.githubusercontent.com/littledivy/deno_bindgen/main/cli.ts
+deno install -Afq -n deno_bindgen https://deno.land/x/deno_bindgen/cli.ts
 cargo install cargo-vcpkg
 
 # build vcpkg dependencies

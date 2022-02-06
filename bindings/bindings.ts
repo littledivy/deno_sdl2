@@ -66,6 +66,12 @@ const _lib = await prepare(opts, {
     nonblocking: false,
   },
 });
+export type CanvasColor = {
+  r: number;
+  g: number;
+  b: number;
+  a: number;
+};
 /**
  * https://docs.rs/sdl2/0.34.5/sdl2/video/struct.WindowBuilder.htm
  * Window Builder configuration
@@ -87,6 +93,39 @@ export type OptionRectangle = {
   y: number;
   width: number | undefined | null;
   height: number | undefined | null;
+};
+export type CanvasFontPartial =
+  | {
+    solid: {
+      color: CanvasColor;
+    };
+  }
+  | {
+    shaded: {
+      color: CanvasColor;
+      background: CanvasColor;
+    };
+  }
+  | {
+    blended: {
+      color: CanvasColor;
+    };
+  };
+export type CanvasFontSize =
+  | "normal"
+  | "bold"
+  | "italic"
+  | "underline"
+  | "strikethrough";
+export type Rectangle = {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+};
+export type CanvasPoint = {
+  x: number;
+  y: number;
 };
 export type CanvasEvent =
   | "quit"
@@ -342,51 +381,12 @@ export type CanvasTask =
       opacity: number;
     };
   };
-export type CanvasPoint = {
-  x: number;
-  y: number;
-};
-export type Rectangle = {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-};
 /**
  * https://rust-sdl2.github.io/rust-sdl2/sdl2/render/struct.CanvasBuilder.html
  * Canvas Builder configuration
  */
 export type CanvasOptions = {
   software: boolean;
-};
-export type CanvasFontPartial =
-  | {
-    solid: {
-      color: CanvasColor;
-    };
-  }
-  | {
-    shaded: {
-      color: CanvasColor;
-      background: CanvasColor;
-    };
-  }
-  | {
-    blended: {
-      color: CanvasColor;
-    };
-  };
-export type CanvasFontSize =
-  | "normal"
-  | "bold"
-  | "italic"
-  | "underline"
-  | "strikethrough";
-export type CanvasColor = {
-  r: number;
-  g: number;
-  b: number;
-  a: number;
 };
 export function do_task(a0: CanvasTask) {
   const a0_buf = encode(JSON.stringify(a0));
