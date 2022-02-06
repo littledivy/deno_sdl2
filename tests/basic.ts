@@ -21,4 +21,7 @@ for await (const event of canvas) {
     canvas.clear();
     canvas.present();
   }
+  if (event.type == "quit") {
+    canvas.quit();
+  }
 }

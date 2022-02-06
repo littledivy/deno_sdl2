@@ -266,7 +266,7 @@ pub fn update(task: CanvasTask, canvas: &mut Canvas<Window>) -> bool {
       rect2,
     } => {
       RESOURCES.with(|rcell| {
-        let mut resources = rcell.borrow_mut();
+        let resources = rcell.borrow_mut();
         if let Some(texture) = resources.resources.get(&texture) {
           match texture {
             Resource::Texture(texture) => {
@@ -301,7 +301,7 @@ pub fn update(task: CanvasTask, canvas: &mut Canvas<Window>) -> bool {
       let window = canvas.window_mut();
       window.set_title(&title).unwrap();
     }
-    CanvasTask::SetIcon { icon } => {
+    CanvasTask::SetIcon { icon: _ } => {
       // TODO: Requires surface creation. Yet to decide the API
     }
     CanvasTask::SetPosition { x, y } => {

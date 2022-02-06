@@ -13,17 +13,25 @@ const canvas = new Canvas({
   flags: null,
 });
 
-const surface = canvas.loadSurface("tests/sample.gif");
+const surface = canvas.loadSurface("tests/deno_logo.png");
 const texture = canvas.createTextureFromSurface(surface);
 
-canvas.copy(texture, { x: 0, y: 0, width: 480, height: 480 }, {
-  x: 0,
-  y: 0,
-  width: 480,
-  height: 480,
-});
-canvas.present();
 // Fire up the event loop
-for await (const _ of canvas) {
+for await (const event of canvas) {
+  if (event.type == "quit") {
+    canvas.quit();
+  }
+
+  canvas.setDrawColor(255, 255, 255, 255);
+  canvas.clear();
+  canvas.copy(texture, { x: 0, y: 0, width: 290, height: 250 }, {
+    x: 0,
+    y: 0,
+    width: 290,
+    height: 250,
+  });
+
+  canvas.present();
+
   continue;
 }

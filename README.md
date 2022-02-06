@@ -61,6 +61,7 @@ You need:
   `main` branch
 - [Rust](https://rust-lang.org) nightly toolchain + Cargo (`1.57.0-nightly`)
 - [`cargo-vcpkg`](https://crates.io/crates/cargo-vcpkg) tool
+- `pkg-config` (on *nix) => `brew install pkg-config`
 
 ```bash
 deno install -Afq -n deno_bindgen https://raw.githubusercontent.com/littledivy/deno_bindgen/main/cli.ts
