@@ -108,7 +108,8 @@ fn build_canvas(window: Window, options: CanvasOptions) -> WindowCanvas {
 pub fn init(options: WindowOptions, canvas_options: CanvasOptions) {
   let sdl_context = sdl2::init().unwrap();
   let video_subsystem = sdl_context.video().unwrap();
-  let _image_context = sdl2::image::init(InitFlag::PNG | InitFlag::JPG).unwrap();
+  let _image_context =
+    sdl2::image::init(InitFlag::PNG | InitFlag::JPG).unwrap();
   let ttf_context = sdl2::ttf::init().unwrap();
 
   let mut window_builder =

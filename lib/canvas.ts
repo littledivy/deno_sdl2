@@ -373,6 +373,7 @@ export class Canvas {
    */
   async *[Symbol.asyncIterator]() {
     this.#closed = false;
+
     while (true) {
       if (this.#closed) break;
       const len = poll_events();

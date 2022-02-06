@@ -14,7 +14,7 @@ lint: fmt
 	deno lint --ignore=target/
 
 test: fmt 
-	deno run -A tests/mp3_flag.ts
+	deno run -A --unstable tests/mp3_flag.ts
 
 clean:
 	rm -rf deno_sdl2
