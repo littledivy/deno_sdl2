@@ -15,7 +15,6 @@ use sdl2::video::Window;
 use sdl2::video::WindowBuilder;
 
 use events::CanvasEvent;
-use shapes::Rectangle;
 use tasks::CanvasTask;
 use update::update;
 
@@ -109,7 +108,7 @@ fn build_canvas(window: Window, options: CanvasOptions) -> WindowCanvas {
 pub fn init(options: WindowOptions, canvas_options: CanvasOptions) {
   let sdl_context = sdl2::init().unwrap();
   let video_subsystem = sdl_context.video().unwrap();
-  let image_context = sdl2::image::init(InitFlag::PNG | InitFlag::JPG).unwrap();
+  let _image_context = sdl2::image::init(InitFlag::PNG | InitFlag::JPG).unwrap();
   let ttf_context = sdl2::ttf::init().unwrap();
 
   let mut window_builder =
@@ -218,7 +217,7 @@ pub fn update_texture(
     if let Some(Resource::Texture(texture)) =
       resources.resources.get_mut(&index)
     {
-      texture.update(None, pixel_data, pitch);
+      texture.update(None, pixel_data, pitch).ok();
     };
   });
 }

@@ -1,11 +1,9 @@
 use deno_bindgen::deno_bindgen;
-use serde::Serialize;
 
 use sdl2::event::Event;
 use sdl2::event::WindowEvent;
 
 #[deno_bindgen]
-#[derive(Serialize)]
 #[serde(rename_all = "snake_case")]
 pub enum CanvasEvent {
   Quit,

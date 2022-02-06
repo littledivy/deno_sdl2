@@ -16,6 +16,9 @@ const canvas = new Canvas({
 canvas.playMusic("tests/sample_0.mp3");
 
 // Fire up the event loop
-for await (const _ of canvas) {
+for await (const event of canvas) {
+  if (event.type == "quit") {
+    canvas.quit();
+  }
   continue;
 }
