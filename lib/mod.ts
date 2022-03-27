@@ -167,6 +167,116 @@ class Canvas {
       throwSDLError(ret);
     }
   }
+
+  textureCreator() {
+    return new TextureCreator(this.raw);
+  }
+}
+
+enum TextureAccess {
+  Static = 0,
+  Streaming = 1,
+  Target = 2,
+}
+
+class TextureCreator {
+  constructor(private raw: Deno.UnsafePointer) {}
+
+  createTexture(
+    format: number,
+    access: number,
+    w: number,
+    h: number,
+  ): Texture {
+    const raw = sdl2.symbols.SDL_CreateTexture(
+      this.raw,
+      format,
+      access,
+      w,
+      h,
+    );
+    if (raw === null) {
+      throwSDLError(0);
+    }
+    return new Texture(raw);
+  }
+}
+
+export interface TextureQuery {
+  format: number;
+  access: TextureAccess;
+  w: number;
+  h: number;
+}
+
+class Texture {
+  constructor(private raw: Deno.UnsafePointer) {}
+
+  query(): TextureQuery {
+    const format = new Uint32Array(1);
+    const access = new Uint32Array(1);
+    const w = new Uint32Array(1);
+    const h = new Uint32Array(1);
+
+    const ret = sdl2.symbols.SDL_QueryTexture(
+      this.raw,
+      Deno.UnsafePointer.of(format),
+      Deno.UnsafePointer.of(access),
+      Deno.UnsafePointer.of(w),
+      Deno.UnsafePointer.of(h),
+    );
+    if (ret < 0) {
+      throwSDLError(ret);
+    }
+    return {
+      format: format[0],
+      access: access[0],
+      w: w[0],
+      h: h[0],
+    };
+  }
+
+  setColorMod(r: number, g: number, b: number) {
+    const ret = sdl2.symbols.SDL_SetTextureColorMod(
+      this.raw,
+      r,
+      g,
+      b,
+    );
+    if (ret < 0) {
+      throwSDLError(ret);
+    }
+  }
+
+  setAlphaMod(a: number) {
+    const ret = sdl2.symbols.SDL_SetTextureAlphaMod(this.raw, a);
+    if (ret < 0) {
+      throwSDLError(ret);
+    }
+  }
+
+  update(pixels: Uint8Array, pitch: number, rect?: Rect) {
+    const ret = sdl2.symbols.SDL_UpdateTexture(
+      this.raw,
+      rect ? rect[_raw] : null,
+      Deno.UnsafePointer.of(pixels),
+      pitch,
+    );
+    if (ret < 0) {
+      throwSDLError(ret);
+    }
+  }
+}
+
+const _raw = Symbol("raw");
+class Rect {
+  [_raw]: Uint32Array;
+  constructor(x: number, y: number, w: number, h: number) {
+    this[_raw] = new Uint32Array([x, y, w, h]);
+  }
+}
+
+class Surface {
 }
 
 class Window {

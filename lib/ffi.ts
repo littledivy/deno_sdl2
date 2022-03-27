@@ -170,6 +170,36 @@ const library = Deno.dlopen("/opt/homebrew/lib/libSDL2.dylib", {
     "parameters": ["pointer", "pointer", "u32", "pointer", "i32"],
     "result": "i32",
   },
+  "SDL_CreateTexture": {
+    "parameters": ["pointer", "u32", "i32", "i32", "i32"],
+    "result": "pointer",
+  },
+  "SDL_DestroyTexture": {
+    "parameters": ["pointer"],
+    "result": "i32",
+  },
+  "SDL_QueryTexture": {
+    "parameters": [
+      "pointer",
+      "pointer",
+      "pointer",
+      "pointer",
+      "pointer",
+    ],
+    "result": "i32",
+  },
+  "SDL_SetTextureColorMod": {
+    "parameters": ["pointer", "u8", "u8", "u8"],
+    "result": "i32",
+  },
+  "SDL_SetTextureAlphaMod": {
+    "parameters": ["pointer", "u8"],
+    "result": "i32",
+  },
+  "SDL_UpdateTexture": {
+    "parameters": ["pointer", "pointer", "pointer", "i32"],
+    "result": "i32",
+  },
 });
 
 export { init, library as sdl2 };
