@@ -61,7 +61,10 @@ function throwSDLError(err: number): never {
 }
 
 class Canvas {
-  constructor(private raw: Deno.UnsafePointer, private target: Deno.UnsafePointer) {}
+  constructor(
+    private raw: Deno.UnsafePointer,
+    private target: Deno.UnsafePointer,
+  ) {}
 
   setDrawColor(r: number, g: number, b: number, a: number) {
     const ret = sdl2.symbols.SDL_SetRenderDrawColor(this.target, r, g, b, a);
@@ -79,6 +82,90 @@ class Canvas {
 
   present() {
     sdl2.symbols.SDL_RenderPresent(this.raw);
+  }
+
+  drawPoint(x: number, y: number) {
+    const ret = sdl2.symbols.SDL_RenderDrawPoint(this.raw, x, y);
+    if (ret < 0) {
+      throwSDLError(ret);
+    }
+  }
+
+  drawPoints(points: [number, number][]) {
+    const intArray = new Int32Array(points.flat());
+    const ret = sdl2.symbols.SDL_RenderDrawPoints(
+      this.raw,
+      Deno.UnsafePointer.of(intArray),
+      intArray.length,
+    );
+    if (ret < 0) {
+      throwSDLError(ret);
+    }
+  }
+
+  drawLine(x1: number, y1: number, x2: number, y2: number) {
+    const ret = sdl2.symbols.SDL_RenderDrawLine(this.raw, x1, y1, x2, y2);
+    if (ret < 0) {
+      throwSDLError(ret);
+    }
+  }
+
+  drawLines(points: [number, number][]) {
+    const intArray = new Int32Array(points.flat());
+    const ret = sdl2.symbols.SDL_RenderDrawLines(
+      this.raw,
+      Deno.UnsafePointer.of(intArray),
+      intArray.length,
+    );
+    if (ret < 0) {
+      throwSDLError(ret);
+    }
+  }
+
+  drawRect(x: number, y: number, w: number, h: number) {
+    const intArray = new Int32Array([x, y, w, h]);
+    const ret = sdl2.symbols.SDL_RenderDrawRect(
+      this.raw,
+      Deno.UnsafePointer.of(intArray),
+    );
+    if (ret < 0) {
+      throwSDLError(ret);
+    }
+  }
+
+  drawRects(rects: [number, number, number, number][]) {
+    const intArray = new Int32Array(rects.flat());
+    const ret = sdl2.symbols.SDL_RenderDrawRects(
+      this.raw,
+      Deno.UnsafePointer.of(intArray),
+      intArray.length,
+    );
+    if (ret < 0) {
+      throwSDLError(ret);
+    }
+  }
+
+  fillRect(x: number, y: number, w: number, h: number) {
+    const intArray = new Int32Array([x, y, w, h]);
+    const ret = sdl2.symbols.SDL_RenderFillRect(
+      this.raw,
+      Deno.UnsafePointer.of(intArray),
+    );
+    if (ret < 0) {
+      throwSDLError(ret);
+    }
+  }
+
+  fillRects(rects: [number, number, number, number][]) {
+    const intArray = new Int32Array(rects.flat());
+    const ret = sdl2.symbols.SDL_RenderFillRects(
+      this.raw,
+      Deno.UnsafePointer.of(intArray),
+      intArray.length,
+    );
+    if (ret < 0) {
+      throwSDLError(ret);
+    }
   }
 }
 

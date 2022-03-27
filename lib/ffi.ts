@@ -155,13 +155,21 @@ const library = Deno.dlopen("/opt/homebrew/lib/libSDL2.dylib", {
     "result": "i32",
   },
   "SDL_RenderCopyEx": {
-    "parameters": ["pointer", "pointer", "pointer", "pointer", "f32", "pointer", "u32"],
+    "parameters": [
+      "pointer",
+      "pointer",
+      "pointer",
+      "pointer",
+      "f32",
+      "pointer",
+      "u32",
+    ],
     "result": "i32",
   },
   "SDL_RenderReadPixels": {
     "parameters": ["pointer", "pointer", "u32", "pointer", "i32"],
     "result": "i32",
-  }
+  },
 });
 
 export { init, library as sdl2 };
