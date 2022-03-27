@@ -1,10 +1,10 @@
 import { init, sdl2 } from "./ffi.ts";
-import { Struct, u8 } from "https://deno.land/x/byte_type@0.1.7/ffi.ts";
+import { Struct, u32 } from "https://deno.land/x/byte_type@0.1.7/ffi.ts";
 
 init();
 
 const SDL_Event = new Struct({
-  "type": u8,
+  "type": u32,
 });
 
 enum EventType {
@@ -60,9 +60,9 @@ function throwSDLError(err: number): never {
   throw new Error(`SDL Error: ${view.getCString()}`);
 }
 
-class Canvas {
+export class Canvas {
   constructor(
-    private raw: Deno.UnsafePointer,
+    private window: Deno.UnsafePointer,
     private target: Deno.UnsafePointer,
   ) {}
 
@@ -74,18 +74,18 @@ class Canvas {
   }
 
   clear() {
-    const ret = sdl2.symbols.SDL_RenderClear(this.raw);
+    const ret = sdl2.symbols.SDL_RenderClear(this.target);
     if (ret < 0) {
       throwSDLError(ret);
     }
   }
 
   present() {
-    sdl2.symbols.SDL_RenderPresent(this.raw);
+    sdl2.symbols.SDL_RenderPresent(this.target);
   }
 
   drawPoint(x: number, y: number) {
-    const ret = sdl2.symbols.SDL_RenderDrawPoint(this.raw, x, y);
+    const ret = sdl2.symbols.SDL_RenderDrawPoint(this.target, x, y);
     if (ret < 0) {
       throwSDLError(ret);
     }
@@ -94,7 +94,7 @@ class Canvas {
   drawPoints(points: [number, number][]) {
     const intArray = new Int32Array(points.flat());
     const ret = sdl2.symbols.SDL_RenderDrawPoints(
-      this.raw,
+      this.target,
       Deno.UnsafePointer.of(intArray),
       intArray.length,
     );
@@ -104,7 +104,7 @@ class Canvas {
   }
 
   drawLine(x1: number, y1: number, x2: number, y2: number) {
-    const ret = sdl2.symbols.SDL_RenderDrawLine(this.raw, x1, y1, x2, y2);
+    const ret = sdl2.symbols.SDL_RenderDrawLine(this.target, x1, y1, x2, y2);
     if (ret < 0) {
       throwSDLError(ret);
     }
@@ -113,7 +113,7 @@ class Canvas {
   drawLines(points: [number, number][]) {
     const intArray = new Int32Array(points.flat());
     const ret = sdl2.symbols.SDL_RenderDrawLines(
-      this.raw,
+      this.target,
       Deno.UnsafePointer.of(intArray),
       intArray.length,
     );
@@ -125,7 +125,7 @@ class Canvas {
   drawRect(x: number, y: number, w: number, h: number) {
     const intArray = new Int32Array([x, y, w, h]);
     const ret = sdl2.symbols.SDL_RenderDrawRect(
-      this.raw,
+      this.target,
       Deno.UnsafePointer.of(intArray),
     );
     if (ret < 0) {
@@ -136,7 +136,7 @@ class Canvas {
   drawRects(rects: [number, number, number, number][]) {
     const intArray = new Int32Array(rects.flat());
     const ret = sdl2.symbols.SDL_RenderDrawRects(
-      this.raw,
+      this.target,
       Deno.UnsafePointer.of(intArray),
       intArray.length,
     );
@@ -148,7 +148,7 @@ class Canvas {
   fillRect(x: number, y: number, w: number, h: number) {
     const intArray = new Int32Array([x, y, w, h]);
     const ret = sdl2.symbols.SDL_RenderFillRect(
-      this.raw,
+      this.target,
       Deno.UnsafePointer.of(intArray),
     );
     if (ret < 0) {
@@ -159,7 +159,7 @@ class Canvas {
   fillRects(rects: [number, number, number, number][]) {
     const intArray = new Int32Array(rects.flat());
     const ret = sdl2.symbols.SDL_RenderFillRects(
-      this.raw,
+      this.target,
       Deno.UnsafePointer.of(intArray),
       intArray.length,
     );
@@ -169,7 +169,7 @@ class Canvas {
   }
 
   textureCreator() {
-    return new TextureCreator(this.raw);
+    return new TextureCreator(this.target);
   }
 }
 
@@ -179,7 +179,7 @@ enum TextureAccess {
   Target = 2,
 }
 
-class TextureCreator {
+export class TextureCreator {
   constructor(private raw: Deno.UnsafePointer) {}
 
   createTexture(
@@ -209,7 +209,7 @@ export interface TextureQuery {
   h: number;
 }
 
-class Texture {
+export class Texture {
   constructor(private raw: Deno.UnsafePointer) {}
 
   query(): TextureQuery {
@@ -269,27 +269,49 @@ class Texture {
 }
 
 const _raw = Symbol("raw");
-class Rect {
+export class Rect {
   [_raw]: Uint32Array;
   constructor(x: number, y: number, w: number, h: number) {
     this[_raw] = new Uint32Array([x, y, w, h]);
   }
 }
 
-class Surface {
+export class Surface {
+  constructor(private raw: Deno.UnsafePointer) {}
+
+  static loadBmp(path: string): Surface {
+    const raw = sdl2.symbols.SDL_LoadBMP_RW(asCString(path));
+    if (raw === null) {
+      throwSDLError(0);
+    }
+    return new Surface(raw);
+  }
 }
 
-class Window {
+const eventBuf = new Uint8Array(1024);
+export class Window {
   constructor(private raw: Deno.UnsafePointer) {}
 
   canvas() {
     // Hardware accelerated canvas
     const raw = sdl2.symbols.SDL_CreateRenderer(this.raw, -1, 0);
-    return new Canvas(raw, this.raw);
+    return new Canvas(this.raw, raw);
+  }
+
+  *events() {
+    while (true) {
+      const event = Deno.UnsafePointer.of(eventBuf);
+      const pending = sdl2.symbols.SDL_PollEvent(event) == 1;
+      if (!pending) {
+        yield { type: "draw" };
+      }
+      const sdlEvent = SDL_Event.read(new Deno.UnsafePointerView(event));
+      yield { type: sdlEvent.type };
+    }
   }
 }
 
-class WindowBuilder {
+export class WindowBuilder {
   private flags: number = 0;
   constructor(
     private title: string,
@@ -366,7 +388,7 @@ class WindowBuilder {
   }
 }
 
-class VideoSubsystem {
+export class VideoSubsystem {
   currentVideoDriver(): string {
     const buf = sdl2.symbols.SDL_GetCurrentVideoDriver();
     if (buf === null) {
@@ -377,4 +399,22 @@ class VideoSubsystem {
   }
 }
 
-new WindowBuilder("Hello", 640, 480).build();
+const window = new WindowBuilder("Hello", 640, 480).highDPI().build();
+const canvas = window.canvas();
+
+import { FPS } from "../examples/utils.ts";
+const fps = FPS();
+for (const event of window.events()) {
+  fps();
+  if (event.type == EventType.Quit) {
+    break;
+  }
+
+  // Rainbow effect
+  const r = Math.sin(Date.now() / 1000) * 127 + 128;
+  const g = Math.sin(Date.now() / 1000 + 2) * 127 + 128;
+  const b = Math.sin(Date.now() / 1000 + 4) * 127 + 128;
+  canvas.setDrawColor(Math.floor(r), Math.floor(g), Math.floor(b), 255);
+  canvas.clear();
+  canvas.present();
+}
