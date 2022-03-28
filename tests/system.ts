@@ -1,4 +1,4 @@
-import { VideoSubsystem } from "../lib/mod.ts";
+import { VideoSubsystem } from "../mod.ts";
 import { assertEquals } from "https://deno.land/std/testing/asserts.ts";
 
 Deno.test("VideoSubsystem#currentVideoDriver", () => {

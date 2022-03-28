@@ -1,4 +1,10 @@
-import { WindowBuilder, EventType, Rect, PixelFormat, TextureAccess } from "../../lib/mod.ts";
+import {
+  EventType,
+  PixelFormat,
+  Rect,
+  TextureAccess,
+  WindowBuilder,
+} from "../../mod.ts";
 const dimensions = {
   width: 200,
   height: 200,

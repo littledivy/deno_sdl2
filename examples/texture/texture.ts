@@ -4,7 +4,7 @@ import {
   Rect,
   TextureAccess,
   WindowBuilder,
-} from "../../lib/mod.ts";
+} from "../../mod.ts";
 
 const window = new WindowBuilder("Hello, Deno!", 1024, 1024).build();
 const canvas = window.canvas();

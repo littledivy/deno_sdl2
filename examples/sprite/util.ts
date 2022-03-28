@@ -1,4 +1,4 @@
-import { Canvas, Rect, Texture } from "../../lib/mod.ts";
+import { Canvas, Rect, Texture } from "../../mod.ts";
 
 export function drawMap(
   texture: Texture,

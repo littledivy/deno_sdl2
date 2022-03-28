@@ -1,10 +1,10 @@
 fmt:
-	deno fmt --ignore=target/
+	deno fmt
 
 lint: fmt
-	deno lint --ignore=target/
+	deno lint
 
 test: fmt 
-	deno run -A --unstable tests/mp3_flag.ts
+	deno test -A --unstable
 
 .PHONY: fmt lint test

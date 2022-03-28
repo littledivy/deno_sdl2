@@ -1,4 +1,4 @@
-import { EventType, Rect, Surface, WindowBuilder } from "../../lib/mod.ts";
+import { EventType, Rect, Surface, WindowBuilder } from "../../mod.ts";
 import { drawMap, Sprite } from "./util.ts";
 
 const canvasSize = { width: 400, height: 400 };

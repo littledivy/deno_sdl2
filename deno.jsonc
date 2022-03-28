@@ -1,0 +1,10 @@
+{
+  "lint": {
+    "rules": {
+      "exclude": [
+        // Dumbest rule IMO. I prefer explicitness.
+        "no-inferrable-types"
+      ]
+    }
+  }
+}
