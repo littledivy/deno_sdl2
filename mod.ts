@@ -7,7 +7,7 @@ import {
   u8,
 } from "https://deno.land/x/byte_type@0.1.7/ffi.ts";
 
-const sdl2 = Deno.dlopen("/opt/homebrew/lib/libSDL2.dylib", {
+const sdl2 = Deno.dlopen(`libSDL2.dylib`, {
   "SDL_Init": {
     "parameters": ["u32"],
     "result": "i32",
@@ -219,7 +219,7 @@ const sdl2 = Deno.dlopen("/opt/homebrew/lib/libSDL2.dylib", {
   },
 });
 
-const sdl2Image = Deno.dlopen("/opt/homebrew/lib/libSDL2_image.dylib", {
+const sdl2Image = Deno.dlopen("libSDL2_image.dylib", {
   "IMG_Init": {
     "parameters": ["u32"],
     "result": "u32",
@@ -230,7 +230,7 @@ const sdl2Image = Deno.dlopen("/opt/homebrew/lib/libSDL2_image.dylib", {
   },
 });
 
-const sdl2Font = Deno.dlopen("/opt/homebrew/lib/libSDL2_ttf.dylib", {
+const sdl2Font = Deno.dlopen("libSDL2_ttf.dylib", {
   "TTF_Init": {
     "parameters": [],
     "result": "u32",

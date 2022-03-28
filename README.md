@@ -7,10 +7,7 @@ https://user-images.githubusercontent.com/34997667/160436698-9045ba0c-3fc8-45f9-
 ### get started
 
 ```typescript
-import {
-  EventType,
-  WindowBuilder,
-} from "https://deno.land/x/sdl2/mod.ts";
+import { EventType, WindowBuilder } from "https://deno.land/x/sdl2/mod.ts";
 
 const window = new WindowBuilder("Hello, Deno!", 640, 480).build();
 const canvas = window.canvas();
@@ -37,7 +34,6 @@ for (const event of window.events()) {
 ### installing sdl2
 
 Follow https://wiki.libsdl.org/Installation to install the dynamic library.
-`deno_sdl2` will use various methods to figure our the installation path.
 
 TL;DR
 
@@ -55,6 +51,15 @@ Linux (x64):
 
 ```shell
 sudo apt install sdl2 sdl2_image sdl2_ttf
+```
+
+Make sure the libraries is in your system's library search paths, if not
+already:
+
+```bash
+sudo ln -s /opt/homebrew/lib/libSDL2.dylib /usr/local/lib/
+sudo ln -s /opt/homebrew/lib/libSDL2_image.dylib /usr/local/lib/
+sudo ln -s /opt/homebrew/lib/libSDL2_ttf.dylib /usr/local/lib/
 ```
 
 ### security
