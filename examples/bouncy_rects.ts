@@ -1,18 +1,8 @@
-import { Canvas } from "../mod.ts";
+import { WindowBuilder, EventType } from "../lib/mod.ts";
 import { FPS } from "./utils.ts";
 
-const canvas = new Canvas({
-  title: "Hello, Deno!",
-  height: 800,
-  width: 600,
-  centered: true,
-  fullscreen: false,
-  hidden: false,
-  resizable: true,
-  minimized: false,
-  maximized: false,
-  flags: null,
-});
+const window = new WindowBuilder("Hello, Deno!", 600, 800).build();
+const canvas = window.canvas();
 
 const boxes: any[] = [];
 let num_boxes = 5;
@@ -43,7 +33,7 @@ function checkCollision(
 }
 
 // 60 FPS cap
-const stepFrame = FPS(60);
+const stepFrame = FPS();
 
 async function frame() {
   canvas.setDrawColor(0, 0, 0, 255);
@@ -122,15 +112,15 @@ async function frame() {
 }
 
 // Fire up the event loop
-for await (const event of canvas) {
+for (const event of window.events()) {
   switch (event.type) {
-    case "draw":
+    case EventType.Draw:
       await frame();
       break;
-    case "quit":
-      canvas.quit();
+    case EventType.Quit:
+      Deno.exit(0);
       break;
-    case "mouse_button_up":
+    case EventType.MouseButtonDown:
       boxes.push({
         x: event.x,
         y: event.y,

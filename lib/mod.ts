@@ -1,5 +1,12 @@
 import { init, sdl2 } from "./ffi.ts";
-import { Struct, u32 } from "https://deno.land/x/byte_type@0.1.7/ffi.ts";
+import {
+  i32,
+  SizedFFIType,
+  Struct,
+  u16,
+  u32,
+  u8,
+} from "https://deno.land/x/byte_type@0.1.7/ffi.ts";
 
 init();
 
@@ -7,9 +14,15 @@ const SDL_Event = new Struct({
   "type": u32,
 });
 
-enum EventType {
+export enum EventType {
   First = 0,
   Quit = 0x100,
+  AppTerminating = 0x101,
+  AppLowMemory = 0x102,
+  AppWillEnterBackground = 0x103,
+  AppDidEnterBackground = 0x104,
+  AppWillEnterForeground = 0x105,
+  AppDidEnterForeground = 0x106,
   WindowEvent = 0x200,
   KeyDown = 0x300,
   KeyUp = 0x301,
@@ -17,36 +30,37 @@ enum EventType {
   MouseButtonDown = 0x401,
   MouseButtonUp = 0x402,
   MouseWheel = 0x403,
-  JoyAxisMotion = 0x600,
-  JoyBallMotion = 0x601,
-  JoyHatMotion = 0x602,
-  JoyButtonDown = 0x603,
-  JoyButtonUp = 0x604,
-  JoyDeviceAdded = 0x605,
-  JoyDeviceRemoved = 0x606,
-  ControllerAxisMotion = 0x650,
-  ControllerButtonDown = 0x651,
-  ControllerButtonUp = 0x652,
-  ControllerDeviceAdded = 0x653,
-  ControllerDeviceRemoved = 0x654,
-  ControllerDeviceRemapped = 0x655,
-  FingerDown = 0x700,
-  FingerUp = 0x701,
-  FingerMotion = 0x702,
-  DollarGesture = 0x800,
-  DollarRecord = 0x801,
-  MultiGesture = 0x802,
-  ClipboardUpdate = 0x900,
-  DropFile = 0x1000,
-  DropText = 0x1001,
-  DropBegin = 0x1002,
-  DropComplete = 0x1003,
+  //  JoyAxisMotion = 0x600,
+  //  JoyBallMotion = 0x601,
+  //  JoyHatMotion = 0x602,
+  //  JoyButtonDown = 0x603,
+  //  JoyButtonUp = 0x604,
+  //  JoyDeviceAdded = 0x605,
+  //  JoyDeviceRemoved = 0x606,
+  //  ControllerAxisMotion = 0x650,
+  //  ControllerButtonDown = 0x651,
+  //  ControllerButtonUp = 0x652,
+  //  ControllerDeviceAdded = 0x653,
+  //  ControllerDeviceRemoved = 0x654,
+  //  ControllerDeviceRemapped = 0x655,
+  //  FingerDown = 0x700,
+  //  FingerUp = 0x701,
+  //  FingerMotion = 0x702,
+  //  DollarGesture = 0x800,
+  //  DollarRecord = 0x801,
+  //  MultiGesture = 0x802,
+  //  ClipboardUpdate = 0x900,
+  //  DropFile = 0x1000,
+  //  DropText = 0x1001,
+  //  DropBegin = 0x1002,
+  //  DropComplete = 0x1003,
   AudioDeviceAdded = 0x1100,
   AudioDeviceRemoved = 0x1101,
-  RenderTargetsReset = 0x2000,
-  RenderDeviceReset = 0x2001,
+  //  RenderTargetsReset = 0x2000,
+  //  RenderDeviceReset = 0x2001,
   User = 0x8000,
   Last = 0xFFFF,
+  Draw,
 }
 
 function asCString(str: string): Uint8Array {
@@ -288,7 +302,148 @@ export class Surface {
   }
 }
 
-const eventBuf = new Uint8Array(1024);
+const sizeOfEvent = 56; // type (u32) + event
+const eventBuf = new Uint8Array(sizeOfEvent);
+function makeReader<T extends Record<string, SizedFFIType<unknown>>>(
+  eventType: Struct<T>,
+) {
+  return (reader: Deno.UnsafePointerView) => {
+    return eventType.read(reader);
+  };
+}
+
+const SDL_QuitEvent = new Struct({
+  type: u32,
+  timestamp: u32,
+});
+
+const SDL_CommonEvent = new Struct({
+  type: u32,
+  timestamp: u32,
+});
+
+const SDL_WindowEvent = new Struct({
+  type: u32,
+  timestamp: u32,
+  windowID: u32,
+  event: u8,
+  padding1: u8,
+  padding2: u8,
+  padding3: u8,
+  data1: i32,
+  data2: i32,
+});
+
+const SDL_DisplayEvent = new Struct({
+  type: u32,
+  timestamp: u32,
+  display: u32,
+  event: u8,
+  padding1: u8,
+  padding2: u8,
+  padding3: u8,
+  data1: i32,
+  data2: i32,
+});
+
+const SDL_KeySym = new Struct({
+  scancode: u32,
+  sym: u32,
+  _mod: u16,
+  unused: u32,
+});
+
+const SDL_KeyboardEvent = new Struct({
+  type: u32,
+  timestamp: u32,
+  windowID: u32,
+  state: u8,
+  repeat: u8,
+  padding2: u8,
+  padding3: u8,
+  keysym: SDL_KeySym,
+});
+
+const SDL_MouseMotionEvent = new Struct({
+  type: u32,
+  timestamp: u32,
+  windowID: u32,
+  which: u32,
+  state: u32,
+  x: i32,
+  y: i32,
+  xrel: i32,
+  yrel: i32,
+});
+
+const SDL_MouseButtonEvent = new Struct({
+  type: u32,
+  timestamp: u32,
+  windowID: u32,
+  which: u32,
+  button: u8,
+  state: u8,
+  padding1: u8,
+  padding2: u8,
+  x: i32,
+  y: i32,
+});
+
+const SDL_MouseWheelEvent = new Struct({
+  type: u32,
+  timestamp: u32,
+  windowID: u32,
+  which: u32,
+  x: i32,
+  y: i32,
+});
+
+const SDL_AudioDeviceEvent = new Struct({
+  type: u32,
+  timestamp: u32,
+  which: u32,
+  event: u8,
+  padding1: u8,
+  padding2: u8,
+  padding3: u8,
+  data1: i32,
+  data2: i32,
+});
+
+const SDL_FirstEvent = new Struct({
+  type: u32,
+});
+
+const SDL_LastEvent = new Struct({
+  type: u32,
+});
+
+type Reader<T> = (reader: Deno.UnsafePointerView) => T;
+const eventReader: Record<EventType, Reader<any>> = {
+  [EventType.First]: makeReader(SDL_FirstEvent),
+  [EventType.Quit]: makeReader(SDL_QuitEvent),
+  [EventType.WindowEvent]: makeReader(SDL_WindowEvent),
+  [EventType.AppTerminating]: makeReader(SDL_CommonEvent),
+  [EventType.AppLowMemory]: makeReader(SDL_CommonEvent),
+  [EventType.AppWillEnterBackground]: makeReader(SDL_CommonEvent),
+  [EventType.AppDidEnterBackground]: makeReader(SDL_CommonEvent),
+  [EventType.AppWillEnterForeground]: makeReader(SDL_CommonEvent),
+  [EventType.AppDidEnterForeground]: makeReader(SDL_CommonEvent),
+  // [EventType.Display]: makeReader(SDL_DisplayEvent),
+  [EventType.KeyDown]: makeReader(SDL_KeyboardEvent),
+  [EventType.KeyUp]: makeReader(SDL_KeyboardEvent),
+  [EventType.MouseMotion]: makeReader(SDL_MouseMotionEvent),
+  [EventType.MouseButtonDown]: makeReader(SDL_MouseButtonEvent),
+  [EventType.MouseButtonUp]: makeReader(SDL_MouseButtonEvent),
+  [EventType.MouseWheel]: makeReader(SDL_MouseWheelEvent),
+  [EventType.AudioDeviceAdded]: makeReader(SDL_AudioDeviceEvent),
+  [EventType.AudioDeviceRemoved]: makeReader(SDL_AudioDeviceEvent),
+  [EventType.User]: makeReader(SDL_CommonEvent),
+  [EventType.Last]: makeReader(SDL_LastEvent),
+  // TODO: Unrechable code
+  [EventType.Draw]: makeReader(SDL_CommonEvent),
+};
+
 export class Window {
   constructor(private raw: Deno.UnsafePointer) {}
 
@@ -303,10 +458,16 @@ export class Window {
       const event = Deno.UnsafePointer.of(eventBuf);
       const pending = sdl2.symbols.SDL_PollEvent(event) == 1;
       if (!pending) {
-        yield { type: "draw" };
+        yield { type: EventType.Draw };
       }
-      const sdlEvent = SDL_Event.read(new Deno.UnsafePointerView(event));
-      yield { type: sdlEvent.type };
+      const view = new Deno.UnsafePointerView(event);
+      const type = view.getUint32();
+      const ev = eventReader[type as EventType];
+      if (!ev) {
+        // throw new Error(`Unknown event type: ${type}`);
+        continue;
+      }
+      yield { ...ev(view) };
     }
   }
 }
@@ -399,22 +560,3 @@ export class VideoSubsystem {
   }
 }
 
-const window = new WindowBuilder("Hello", 640, 480).highDPI().build();
-const canvas = window.canvas();
-
-import { FPS } from "../examples/utils.ts";
-const fps = FPS();
-for (const event of window.events()) {
-  fps();
-  if (event.type == EventType.Quit) {
-    break;
-  }
-
-  // Rainbow effect
-  const r = Math.sin(Date.now() / 1000) * 127 + 128;
-  const g = Math.sin(Date.now() / 1000 + 2) * 127 + 128;
-  const b = Math.sin(Date.now() / 1000 + 4) * 127 + 128;
-  canvas.setDrawColor(Math.floor(r), Math.floor(g), Math.floor(b), 255);
-  canvas.clear();
-  canvas.present();
-}
