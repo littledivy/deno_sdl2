@@ -7,7 +7,30 @@ import {
   u8,
 } from "https://deno.land/x/byte_type@0.1.7/ffi.ts";
 
-const sdl2 = Deno.dlopen(`libSDL2.dylib`, {
+let DENO_SDL2_PATH: string | undefined;
+try {
+  DENO_SDL2_PATH = Deno.env.get("DENO_SDL2_PATH");
+} catch (_) {
+  // ignore, this can only fail if permission is not given
+}
+
+const OS_PREFIX = Deno.build.os === "windows" ? "" : "lib";
+const OS_SUFFIX = Deno.build.os === "windows"
+  ? ".dll"
+  : Deno.build.os === "darwin"
+  ? ".dylib"
+  : ".so";
+
+function getLibraryPath(lib: string): string {
+  lib = `${OS_PREFIX}${lib}${OS_SUFFIX}`;
+  if (DENO_SDL2_PATH) {
+    return `${DENO_SDL2_PATH}/${lib}`;
+  } else {
+    return lib;
+  }
+}
+
+const sdl2 = Deno.dlopen(getLibraryPath("SDL2"), {
   "SDL_Init": {
     "parameters": ["u32"],
     "result": "i32",
@@ -219,7 +242,7 @@ const sdl2 = Deno.dlopen(`libSDL2.dylib`, {
   },
 });
 
-const sdl2Image = Deno.dlopen("libSDL2_image.dylib", {
+const sdl2Image = Deno.dlopen(getLibraryPath("SDL2_image"), {
   "IMG_Init": {
     "parameters": ["u32"],
     "result": "u32",
@@ -230,7 +253,7 @@ const sdl2Image = Deno.dlopen("libSDL2_image.dylib", {
   },
 });
 
-const sdl2Font = Deno.dlopen("libSDL2_ttf.dylib", {
+const sdl2Font = Deno.dlopen(getLibraryPath("SDL2_ttf"), {
   "TTF_Init": {
     "parameters": [],
     "result": "u32",
@@ -932,8 +955,8 @@ export class WindowBuilder {
     const title = asCString(this.title);
     const window = sdl2.symbols.SDL_CreateWindow(
       title,
-      0,
-      0,
+      0x2FFF0000,
+      0x2FFF0000,
       this.width,
       this.height,
       this.flags,
