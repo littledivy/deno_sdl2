@@ -10,7 +10,7 @@ https://user-images.githubusercontent.com/34997667/160436698-9045ba0c-3fc8-45f9-
 import {
   EventType,
   WindowBuilder,
-} from "https://deno.land/x/sdl2/src/canvas.ts";
+} from "https://deno.land/x/sdl2/mod.ts";
 
 const window = new WindowBuilder("Hello, Deno!", 640, 480).build();
 const canvas = window.canvas();
