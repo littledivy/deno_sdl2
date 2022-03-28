@@ -1,4 +1,3 @@
-import { init, sdl2 } from "./ffi.ts";
 import {
   i32,
   SizedFFIType,
@@ -8,6 +7,279 @@ import {
   u8,
 } from "https://deno.land/x/byte_type@0.1.7/ffi.ts";
 
+const sdl2 = Deno.dlopen("/opt/homebrew/lib/libSDL2.dylib", {
+  "SDL_Init": {
+    "parameters": ["u32"],
+    "result": "i32",
+  },
+  "SDL_InitSubSystem": {
+    "parameters": ["u32"],
+    "result": "i32",
+  },
+  "SDL_QuitSubSystem": {
+    "parameters": ["u32"],
+    "result": "i32",
+  },
+  "SDL_GetPlatform": {
+    "parameters": [],
+    "result": "pointer",
+  },
+  "SDL_GetError": {
+    "parameters": [],
+    "result": "pointer",
+  },
+  "SDL_PollEvent": {
+    "parameters": ["pointer"],
+    "result": "i32",
+  },
+  "SDL_GetCurrentVideoDriver": {
+    "parameters": [],
+    "result": "pointer",
+  },
+  "SDL_CreateWindow": {
+    "parameters": [
+      "pointer",
+      "i32",
+      "i32",
+      "i32",
+      "i32",
+      "u32",
+    ],
+    "result": "pointer",
+  },
+  "SDL_DestroyWindow": {
+    "parameters": ["pointer"],
+    "result": "i32",
+  },
+  "SDL_GetWindowSize": {
+    "parameters": ["pointer", "pointer", "pointer"],
+    "result": "i32",
+  },
+  "SDL_GetWindowPosition": {
+    "parameters": ["pointer", "pointer", "pointer"],
+    "result": "i32",
+  },
+  "SDL_GetWindowFlags": {
+    "parameters": ["pointer"],
+    "result": "u32",
+  },
+  "SDL_SetWindowTitle": {
+    "parameters": ["pointer", "pointer"],
+    "result": "i32",
+  },
+  "SDL_SetWindowIcon": {
+    "parameters": ["pointer", "pointer"],
+    "result": "i32",
+  },
+  "SDL_SetWindowPosition": {
+    "parameters": ["pointer", "i32", "i32"],
+    "result": "i32",
+  },
+  "SDL_SetWindowSize": {
+    "parameters": ["pointer", "i32", "i32"],
+    "result": "i32",
+  },
+  "SDL_SetWindowFullscreen": {
+    "parameters": ["pointer", "u32"],
+    "result": "i32",
+  },
+  "SDL_SetWindowMinimumSize": {
+    "parameters": ["pointer", "i32", "i32"],
+    "result": "i32",
+  },
+  "SDL_SetWindowMaximumSize": {
+    "parameters": ["pointer", "i32", "i32"],
+    "result": "i32",
+  },
+  "SDL_SetWindowBordered": {
+    "parameters": ["pointer", "i32"],
+    "result": "i32",
+  },
+  "SDL_SetWindowResizable": {
+    "parameters": ["pointer", "i32"],
+    "result": "i32",
+  },
+  "SDL_SetWindowInputFocus": {
+    "parameters": ["pointer"],
+    "result": "i32",
+  },
+  "SDL_SetWindowGrab": {
+    "parameters": ["pointer", "i32"],
+    "result": "i32",
+  },
+  "SDL_CreateRenderer": {
+    "parameters": ["pointer", "i32", "u32"],
+    "result": "pointer",
+  },
+  "SDL_SetRenderDrawColor": {
+    "parameters": ["pointer", "u8", "u8", "u8", "u8"],
+    "result": "i32",
+  },
+  "SDL_RenderClear": {
+    "parameters": ["pointer"],
+    "result": "i32",
+  },
+  "SDL_SetRenderDrawBlendMode": {
+    "parameters": ["pointer", "u32"],
+    "result": "i32",
+  },
+  "SDL_RenderPresent": {
+    "parameters": ["pointer"],
+    "result": "i32",
+  },
+  "SDL_RenderDrawPoint": {
+    "parameters": ["pointer", "i32", "i32"],
+    "result": "i32",
+  },
+  "SDL_RenderDrawPoints": {
+    "parameters": ["pointer", "pointer", "i32"],
+    "result": "i32",
+  },
+  "SDL_RenderDrawLine": {
+    "parameters": ["pointer", "i32", "i32", "i32", "i32"],
+    "result": "i32",
+  },
+  "SDL_RenderDrawLines": {
+    "parameters": ["pointer", "pointer", "i32"],
+    "result": "i32",
+  },
+  "SDL_RenderDrawRect": {
+    "parameters": ["pointer", "pointer"],
+    "result": "i32",
+  },
+  "SDL_RenderDrawRects": {
+    "parameters": ["pointer", "pointer", "i32"],
+    "result": "i32",
+  },
+  "SDL_RenderFillRect": {
+    "parameters": ["pointer", "pointer"],
+    "result": "i32",
+  },
+  "SDL_RenderFillRects": {
+    "parameters": ["pointer", "pointer", "i32"],
+    "result": "i32",
+  },
+  "SDL_RenderCopy": {
+    "parameters": ["pointer", "pointer", "pointer", "pointer"],
+    "result": "i32",
+  },
+  "SDL_RenderCopyEx": {
+    "parameters": [
+      "pointer",
+      "pointer",
+      "pointer",
+      "pointer",
+      "f32",
+      "pointer",
+      "u32",
+    ],
+    "result": "i32",
+  },
+  "SDL_RenderReadPixels": {
+    "parameters": ["pointer", "pointer", "u32", "pointer", "i32"],
+    "result": "i32",
+  },
+  "SDL_CreateTexture": {
+    "parameters": ["pointer", "u32", "i32", "i32", "i32"],
+    "result": "pointer",
+  },
+  "SDL_DestroyTexture": {
+    "parameters": ["pointer"],
+    "result": "i32",
+  },
+  "SDL_QueryTexture": {
+    "parameters": [
+      "pointer",
+      "pointer",
+      "pointer",
+      "pointer",
+      "pointer",
+    ],
+    "result": "i32",
+  },
+  "SDL_SetTextureColorMod": {
+    "parameters": ["pointer", "u8", "u8", "u8"],
+    "result": "i32",
+  },
+  "SDL_SetTextureAlphaMod": {
+    "parameters": ["pointer", "u8"],
+    "result": "i32",
+  },
+  "SDL_UpdateTexture": {
+    "parameters": ["pointer", "pointer", "pointer", "i32"],
+    "result": "i32",
+  },
+  "SDL_LoadBMP_RW": {
+    "parameters": ["pointer"],
+    "result": "pointer",
+  },
+  "SDL_CreateTextureFromSurface": {
+    "parameters": ["pointer", "pointer"],
+    "result": "pointer",
+  },
+});
+
+const sdl2Image = Deno.dlopen("/opt/homebrew/lib/libSDL2_image.dylib", {
+  "IMG_Init": {
+    "parameters": ["u32"],
+    "result": "u32",
+  },
+  "IMG_Load": {
+    "parameters": ["pointer"],
+    "result": "pointer",
+  },
+});
+
+let context_alive = false;
+function init() {
+  if (context_alive) {
+    return;
+  }
+  context_alive = true;
+  const result = sdl2.symbols.SDL_Init(0);
+  if (result != 0) {
+    const errPtr = sdl2.symbols.SDL_GetError();
+    const view = new Deno.UnsafePointerView(errPtr);
+    throw new Error(`SDL_Init failed: ${view.getCString()}`);
+  }
+
+  const platform = sdl2.symbols.SDL_GetPlatform();
+  const view = new Deno.UnsafePointerView(platform);
+  console.log(`SDL2 initialized on ${view.getCString()}`);
+  // Initialize subsystems
+  // SDL_INIT_EVENTS
+  {
+    const result = sdl2.symbols.SDL_InitSubSystem(0x00000001);
+    if (result != 0) {
+      const errPtr = sdl2.symbols.SDL_GetError();
+      const view = new Deno.UnsafePointerView(errPtr);
+      throw new Error(`SDL_InitSubSystem failed: ${view.getCString()}`);
+    }
+  }
+  // SDL_INIT_VIDEO
+  {
+    const result = sdl2.symbols.SDL_InitSubSystem(0x00000010);
+    if (result != 0) {
+      const errPtr = sdl2.symbols.SDL_GetError();
+      const view = new Deno.UnsafePointerView(errPtr);
+      throw new Error(`SDL_InitSubSystem failed: ${view.getCString()}`);
+    }
+  }
+  // SDL_INIT_IMAGE
+  {
+    const result = sdl2.symbols.SDL_InitSubSystem(0x00000004);
+    if (result != 0) {
+      const errPtr = sdl2.symbols.SDL_GetError();
+      const view = new Deno.UnsafePointerView(errPtr);
+      throw new Error(`SDL_InitSubSystem failed: ${view.getCString()}`);
+    }
+  }
+  // IMG_Init
+  {
+    // TIF = 4, WEBP = 8
+    sdl2Image.symbols.IMG_Init(1 | 2); // png and jpg
+  }
+}
 init();
 
 const SDL_Event = new Struct({
@@ -63,6 +335,7 @@ export enum EventType {
   Draw,
 }
 
+const _raw = Symbol("raw");
 function asCString(str: string): Uint8Array {
   // @ts-ignore
   return Deno.core.encode(`${str}\0`);
@@ -182,12 +455,64 @@ export class Canvas {
     }
   }
 
+  copy(texture: Texture, source?: Rect, dest?: Rect) {
+    const ret = sdl2.symbols.SDL_RenderCopy(
+      this.target,
+      texture[_raw],
+      source ? source[_raw] : null,
+      dest ? dest[_raw] : null,
+    );
+    if (ret < 0) {
+      throwSDLError(ret);
+    }
+  }
+
   textureCreator() {
     return new TextureCreator(this.target);
   }
 }
 
-enum TextureAccess {
+export enum PixelFormat {
+  Unknown = 0,
+  Index1LSB = 286261504,
+  Index1MSB = 287310080,
+  Index4LSB = 303039488,
+  Index4MSB = 304088064,
+  Index8 = 318769153,
+  RGB332 = 336660481,
+  XRGB4444 = 353504258,
+  XBGR4444 = 357698562,
+  XRGB1555 = 353570562,
+  XBGR1555 = 357764866,
+  ARGB4444 = 355602434,
+  RGBA4444 = 356651010,
+  ABGR4444 = 359796738,
+  BGRA4444 = 360845314,
+  ARGB1555 = 355667970,
+  RGBA5551 = 356782082,
+  ABGR1555 = 359862274,
+  BGRA5551 = 360976386,
+  RGB565 = 353701890,
+  BGR565 = 357896194,
+  RGB24 = 386930691,
+  BGR24 = 390076419,
+  XRGB8888 = 370546692,
+  RGBX8888 = 371595268,
+  XBGR8888 = 374740996,
+  BGRX8888 = 375789572,
+  ARGB8888 = 372645892,
+  RGBA8888 = 373694468,
+  ABGR8888 = 376840196,
+  BGRA8888 = 377888772,
+  ARGB2101010 = 372711428,
+  YV12 = 842094169,
+  IYUV = 1448433993,
+  YUY2 = 844715353,
+  UYVY = 1498831189,
+  YVYU = 1431918169,
+}
+
+export enum TextureAccess {
   Static = 0,
   Streaming = 1,
   Target = 2,
@@ -214,6 +539,17 @@ export class TextureCreator {
     }
     return new Texture(raw);
   }
+
+  createTextureFromSurface(surface: Surface): Texture {
+    const raw = sdl2.symbols.SDL_CreateTextureFromSurface(
+      this.raw,
+      surface[_raw],
+    );
+    if (raw === null) {
+      throwSDLError(0);
+    }
+    return new Texture(raw);
+  }
 }
 
 export interface TextureQuery {
@@ -224,7 +560,11 @@ export interface TextureQuery {
 }
 
 export class Texture {
-  constructor(private raw: Deno.UnsafePointer) {}
+  [_raw]: Deno.UnsafePointer;
+
+  constructor(private raw: Deno.UnsafePointer) {
+    this[_raw] = raw;
+  }
 
   query(): TextureQuery {
     const format = new Uint32Array(1);
@@ -282,16 +622,42 @@ export class Texture {
   }
 }
 
-const _raw = Symbol("raw");
 export class Rect {
   [_raw]: Uint32Array;
   constructor(x: number, y: number, w: number, h: number) {
     this[_raw] = new Uint32Array([x, y, w, h]);
   }
+
+  get x() {
+    return this[_raw][0];
+  }
+
+  get y() {
+    return this[_raw][1];
+  }
+
+  get width() {
+    return this[_raw][2];
+  }
+
+  get height() {
+    return this[_raw][3];
+  }
 }
 
 export class Surface {
-  constructor(private raw: Deno.UnsafePointer) {}
+  [_raw]: Deno.UnsafePointer;
+  constructor(raw: Deno.UnsafePointer) {
+    this[_raw] = raw;
+  }
+
+  static fromFile(path: string): Surface {
+    const raw = sdl2Image.symbols.IMG_Load(asCString(path));
+    if (raw === null) {
+      throwSDLError(0);
+    }
+    return new Surface(raw);
+  }
 
   static loadBmp(path: string): Surface {
     const raw = sdl2.symbols.SDL_LoadBMP_RW(asCString(path));
@@ -559,4 +925,3 @@ export class VideoSubsystem {
     return view.getCString();
   }
 }
-

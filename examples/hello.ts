@@ -1,4 +1,4 @@
-import { WindowBuilder, EventType } from "../lib/mod.ts";
+import { EventType, WindowBuilder } from "../lib/mod.ts";
 import { FPS } from "../examples/utils.ts";
 
 const window = new WindowBuilder("Hello, Deno!", 640, 480).build();
