@@ -230,6 +230,37 @@ const sdl2Image = Deno.dlopen("/opt/homebrew/lib/libSDL2_image.dylib", {
   },
 });
 
+const sdl2Font = Deno.dlopen("/opt/homebrew/lib/libSDL2_ttf.dylib", {
+  "TTF_Init": {
+    "parameters": [],
+    "result": "u32",
+  },
+  "TTF_OpenFont": {
+    "parameters": ["pointer", "i32"],
+    "result": "pointer",
+  },
+  "TTF_RenderText_Solid": {
+    "parameters": ["pointer", "pointer", "pointer"],
+    "result": "pointer",
+  },
+  "TTF_RenderText_Shaded": {
+    "parameters": ["pointer", "pointer", "pointer", "pointer"],
+    "result": "pointer",
+  },
+  "TTF_RenderText_Blended": {
+    "parameters": ["pointer", "pointer", "pointer"],
+    "result": "pointer",
+  },
+  "TTF_CloseFont": {
+    "parameters": ["pointer"],
+    "result": "i32",
+  },
+  "TTF_Quit": {
+    "parameters": [],
+    "result": "i32",
+  },
+});
+
 let context_alive = false;
 function init() {
   if (context_alive) {
@@ -278,6 +309,19 @@ function init() {
   {
     // TIF = 4, WEBP = 8
     sdl2Image.symbols.IMG_Init(1 | 2); // png and jpg
+  }
+  // SDL_INIT_TTF
+  {
+    const result = sdl2.symbols.SDL_InitSubSystem(0x00000100);
+    if (result != 0) {
+      const errPtr = sdl2.symbols.SDL_GetError();
+      const view = new Deno.UnsafePointerView(errPtr);
+      throw new Error(`SDL_InitSubSystem failed: ${view.getCString()}`);
+    }
+  }
+  // TTF_Init
+  {
+    sdl2Font.symbols.TTF_Init();
   }
 }
 
@@ -466,6 +510,44 @@ export class Canvas {
 
   textureCreator() {
     return new TextureCreator(this.target);
+  }
+
+  loadFont(path: string, size: number) {
+    const raw = sdl2Font.symbols.TTF_OpenFont(asCString(path), size);
+    return new Font(raw);
+  }
+}
+
+export class Font {
+  [_raw]: Deno.UnsafePointer;
+  constructor(raw: Deno.UnsafePointer) {
+    this[_raw] = raw;
+  }
+
+  renderSolid(text: string, color: Color) {
+    const raw = sdl2Font.symbols.TTF_RenderText_Solid(
+      this[_raw],
+      asCString(text),
+      color[_raw],
+    );
+    return new Texture(raw);
+  }
+
+  renderBlended(text: string, color: Color) {
+    const raw = sdl2Font.symbols.TTF_RenderText_Blended(
+      this[_raw],
+      asCString(text),
+      color[_raw],
+    );
+    return new Texture(raw);
+  }
+}
+
+export class Color {
+  [_raw]: Deno.UnsafePointer;
+  constructor(r: number, g: number, b: number, a: number = 0xff) {
+    const raw = new Uint8Array([r, g, b, a]);
+    this[_raw] = Deno.UnsafePointer.of(raw);
   }
 }
 
