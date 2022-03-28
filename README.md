@@ -43,9 +43,13 @@ MacOS (arm64/x64):
 brew install sdl2 sdl2_image sdl2_ttf
 ```
 
-Windows (x64): Grab one of the prebuilt libraries from
-https://buildbot.libsdl.org/sdl-builds/sdl-visualstudio-x86/ and put
-`lib/SDL2.dll` into the root of your project.
+Windows (x64): Grab the prebuilt libraries from
+
+- https://buildbot.libsdl.org/sdl-builds/sdl-visualstudio-amd64/
+- https://www.libsdl.org/projects/SDL_image/
+- https://github.com/libsdl-org/SDL_ttf/releases
+
+And either put in PATH, or in current directory.
 
 Linux (x64):
 
@@ -61,6 +65,9 @@ sudo ln -s /opt/homebrew/lib/libSDL2.dylib /usr/local/lib/
 sudo ln -s /opt/homebrew/lib/libSDL2_image.dylib /usr/local/lib/
 sudo ln -s /opt/homebrew/lib/libSDL2_ttf.dylib /usr/local/lib/
 ```
+
+Additionally, you can set `DENO_SDL2_PATH` to point to the directory where these
+three libraries are located.
 
 ### security
 
