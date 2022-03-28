@@ -1,7 +1,4 @@
-deno_sdl2
-target/
 *.bmp
 
 # VS code
 .vscode/
-
