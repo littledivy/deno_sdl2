@@ -1,3 +1,10 @@
+import {
+  EventType,
+  PixelFormat,
+  Rect,
+  TextureAccess,
+  WindowBuilder,
+} from "../../mod.ts";
 const dimensions = {
   width: 200,
   height: 200,
@@ -86,27 +93,17 @@ encoder.copyTextureToBuffer(
 
 device.queue.submit([encoder.finish()]);
 
-import { Canvas, PixelFormat, TextureAccess } from "../../mod.ts";
+const window = new WindowBuilder("Hello, Deno!", 800, 800).build();
+const canvas = window.canvas();
 
-const canvas = new Canvas({
-  title: "Hello, Deno!",
-  height: 800,
-  width: 800,
-  centered: false,
-  fullscreen: false,
-  hidden: false,
-  resizable: true,
-  minimized: false,
-  maximized: false,
-  flags: null,
-});
-
-const sdl2texture = canvas.createTexture(
+const creator = canvas.textureCreator();
+const sdl2texture = creator.createTexture(
   PixelFormat.ABGR8888,
   TextureAccess.Streaming,
   200,
   200,
 );
+
 await outputBuffer.mapAsync(1);
 const buf = new Uint8Array(outputBuffer.getMappedRange());
 const buffer = new Uint8Array(unpadded * dimensions.height);
@@ -117,28 +114,19 @@ for (let i = 0; i < dimensions.height; i++) {
 
   buffer.set(slice, i * unpadded);
 }
-sdl2texture.update(buffer);
-const rect = { x: 0, y: 0, width: 200, height: 200 };
-const screen = { x: 0, y: 0, width: 800, height: 800 };
-canvas.copy(sdl2texture, rect, screen);
+
+sdl2texture.update(buffer, 200 * 4);
+
+const rect = new Rect(0, 0, 200, 200);
+canvas.copy(sdl2texture, rect);
 canvas.present();
 
-event_loop:
-for await (const event of canvas) {
+for (const event of window.events()) {
   switch (event.type) {
-    case "resized":
-      canvas.copy(sdl2texture, rect, {
-        x: 0,
-        y: 0,
-        width: event.width,
-        height: event.height,
-      });
-      canvas.present();
+    case EventType.Quit:
+    case EventType.KeyDown:
+      Deno.exit(0);
       break;
-    case "quit":
-      break event_loop;
-    case "key_down":
-      break event_loop;
     default:
       break;
   }

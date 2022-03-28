@@ -1,83 +1,69 @@
 ### Deno SDL2
 
-Cross platform bindings to [SDL2](https://www.libsdl.org/index.php). Have fun!
+deno_sdl2 provides cross-platform bindings to sdl2, sdl2_ttf and sdl2_image.
 
-<p align="center">
-  <img src="examples/sprite/demo.png" data-tooltip="Ad" width="450px" style="border-radius: 15px">
-</p>
+https://user-images.githubusercontent.com/34997667/160436698-9045ba0c-3fc8-45f9-8038-4194e5d3dcc8.mov
 
-### Features
-
-- Bindings to Video, Graphics, Font and Mixer subsystems. (Uses rodio instead of
-  SDL2_Mixer)
-- Built on top of Deno's FFI API. Previous versions used TCP streams.
-
-### Example
+### get started
 
 ```typescript
-import { Canvas } from "https://deno.land/x/sdl2/src/canvas.ts";
+import {
+  EventType,
+  WindowBuilder,
+} from "https://deno.land/x/sdl2/src/canvas.ts";
 
-const canvas = new Canvas({
-  title: "Hello, Deno!",
-  height: 800,
-  width: 600,
-  centered: true,
-  fullscreen: false,
-  hidden: false,
-  resizable: true,
-  minimized: false,
-  maximized: false,
-  flags: null,
-});
+const window = new WindowBuilder("Hello, Deno!", 640, 480).build();
+const canvas = window.canvas();
 
-canvas.setDrawColor(0, 64, 255, 255);
-canvas.clear();
-canvas.present();
-
-for await (const event of canvas) {
-  switch (event.type) {
-    case "draw":
-      // Your game logic
-      // ...
-      break;
-    case "mouse_motion":
-      // Mouse stuff
-      break;
-    case "key_down":
-      // Keyboard stuff
-      break;
-    // ...
-    default:
-      break;
+for (const event of window.events()) {
+  if (event.type == EventType.Quit) {
+    break;
+  } else if (event.type == EventType.Draw) {
+    // Rainbow effect
+    const r = Math.sin(Date.now() / 1000) * 127 + 128;
+    const g = Math.sin(Date.now() / 1000 + 2) * 127 + 128;
+    const b = Math.sin(Date.now() / 1000 + 4) * 127 + 128;
+    canvas.setDrawColor(Math.floor(r), Math.floor(g), Math.floor(b), 255);
+    canvas.clear();
+    canvas.present();
   }
 }
 ```
 
-### Building from source
-
-You need:
-
-- [`deno_bindgen`](https://github.com/littledivy/deno_bindgen) CLI from the
-  `main` branch
-- [Rust](https://rust-lang.org) nightly toolchain + Cargo (`1.57.0-nightly`)
-- [`cargo-vcpkg`](https://crates.io/crates/cargo-vcpkg) tool
-- `pkg-config` (on *nix) => `brew install pkg-config`
-
-```bash
-deno install -Afq -n deno_bindgen https://deno.land/x/deno_bindgen/cli.ts
-cargo install cargo-vcpkg
-
-# build vcpkg dependencies
-cargo vcpkg -v build
+```shell
+~> deno run --allow-ffi --unstable https://deno.land/x/sdl2/examples/hello.ts
 ```
 
-Build using:
+### installing sdl2
 
-```bash
-deno_bindgen -- --features "use_vcpkg"
+Follow https://wiki.libsdl.org/Installation to install the dynamic library.
+`deno_sdl2` will use various methods to figure our the installation path.
+
+TL;DR
+
+MacOS (arm64/x64):
+
+```shell
+brew install sdl2 sdl2_image sdl2_ttf
 ```
 
-### Projects using `deno_sdl2`
+Windows (x64): Grab one of the prebuilt libraries from
+https://buildbot.libsdl.org/sdl-builds/sdl-visualstudio-x86/ and put
+`lib/SDL2.dll` into the root of your project.
+
+Linux (x64):
+
+```shell
+sudo apt install sdl2 sdl2_image sdl2_ttf
+```
+
+### security
+
+you need `--allow-ffi --unstable` to use SDL2. `deno_sdl2` needs access to
+system's SDL2 library. Deno's permission model does not work well with FFI
+libraries, use at your own risk.
+
+### projects using `deno_sdl2`
 
 - https://github.com/dhairy-online/dino-deno
 - https://github.com/dhairy-online/flappybird
@@ -85,6 +71,6 @@ deno_bindgen -- --features "use_vcpkg"
 
 - ...insert your project here
 
-### License
+### license
 
 MIT

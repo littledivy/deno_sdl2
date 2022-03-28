@@ -1,22 +1,18 @@
-import { Canvas } from "../../mod.ts";
+import { EventType, Rect, Surface, WindowBuilder } from "../../mod.ts";
 import { drawMap, Sprite } from "./util.ts";
 
 const canvasSize = { width: 400, height: 400 };
+const window = new WindowBuilder(
+  "Hello, Deno!",
+  canvasSize.width,
+  canvasSize.height,
+).build();
+const canv = window.canvas();
 
-const canv = new Canvas({
-  title: "Deno run!",
-  ...canvasSize,
-  centered: true,
-  fullscreen: false,
-  hidden: false,
-  resizable: true,
-  minimized: false,
-  maximized: false,
-  flags: null,
-});
+const surface = Surface.fromFile("./examples/sprite/sprite.png");
 
-const surface = canv.loadSurface("./examples/sprite/sprite.png");
-const texture = canv.createTextureFromSurface(surface);
+const creator = canv.textureCreator();
+const texture = creator.createTextureFromSurface(surface);
 
 const map = [
   [8, 8, 9, 8, 11, 8, 8, 8],
@@ -30,10 +26,10 @@ const map = [
 ];
 
 const denoTextureFrames = [
-  { x: 0, y: 0, width: 16, height: 16 },
-  { x: 16, y: 0, width: 16, height: 16 },
-  { x: 32, y: 0, width: 16, height: 16 },
-  { x: 48, y: 0, width: 16, height: 16 },
+  new Rect(0, 0, 16, 16),
+  new Rect(16, 0, 16, 16),
+  new Rect(32, 0, 16, 16),
+  new Rect(48, 0, 16, 16),
 ];
 
 function random(min: number, max: number) {
@@ -94,21 +90,14 @@ function frame() {
   Deno.sleepSync(10);
 }
 
-for await (const event of canv) {
+for (const event of window.events()) {
   switch (event.type) {
-    case "draw":
+    case EventType.Draw:
       frame();
       break;
-    case "quit":
-      canv.quit();
+    case EventType.Quit:
+      Deno.exit(0);
       break;
-    case "mouse_motion":
-      // Mouse stuff
-      break;
-    case "key_down":
-      // Keyboard stuff
-      break;
-    // ...
     default:
       break;
   }

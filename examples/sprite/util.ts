@@ -1,4 +1,4 @@
-import { Canvas, Rectangle, Texture } from "../../mod.ts";
+import { Canvas, Rect, Texture } from "../../mod.ts";
 
 export function drawMap(
   texture: Texture,
@@ -9,21 +9,22 @@ export function drawMap(
   for (let i = 0; i < map.length; i++) {
     for (let j = 0; j < map[i].length; j++) {
       const chip = map[i][j];
-
+      const src = new Rect(
+        (chip % 4) * chipSize,
+        ((chip / 4) | 0) * chipSize,
+        chipSize,
+        chipSize,
+      );
+      const dst = new Rect(
+        i * chipSize * 4,
+        j * chipSize * 4,
+        chipSize * 4,
+        chipSize * 4,
+      );
       canvas.copy(
         texture,
-        {
-          x: (chip % 4) * chipSize,
-          y: ((chip / 4) | 0) * chipSize,
-          width: chipSize,
-          height: chipSize,
-        },
-        {
-          x: j * chipSize * 4,
-          y: i * chipSize * 4,
-          width: chipSize * 4,
-          height: chipSize * 4,
-        },
+        src,
+        dst,
       );
     }
   }
@@ -39,21 +40,22 @@ export class Sprite {
   originY = 0;
   scale = 1;
   texture: Texture;
-  frames: Rectangle[];
+  frames: Rect[];
   index = 0;
 
-  constructor(texture: Texture, frames: Rectangle[]) {
+  constructor(texture: Texture, frames: Rect[]) {
     this.texture = texture;
     this.frames = frames;
   }
 
   draw(dest: Canvas) {
-    dest.copy(this.texture, this.frames[this.index], {
-      x: this.x - this.originX,
-      y: this.y - this.originY - this.z,
-      width: this.frames[this.index].width * this.scale,
-      height: this.frames[this.index].height * this.scale,
-    });
+    const dst = new Rect(
+      this.x - this.originX,
+      this.y - this.originY,
+      this.frames[this.index].width * this.scale,
+      this.frames[this.index].height * this.scale,
+    );
+    dest.copy(this.texture, this.frames[this.index], dst);
   }
 
   tick() {

@@ -1,24 +1,13 @@
-import { Canvas } from "../mod.ts";
+import { EventType, WindowBuilder } from "../mod.ts";
 import { FPS } from "./utils.ts";
 
 const HEIGHT = 800;
 const WIDTH = 600;
 
-const canvas = new Canvas({
-  title: "Hello, Deno!",
-  height: 800,
-  width: 600,
-  centered: true,
-  fullscreen: false,
-  hidden: false,
-  resizable: true,
-  minimized: false,
-  maximized: false,
-  flags: null,
-});
+const window = new WindowBuilder("Stars", WIDTH, HEIGHT).build();
+const canvas = window.canvas();
 
-// Max FPS
-const tick = FPS(100);
+const tick = FPS();
 
 const star_count = 512;
 const depth = 32;
@@ -33,9 +22,9 @@ for (let i = 0; i < star_count; i++) {
   stars.push(star);
 }
 
-for await (const event of canvas) {
-  if (event.type == "quit") canvas.quit();
-  else if (event.type == "draw") {
+for (const event of window.events()) {
+  if (event.type == EventType.Quit) Deno.exit(0);
+  else if (event.type == EventType.Draw) {
     canvas.setDrawColor(0, 0, 0, 255);
     canvas.clear();
 

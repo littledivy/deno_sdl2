@@ -1,50 +1,26 @@
-import { Canvas } from "../../mod.ts";
+import { Color, EventType, WindowBuilder } from "../../mod.ts";
 import { FPS } from "../utils.ts";
 
-const stepFrame = FPS(100);
-const canvas = new Canvas({
-  title: "Hello, Deno!",
-  height: 800,
-  width: 600,
-  centered: true,
-  fullscreen: false,
-  hidden: false,
-  resizable: true,
-  minimized: false,
-  maximized: false,
-  flags: null,
-});
+const stepFrame = FPS();
+const window = new WindowBuilder("deno_sdl2 Font", 800, 600).build();
+const canvas = window.canvas();
 
-const font = canvas.loadFont("./examples/font/jetbrains-mono.ttf", 128, {
-  style: "normal",
-});
+const font = canvas.loadFont("./examples/font/jetbrains-mono.ttf", 128);
+const color = new Color(0, 0, 0);
 
-const surface = canvas.renderFont(font, Deno.args[0] || "Hello there!", {
-  blended: {
-    color: {
-      r: 255,
-      g: 255,
-      b: 255,
-      a: 255,
-    },
-  },
-});
-const texture = canvas.createTextureFromSurface(surface);
-const { width, height } = texture;
+const surface = font.renderSolid(Deno.args[0] || "Hello there!", color);
+
+const creator = canvas.textureCreator();
+const texture = creator.createTextureFromSurface(surface);
 
 async function frame() {
   canvas.clear();
-  canvas.copy(texture, { x: 0, y: 0, width, height }, {
-    x: 0,
-    y: 0,
-    width,
-    height,
-  });
+  canvas.copy(texture);
   canvas.present();
   stepFrame();
 }
 
-for await (const event of canvas) {
-  if (event.type == "quit") canvas.quit();
-  else if (event.type == "draw") await frame();
+for (const event of window.events()) {
+  if (event.type == EventType.Quit) Deno.exit(0);
+  else if (event.type == EventType.Draw) frame();
 }

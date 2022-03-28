@@ -1,4 +1,4 @@
-export const FPS = (cap: number) => {
+export const FPS = () => {
   let start = performance.now();
   let frames = 0;
   return () => {
@@ -9,7 +9,5 @@ export const FPS = (cap: number) => {
       console.log(`FPS: ${frames}`);
       frames = 0;
     }
-
-    Deno.sleepSync(1 / cap * 1000);
   };
 };
