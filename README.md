@@ -52,6 +52,9 @@ sudo ln -s /opt/homebrew/lib/libSDL2_image.dylib /usr/local/lib/
 sudo ln -s /opt/homebrew/lib/libSDL2_ttf.dylib /usr/local/lib/
 ```
 
+Additionally, you can set `DENO_SDL2_PATH` to point to the directory where these
+three libraries are located.
+
 Windows (x64):
 
 Grab prebuilt libraries from all of:

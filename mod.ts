@@ -7,24 +7,30 @@ import {
   u8,
 } from "https://deno.land/x/byte_type@0.1.7/ffi.ts";
 
-let sdl2Lib;
-let sdl2ImageLib;
-let sdl2TtfLib;
-if (Deno.build.os == "darwin") {
-  sdl2Lib = "libSDL2.dylib";
-  sdl2ImageLib = "libSDL2_image.dylib";
-  sdl2TtfLib = "libSDL2_ttf.dylib";
-} else if (Deno.build.os == "windows") {
-  sdl2Lib = "SDL2.dll";
-  sdl2ImageLib = "SDL2_image.dll";
-  sdl2TtfLib = "SDL2_ttf.dll";
-} else {
-  sdl2Lib = "libSDL2-2.0.so";
-  sdl2ImageLib = "libSDL2_image-2.0.so";
-  sdl2TtfLib = "libSDL2_ttf-2.0.so";
+let DENO_SDL2_PATH: string | undefined;
+try {
+  DENO_SDL2_PATH = Deno.env.get("DENO_SDL2_PATH");
+} catch (_) {
+  // ignore, this can only fail if permission is not given
 }
 
-const sdl2 = Deno.dlopen(sdl2Lib, {
+const OS_PREFIX = Deno.build.os === "windows" ? "" : "lib";
+const OS_SUFFIX = Deno.build.os === "windows"
+  ? ".dll"
+  : Deno.build.os === "darwin"
+  ? ".dylib"
+  : ".so";
+
+function getLibraryPath(lib: string): string {
+  lib = `${OS_PREFIX}${lib}${OS_SUFFIX}`;
+  if (DENO_SDL2_PATH) {
+    return `${DENO_SDL2_PATH}/${lib}`;
+  } else {
+    return lib;
+  }
+}
+
+const sdl2 = Deno.dlopen(getLibraryPath("SDL2"), {
   "SDL_Init": {
     "parameters": ["u32"],
     "result": "i32",
@@ -236,7 +242,7 @@ const sdl2 = Deno.dlopen(sdl2Lib, {
   },
 });
 
-const sdl2Image = Deno.dlopen(sdl2ImageLib, {
+const sdl2Image = Deno.dlopen(getLibraryPath("SDL2_image"), {
   "IMG_Init": {
     "parameters": ["u32"],
     "result": "u32",
@@ -247,7 +253,7 @@ const sdl2Image = Deno.dlopen(sdl2ImageLib, {
   },
 });
 
-const sdl2Font = Deno.dlopen(sdl2TtfLib, {
+const sdl2Font = Deno.dlopen(getLibraryPath("SDL2_ttf"), {
   "TTF_Init": {
     "parameters": [],
     "result": "u32",
@@ -949,8 +955,8 @@ export class WindowBuilder {
     const title = asCString(this.title);
     const window = sdl2.symbols.SDL_CreateWindow(
       title,
-      0,
-      0,
+      0x2FFF0000,
+      0x2FFF0000,
       this.width,
       this.height,
       this.flags,
