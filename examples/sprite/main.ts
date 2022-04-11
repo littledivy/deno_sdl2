@@ -83,7 +83,13 @@ function frame() {
     shadow.draw(canv);
     deno.draw(canv);
 
-    deno.wrap(canvasSize.width, canvasSize.height);
+    const margin = 48;
+    deno.wrap({
+      x: -margin,
+      y: -margin,
+      width: canvasSize.width + margin * 2,
+      height: canvasSize.height + margin * 2,
+    });
 
     shadow.x = deno.x;
     shadow.y = deno.y;
