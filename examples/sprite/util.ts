@@ -51,7 +51,7 @@ export class Sprite {
   draw(dest: Canvas) {
     const dst = new Rect(
       this.x - this.originX,
-      this.y - this.originY,
+      this.y - this.originY - this.z,
       this.frames[this.index].width * this.scale,
       this.frames[this.index].height * this.scale,
     );

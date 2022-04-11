@@ -32,8 +32,24 @@ const denoTextureFrames = [
   new Rect(48, 0, 16, 16),
 ];
 
+const shadowTexture = [
+  new Rect(0, 3 * 16, 16, 16),
+];
+
 function random(min: number, max: number) {
   return (Math.random() * (max - min) + min) | 0;
+}
+
+function createShadowInstance() {
+  const shadow = new Sprite(texture, shadowTexture);
+  shadow.x = 0;
+  shadow.y = 0;
+  shadow.originX = shadow.frames[0].width / 2 + 6;
+  shadow.originY = shadow.frames[0].height - 16;
+  shadow.scale = 4;
+  shadow.vx = 0;
+  shadow.vy = 0;
+  return shadow;
 }
 
 function createDenoInstance() {
@@ -54,6 +70,8 @@ for (let i = 0; i < 1; i++) {
   denos.push(createDenoInstance());
 }
 
+const shadow = createShadowInstance();
+
 let cnt = 0;
 
 function frame() {
@@ -62,9 +80,13 @@ function frame() {
 
   for (const deno of denos) {
     deno.tick();
+    shadow.draw(canv);
     deno.draw(canv);
 
     deno.wrap(canvasSize.width, canvasSize.height);
+
+    shadow.x = deno.x;
+    shadow.y = deno.y;
 
     // make deno jump
     deno.z = Math.abs(Math.sin(cnt / 10) * 16) | 0;
