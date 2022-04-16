@@ -1,5 +1,12 @@
 import { Canvas, Rect, Texture } from "../../mod.ts";
 
+export interface Area {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
 export function drawMap(
   texture: Texture,
   canvas: Canvas,
@@ -51,7 +58,7 @@ export class Sprite {
   draw(dest: Canvas) {
     const dst = new Rect(
       this.x - this.originX,
-      this.y - this.originY,
+      this.y - this.originY - this.z,
       this.frames[this.index].width * this.scale,
       this.frames[this.index].height * this.scale,
     );
@@ -63,17 +70,8 @@ export class Sprite {
     this.y += this.vy;
   }
 
-  wrap(width: number, height: number) {
-    if (this.x < 0) {
-      this.x += width;
-    } else if (this.x > width) {
-      this.x -= width;
-    }
-
-    if (this.y < 0) {
-      this.y += height;
-    } else if (this.y > height) {
-      this.y -= height;
-    }
+  wrap(rect: Area) {
+    this.x = (this.x - rect.x) % rect.width + rect.x;
+    this.y = (this.y - rect.y) % rect.height + rect.y;
   }
 }
