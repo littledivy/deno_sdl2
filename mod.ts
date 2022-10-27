@@ -61,7 +61,7 @@ const sdl2 = Deno.dlopen(getLibraryPath("SDL2"), {
   },
   "SDL_CreateWindow": {
     "parameters": [
-      "pointer",
+      "buffer",
       "i32",
       "i32",
       "i32",
