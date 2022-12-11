@@ -1,0 +1,6 @@
+{
+  "version": "2",
+  "remote": {
+    "https://deno.land/x/byte_type@0.1.7/ffi.ts": "5bc603fd9d0b695bcd1bdaeb45e6e34b0925d5cd8da41ceaec290570a55287e0"
+  }
+}

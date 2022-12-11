@@ -61,7 +61,7 @@ const sdl2 = Deno.dlopen(getLibraryPath("SDL2"), {
   },
   "SDL_CreateWindow": {
     "parameters": [
-      "pointer",
+      "buffer",
       "i32",
       "i32",
       "i32",
@@ -248,7 +248,7 @@ const sdl2Image = Deno.dlopen(getLibraryPath("SDL2_image"), {
     "result": "u32",
   },
   "IMG_Load": {
-    "parameters": ["pointer"],
+    "parameters": ["buffer"],
     "result": "pointer",
   },
 });
@@ -523,8 +523,8 @@ export class Canvas {
     const ret = sdl2.symbols.SDL_RenderCopy(
       this.target,
       texture[_raw],
-      source ? source[_raw] : null,
-      dest ? dest[_raw] : null,
+      source ? Deno.UnsafePointer.of(source[_raw]) : null,
+      dest ? Deno.UnsafePointer.of(dest[_raw]) : null,
     );
     if (ret < 0) {
       throwSDLError();
