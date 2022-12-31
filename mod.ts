@@ -400,9 +400,10 @@ export enum EventType {
 }
 
 const _raw = Symbol("raw");
+const enc = new TextEncoder();
+
 function asCString(str: string): Uint8Array {
-  // @ts-ignore: Deno.core is not public API.
-  return Deno.core.encode(`${str}\0`);
+  return enc.encode(`${str}\0`);
 }
 
 function throwSDLError(): never {
