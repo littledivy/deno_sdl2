@@ -6,7 +6,7 @@ const window = new WindowBuilder("deno_sdl2 Font", 800, 600).build();
 const canvas = window.canvas();
 
 const font = canvas.loadFont("./examples/font/jetbrains-mono.ttf", 128);
-const color = new Color(0, 0, 0);
+const color = new Color(255, 0, 0);
 
 const surface = font.renderSolid(Deno.args[0] || "Hello there!", color);
 
