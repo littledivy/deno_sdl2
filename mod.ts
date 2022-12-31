@@ -61,7 +61,7 @@ const sdl2 = Deno.dlopen(getLibraryPath("SDL2"), {
   },
   "SDL_CreateWindow": {
     "parameters": [
-      "pointer",
+      "buffer",
       "i32",
       "i32",
       "i32",
@@ -248,7 +248,7 @@ const sdl2Image = Deno.dlopen(getLibraryPath("SDL2_image"), {
     "result": "u32",
   },
   "IMG_Load": {
-    "parameters": ["pointer"],
+    "parameters": ["buffer"],
     "result": "pointer",
   },
 });
@@ -259,11 +259,11 @@ const sdl2Font = Deno.dlopen(getLibraryPath("SDL2_ttf"), {
     "result": "u32",
   },
   "TTF_OpenFont": {
-    "parameters": ["pointer", "i32"],
+    "parameters": ["buffer", "i32"],
     "result": "pointer",
   },
   "TTF_RenderText_Solid": {
-    "parameters": ["pointer", "pointer", "pointer"],
+    "parameters": ["pointer", "buffer", "pointer"],
     "result": "pointer",
   },
   "TTF_RenderText_Shaded": {
@@ -407,8 +407,8 @@ function asCString(str: string): Uint8Array {
 
 function throwSDLError(): never {
   const error = sdl2.symbols.SDL_GetError();
-  const view = new Deno.UnsafePointerView(error);
-  throw new Error(`SDL Error: ${view.getCString()}`);
+  const view = Deno.UnsafePointerView.getCString(error);
+  throw new Error(`SDL Error: ${view}`);
 }
 
 export class Canvas {
@@ -523,8 +523,8 @@ export class Canvas {
     const ret = sdl2.symbols.SDL_RenderCopy(
       this.target,
       texture[_raw],
-      source ? source[_raw] : null,
-      dest ? dest[_raw] : null,
+      source ? Deno.UnsafePointer.of(source[_raw]) : null,
+      dest ? Deno.UnsafePointer.of(dest[_raw]) : null,
     );
     if (ret < 0) {
       throwSDLError();
