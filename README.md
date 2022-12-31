@@ -55,6 +55,7 @@ sudo ln -s /opt/homebrew/lib/libSDL2_ttf.dylib /usr/local/lib/
 Additionally, you can set `DENO_SDL2_PATH` to point to the directory where these
 three libraries are located.
 
+<!--
 Windows (x64):
 
 Grab prebuilt libraries from all of:
@@ -65,12 +66,15 @@ Grab prebuilt libraries from all of:
 
 Take `SDL2.dll`, `SDL2_image.dll` and `SDL2_ttf.dll` from each respectively and
 put them into `C:\Windows\System32\`.
+-->
 
 Linux (x64):
 
 ```shell
 sudo apt install libsdl2-dev libsdl2-image-dev libsdl2-ttf-dev
 ```
+
+Windows is not supported, it might work but I can't maintain it.
 
 ### security
 
