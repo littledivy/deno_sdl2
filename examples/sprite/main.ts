@@ -1,5 +1,5 @@
 import { EventType, Rect, Surface, WindowBuilder } from "../../mod.ts";
-import { drawMap, Sprite } from "./util.ts";
+import { drawMap, sleepSync, Sprite } from "./util.ts";
 
 const canvasSize = { width: 400, height: 400 };
 const window = new WindowBuilder(
@@ -115,7 +115,7 @@ function frame() {
   }
 
   canv.present();
-  Deno.sleepSync(10);
+  sleepSync(10);
 }
 
 for (const event of window.events()) {

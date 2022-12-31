@@ -259,11 +259,11 @@ const sdl2Font = Deno.dlopen(getLibraryPath("SDL2_ttf"), {
     "result": "u32",
   },
   "TTF_OpenFont": {
-    "parameters": ["pointer", "i32"],
+    "parameters": ["buffer", "i32"],
     "result": "pointer",
   },
   "TTF_RenderText_Solid": {
-    "parameters": ["pointer", "pointer", "pointer"],
+    "parameters": ["pointer", "buffer", "pointer"],
     "result": "pointer",
   },
   "TTF_RenderText_Shaded": {
@@ -407,8 +407,8 @@ function asCString(str: string): Uint8Array {
 
 function throwSDLError(): never {
   const error = sdl2.symbols.SDL_GetError();
-  const view = new Deno.UnsafePointerView(error);
-  throw new Error(`SDL Error: ${view.getCString()}`);
+  const view = Deno.UnsafePointerView.getCString(error);
+  throw new Error(`SDL Error: ${view}`);
 }
 
 export class Canvas {
