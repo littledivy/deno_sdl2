@@ -1,6 +1,6 @@
 ### Deno SDL2
 
-deno_sdl2 provides cross-platform bindings to sdl2, sdl2_ttf and sdl2_image.
+deno_sdl2 provides bindings to sdl2, sdl2_ttf and sdl2_image.
 
 https://user-images.githubusercontent.com/34997667/160436698-9045ba0c-3fc8-45f9-8038-4194e5d3dcc8.mov
 
