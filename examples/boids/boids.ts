@@ -1,4 +1,4 @@
-import { Canvas, PixelFormat, Texture, TextureAccess } from "../../mod.ts";
+import { Canvas, PixelFormat, Texture, TextureAccess, WindowBuilder, EventType } from "../../mod.ts";
 import { FPS } from "../utils.ts";
 
 class Boids {
@@ -25,32 +25,24 @@ class Boids {
 
   canvas: Canvas;
   sdl2texture: Texture;
-
+  window: Window;
   constructor(options: {
     particleCount: number;
     particlesPerGroup: number;
   }, public device: GPUDevice) {
     this.particleCount = options.particleCount;
     this.particlesPerGroup = options.particlesPerGroup;
-    this.canvas = new Canvas({
-      title: "Hello, Deno!",
-      ...this.dimensions,
-      centered: false,
-      fullscreen: false,
-      hidden: false,
-      resizable: true,
-      minimized: false,
-      maximized: false,
-      flags: null,
-    });
-
-    this.sdl2texture = this.canvas.createTexture(
+    const window = new WindowBuilder("Hello, Deno!" , this.dimensions.width, this.dimensions.height).build();
+    this.canvas = window.canvas();
+    this.window = window;
+    const creator = this.canvas.textureCreator();
+    this.sdl2texture = creator.createTexture(
       PixelFormat.ABGR8888,
       TextureAccess.Streaming,
       this.dimensions.width,
       this.dimensions.height,
     );
-    this.texture = this.device.createTexture({
+        this.texture = this.device.createTexture({
       label: "Capture",
       size: this.dimensions,
       format: "rgba8unorm-srgb",
@@ -377,28 +369,28 @@ boids.init();
 const tick = FPS(100);
 
 event_loop:
-for await (const event of boids.canvas) {
+for (const event of boids.window.events()) {
   switch (event.type) {
-    case "resized": {
-      const { width, height } = event;
-      boids.canvas.copy(boids.sdl2texture, { x: 0, y: 0, width, height }, {
-        x: 0,
-        y: 0,
-        width,
-        height,
-      });
-      boids.screenDimensions = { width, height };
-      boids.canvas.present();
-      break;
-    }
-    case "draw": {
+    // case EventType.Re: {
+    //   const { width, height } = event;
+    //   boids.canvas.copy(boids.sdl2texture, { x: 0, y: 0, width, height }, {
+    //     x: 0,
+    //     y: 0,
+    //     width,
+    //     height,
+    //   });
+    //   boids.screenDimensions = { width, height };
+    //   boids.canvas.present();
+    //   break;
+    // }
+    case EventType.Draw: {
       await boids.update();
       tick();
       break;
     }
-    case "quit":
+    case EventType.Quit:
       break event_loop;
-    case "key_down":
+    case EventType.KeyDown:
       break event_loop;
     default:
       break;
