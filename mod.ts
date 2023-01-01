@@ -349,7 +349,9 @@ function init() {
 }
 
 init();
-
+/**
+ * An enum that contains structures for the different event types.
+ */
 export enum EventType {
   First = 0,
   Quit = 0x100,
@@ -412,12 +414,22 @@ function throwSDLError(): never {
   throw new Error(`SDL Error: ${view}`);
 }
 
+/**
+ * SDL2 canvas.
+ */
 export class Canvas {
   constructor(
     private window: Deno.UnsafePointer,
     private target: Deno.UnsafePointer,
   ) {}
 
+  /**
+   * Set the color used for drawing operations (Rect, Line and Clear).
+   * @param r the red value used to draw on the rendering target
+   * @param g the green value used to draw on the rendering target
+   * @param b the blue value used to draw on the rendering target
+   * @param a the alpha value used to draw on the rendering target; usually SDL_ALPHA_OPAQUE (255).
+   */
   setDrawColor(r: number, g: number, b: number, a: number) {
     const ret = sdl2.symbols.SDL_SetRenderDrawColor(this.target, r, g, b, a);
     if (ret < 0) {
@@ -425,17 +437,27 @@ export class Canvas {
     }
   }
 
+  /**
+   * Clear the current rendering target with the drawing color.
+   */
   clear() {
     const ret = sdl2.symbols.SDL_RenderClear(this.target);
     if (ret < 0) {
       throwSDLError();
     }
   }
-
+  /**
+   * Update the screen with any rendering performed since the previous call.
+   */
   present() {
     sdl2.symbols.SDL_RenderPresent(this.target);
   }
 
+  /**
+   * Draw a point on the current rendering target.
+   * @param x the x coordinate of the point
+   * @param y the y coordinate of the point
+   */
   drawPoint(x: number, y: number) {
     const ret = sdl2.symbols.SDL_RenderDrawPoint(this.target, x, y);
     if (ret < 0) {
@@ -443,6 +465,10 @@ export class Canvas {
     }
   }
 
+  /**
+   * Draw multiple points on the current rendering target.
+   * @param points an array of Points (x, y) structures that represent the points to draw
+   */
   drawPoints(points: [number, number][]) {
     const intArray = new Int32Array(points.flat());
     const ret = sdl2.symbols.SDL_RenderDrawPoints(
@@ -455,6 +481,13 @@ export class Canvas {
     }
   }
 
+  /**
+   * Draw a line on the current rendering target.
+   * @param x1 the x coordinate of the start point
+   * @param y1 the y coordinate of the start point
+   * @param x2 the x coordinate of the end point
+   * @param y2 the y coordinate of the end point
+   */
   drawLine(x1: number, y1: number, x2: number, y2: number) {
     const ret = sdl2.symbols.SDL_RenderDrawLine(this.target, x1, y1, x2, y2);
     if (ret < 0) {
@@ -462,6 +495,10 @@ export class Canvas {
     }
   }
 
+  /**
+   * Draw a series of connected lines on the current rendering target.
+   * @param points an array of Points (x, y) structures representing points along the lines
+   */
   drawLines(points: [number, number][]) {
     const intArray = new Int32Array(points.flat());
     const ret = sdl2.symbols.SDL_RenderDrawLines(
@@ -474,6 +511,14 @@ export class Canvas {
     }
   }
 
+  /**
+   * Draw a rectangle on the current rendering target.
+   * @param x the x coordinate of the rectangle
+   * @param y the y coordinate of the rectangle
+   * @param w the width of the rectangle
+   * @param h the height of the rectangle
+   */
+
   drawRect(x: number, y: number, w: number, h: number) {
     const intArray = new Int32Array([x, y, w, h]);
     const ret = sdl2.symbols.SDL_RenderDrawRect(
@@ -485,6 +530,10 @@ export class Canvas {
     }
   }
 
+  /**
+   * Draw some number of rectangles on the current rendering target.
+   * @param rects an array of Rect (x, y, w, h) structures representing the rectangles to draw
+   */
   drawRects(rects: [number, number, number, number][]) {
     const intArray = new Int32Array(rects.flat());
     const ret = sdl2.symbols.SDL_RenderDrawRects(
@@ -497,6 +546,13 @@ export class Canvas {
     }
   }
 
+  /**
+   * Fill a rectangle on the current rendering target with the drawing color.
+   * @param x the x coordinate of the rectangle
+   * @param y the y coordinate of the rectangle
+   * @param w the width of the rectangle
+   * @param h the height of the rectangle
+   */
   fillRect(x: number, y: number, w: number, h: number) {
     const intArray = new Int32Array([x, y, w, h]);
     const ret = sdl2.symbols.SDL_RenderFillRect(
@@ -508,6 +564,10 @@ export class Canvas {
     }
   }
 
+  /**
+   * Fill some number of rectangles on the current rendering target with the drawing color.
+   * @param rects an array of Rect (x, y, w, h) structures representing the rectangles to fill
+   */
   fillRects(rects: [number, number, number, number][]) {
     const intArray = new Int32Array(rects.flat());
     const ret = sdl2.symbols.SDL_RenderFillRects(
@@ -520,6 +580,12 @@ export class Canvas {
     }
   }
 
+  /**
+   * Copy a portion of the texture to the current rendering target.
+   * @param texture the source texture
+   * @param source the source rectangle, or null to copy the entire texture
+   * @param dest the destination rectangle, or null for the entire rendering target; the texture will be stretched to fill the given rectangle
+   */
   copy(texture: Texture, source?: Rect, dest?: Rect) {
     const ret = sdl2.symbols.SDL_RenderCopy(
       this.target,
@@ -532,22 +598,40 @@ export class Canvas {
     }
   }
 
+  /**
+   * TextureCreator is a helper class for creating textures.
+   * @returns a TextureCreator object for use with creating textures
+   */
   textureCreator() {
     return new TextureCreator(this.target);
   }
 
+  /**
+   * Create a font from a file, using a specified point size.
+   * @param path the path to the font file
+   * @param size point size to use for the newly-opened font
+   * @returns a Font object for use with rendering text
+   */
   loadFont(path: string, size: number) {
     const raw = sdl2Font.symbols.TTF_OpenFont(asCString(path), size);
     return new Font(raw);
   }
 }
 
+/**
+ * Font is a helper class for rendering text.
+ */
 export class Font {
   [_raw]: Deno.UnsafePointer;
   constructor(raw: Deno.UnsafePointer) {
     this[_raw] = raw;
   }
-
+  /**
+   * Render a solid color version of the text.
+   * @param text text to render, in Latin1 encoding.
+   * @param color the foreground color of the text
+   * @returns a Texture object
+   */
   renderSolid(text: string, color: Color) {
     const raw = sdl2Font.symbols.TTF_RenderText_Solid(
       this[_raw],
@@ -557,6 +641,12 @@ export class Font {
     return new Texture(raw);
   }
 
+  /**
+   * Render text at high quality to a new ARGB surface.
+   * @param text text to render, in Latin1 encoding.
+   * @param color the foreground color of the text
+   * @returns a Texture object
+   */
   renderBlended(text: string, color: Color) {
     const raw = sdl2Font.symbols.TTF_RenderText_Blended(
       this[_raw],
@@ -567,6 +657,9 @@ export class Font {
   }
 }
 
+/**
+ * Color is a helper class for representing colors.
+ */
 export class Color {
   [_raw]: Deno.UnsafePointer;
   constructor(r: number, g: number, b: number, a: number = 0xff) {
@@ -574,7 +667,10 @@ export class Color {
     this[_raw] = Deno.UnsafePointer.of(raw);
   }
 }
-
+/**
+ * A structure that contains pixel format information.
+ * @see https://wiki.libsdl.org/SDL2/SDL_PixelFormat
+ */
 export enum PixelFormat {
   Unknown = 0,
   Index1LSB = 286261504,
@@ -615,15 +711,41 @@ export enum PixelFormat {
   YVYU = 1431918169,
 }
 
+/**
+ * An enumeration of texture access patterns.
+ * @see https://wiki.libsdl.org/SDL2/SDL_TextureAccess
+ */
 export enum TextureAccess {
   Static = 0,
   Streaming = 1,
   Target = 2,
 }
 
+/**
+ * A class used to create textures.
+ */
 export class TextureCreator {
   constructor(private raw: Deno.UnsafePointer) {}
 
+  /**
+   * Create a texture for a rendering context.
+   * @param format the format of the texture
+   * @param access one of the enumerated values in TextureAccess or a number
+   * @param w the width of the texture in pixels
+   * @param h the height of the texture in pixels
+   * @returns a Texture object
+   *
+   * @example
+   * ```ts
+   * const creator = canvas.textureCreator();
+   * const texture = creator.createTexture(
+   *  PixelFormat.RGBA8888,
+   *  TextureAccess.Static,
+   *  640,
+   *  480,
+   * );
+   * ```
+   */
   createTexture(
     format: number,
     access: number,
@@ -643,6 +765,12 @@ export class TextureCreator {
     return new Texture(raw);
   }
 
+  /**
+   * Create a texture from a surface.
+   * @param surface the surface used to create the texture
+   * @returns a Texture object
+   */
+
   createTextureFromSurface(surface: Surface): Texture {
     const raw = sdl2.symbols.SDL_CreateTextureFromSurface(
       this.raw,
@@ -655,6 +783,9 @@ export class TextureCreator {
   }
 }
 
+/**
+ * An interface that contains information about a texture.
+ */
 export interface TextureQuery {
   format: number;
   access: TextureAccess;
@@ -662,6 +793,10 @@ export interface TextureQuery {
   h: number;
 }
 
+/**
+ * A structure that contains an efficient, driver-specific representation of pixel data.
+ * @see https://wiki.libsdl.org/SDL2/SDL_Texture
+ */
 export class Texture {
   [_raw]: Deno.UnsafePointer;
 
@@ -669,6 +804,10 @@ export class Texture {
     this[_raw] = raw;
   }
 
+  /**
+   * Query the attributes of a texture.
+   * @returns a TextureQuery
+   */
   query(): TextureQuery {
     const format = new Uint32Array(1);
     const access = new Uint32Array(1);
@@ -692,7 +831,12 @@ export class Texture {
       h: h[0],
     };
   }
-
+  /**
+   * Set an additional color value multiplied into render copy operations.
+   * @param r the red color value
+   * @param g the green color value
+   * @param b the blue color value
+   */
   setColorMod(r: number, g: number, b: number) {
     const ret = sdl2.symbols.SDL_SetTextureColorMod(
       this.raw,
@@ -704,7 +848,10 @@ export class Texture {
       throwSDLError();
     }
   }
-
+  /**
+   * Set an additional alpha value multiplied into render copy operations.
+   * @param a the source alpha value multiplied into copy operations
+   */
   setAlphaMod(a: number) {
     const ret = sdl2.symbols.SDL_SetTextureAlphaMod(this.raw, a);
     if (ret < 0) {
@@ -712,6 +859,12 @@ export class Texture {
     }
   }
 
+  /**
+   * Update the given texture rectangle with new pixel data.
+   * @param pixels the raw pixel data in the format of the texture
+   * @param pitch the number of bytes in a row of pixel data, including padding between lines
+   * @param rect an Rect representing the area to update, or null to update the entire texture
+   */
   update(pixels: Uint8Array, pitch: number, rect?: Rect) {
     const ret = sdl2.symbols.SDL_UpdateTexture(
       this.raw,
@@ -725,35 +878,54 @@ export class Texture {
   }
 }
 
+/**
+ * A structure that contains the definition of a rectangle, with the origin at the upper left.
+ * @see https://wiki.libsdl.org/SDL2/SDL_Rect
+ */
 export class Rect {
   [_raw]: Uint32Array;
   constructor(x: number, y: number, w: number, h: number) {
     this[_raw] = new Uint32Array([x, y, w, h]);
   }
-
+  /**
+   * The x coordinate of the rectangle.
+   */
   get x() {
     return this[_raw][0];
   }
-
+  /**
+   * The y coordinate of the rectangle.
+   */
   get y() {
     return this[_raw][1];
   }
-
+  /**
+   * The width of the rectangle.
+   */
   get width() {
     return this[_raw][2];
   }
-
+  /**
+   * The height of the rectangle.
+   */
   get height() {
     return this[_raw][3];
   }
 }
-
+/**
+ * A structure that contains a collection of pixels used in software blitting.
+ */
 export class Surface {
   [_raw]: Deno.UnsafePointer;
   constructor(raw: Deno.UnsafePointer) {
     this[_raw] = raw;
   }
 
+  /**
+   * Create a surface from a file.
+   * @param path the path to the image file
+   * @returns a Surface
+   */
   static fromFile(path: string): Surface {
     const raw = sdl2Image.symbols.IMG_Load(asCString(path));
     if (raw === null) {
@@ -761,7 +933,10 @@ export class Surface {
     }
     return new Surface(raw);
   }
-
+  /**
+   * @param path the path to the bmp (bitmap) file
+   * @returns a Surface
+   */
   static loadBmp(path: string): Surface {
     const raw = sdl2.symbols.SDL_LoadBMP_RW(asCString(path));
     if (raw === null) {
@@ -916,15 +1091,25 @@ const eventReader: Record<EventType, Reader<any>> = {
   [EventType.Draw]: makeReader(SDL_CommonEvent),
 };
 
+/**
+ * A window.
+ */
 export class Window {
   constructor(private raw: Deno.UnsafePointer) {}
 
+  /**
+   * Create a 2D rendering context for a window.
+   * @returns a valid rendering context (Canvas)
+   */
   canvas() {
     // Hardware accelerated canvas
     const raw = sdl2.symbols.SDL_CreateRenderer(this.raw, -1, 0);
     return new Canvas(this.raw, raw);
   }
 
+  /**
+   * Events from the window.
+   */
   *events() {
     while (true) {
       const event = Deno.UnsafePointer.of(eventBuf);
@@ -944,6 +1129,13 @@ export class Window {
   }
 }
 
+/**
+ * A window builder to create a window.
+ * @example
+ * ```ts
+ * const window = new WindowBuilder("Hello World", 800, 600);
+ * ```
+ */
 export class WindowBuilder {
   private flags: number = 0;
   constructor(
@@ -952,6 +1144,10 @@ export class WindowBuilder {
     private height: number,
   ) {}
 
+  /**
+   * Build a window.
+   * @returns a window
+   */
   build() {
     const title = asCString(this.title);
     const window = sdl2.symbols.SDL_CreateWindow(
@@ -965,51 +1161,72 @@ export class WindowBuilder {
     return new Window(window);
   }
 
+  /**
+   * Set the window to be fullscreen.
+   */
   fullscreen() {
     this.flags |= 0x00000001;
     return this;
   }
-
+  /**
+   * Set the window to be resizable.
+   */
   resizable() {
     this.flags |= 0x00000002;
     return this;
   }
-
+  /**
+   * Set the window to be borderless.
+   */
   borderless() {
     this.flags |= 0x00000004;
     return this;
   }
-
+  /**
+   * Set the window to be always on top.
+   */
   alwaysOnTop() {
     this.flags |= 0x00000008;
     return this;
   }
-
+  /**
+   * Window usable with an OpenGL context
+   */
   openGL() {
     this.flags |= 0x00000010;
     return this;
   }
-
+  /**
+   * Window should be created in high-DPI mode.
+   */
   highDPI() {
     this.flags |= 0x00000020;
     return this;
   }
-
+  /**
+   * Window has grabbed input focus.
+   */
   inputGrabbed() {
     this.flags |= 0x00000040;
     return this;
   }
-
+  /**
+   * Set the window to be a input focused window.
+   */
   inputFocus() {
     this.flags |= 0x00000080;
     return this;
   }
-
+  /**
+   * Set the window to be a mouse focused window.
+   */
   mouseFocus() {
     this.flags |= 0x00000100;
     return this;
   }
-
+  /**
+   * Set the window to be a foreign window.
+   */
   foreign() {
     this.flags |= 0x00000200;
     return this;
@@ -1020,8 +1237,13 @@ export class WindowBuilder {
     return this;
   }
 }
-
+/**
+ * A video subsystem.
+ */
 export class VideoSubsystem {
+  /**
+   * Get the name of the currently initialized video driver.
+   */
   currentVideoDriver(): string {
     const buf = sdl2.symbols.SDL_GetCurrentVideoDriver();
     if (buf === null) {
