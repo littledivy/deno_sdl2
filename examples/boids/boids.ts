@@ -1,4 +1,11 @@
-import { Canvas, PixelFormat, Texture, TextureAccess, WindowBuilder, EventType } from "../../mod.ts";
+import {
+  Canvas,
+  EventType,
+  PixelFormat,
+  Texture,
+  TextureAccess,
+  WindowBuilder,
+} from "../../mod.ts";
 import { FPS } from "../utils.ts";
 
 class Boids {
@@ -32,7 +39,11 @@ class Boids {
   }, public device: GPUDevice) {
     this.particleCount = options.particleCount;
     this.particlesPerGroup = options.particlesPerGroup;
-    const window = new WindowBuilder("Hello, Deno!" , this.dimensions.width, this.dimensions.height).build();
+    const window = new WindowBuilder(
+      "Hello, Deno!",
+      this.dimensions.width,
+      this.dimensions.height,
+    ).build();
     this.canvas = window.canvas();
     this.window = window;
     const creator = this.canvas.textureCreator();
@@ -42,7 +53,7 @@ class Boids {
       this.dimensions.width,
       this.dimensions.height,
     );
-        this.texture = this.device.createTexture({
+    this.texture = this.device.createTexture({
       label: "Capture",
       size: this.dimensions,
       format: "rgba8unorm-srgb",
