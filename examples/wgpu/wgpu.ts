@@ -73,13 +73,14 @@ const renderPass = encoder.beginRenderPass({
     {
       view: texture.createView(),
       storeOp: "store",
-      loadValue: [0, 1, 0, 1],
+      loadOp: "clear",
+      clearValue: [0, 1, 0, 1],
     },
   ],
 });
 renderPass.setPipeline(renderPipeline);
 renderPass.draw(3, 1);
-renderPass.endPass();
+renderPass.end();
 
 encoder.copyTextureToBuffer(
   { texture },

@@ -4,6 +4,7 @@ import { FPS } from "./utils.ts";
 const window = new WindowBuilder("Hello, Deno!", 600, 800).build();
 const canvas = window.canvas();
 
+// deno-lint-ignore no-explicit-any
 const boxes: any[] = [];
 let num_boxes = 5;
 
@@ -35,6 +36,7 @@ function checkCollision(
 // 60 FPS cap
 const stepFrame = FPS();
 
+// deno-lint-ignore require-await
 async function frame() {
   canvas.setDrawColor(0, 0, 0, 255);
   canvas.clear();
@@ -77,20 +79,20 @@ async function frame() {
           20,
         )
       ) {
-        let dx = boxes[j].x - boxes[i].x;
-        let dy = boxes[j].y - boxes[i].y;
+        const dx = boxes[j].x - boxes[i].x;
+        const dy = boxes[j].y - boxes[i].y;
         let d = Math.floor(Math.sqrt(dx * dx + dy * dy));
 
         if (d === 0) {
           d = 1;
         }
-        let unitX = Math.floor(dx / d);
-        let unitY = Math.floor(dy / d);
+        const unitX = Math.floor(dx / d);
+        const unitY = Math.floor(dy / d);
 
-        let force = -2;
+        const force = -2;
 
-        let forceX = unitX * force;
-        let forceY = unitY * force;
+        const forceX = unitX * force;
+        const forceY = unitY * force;
 
         boxes[i].dx += forceX;
         boxes[i].dy += forceY;

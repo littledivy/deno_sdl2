@@ -2,8 +2,10 @@ import {
   Canvas,
   EventType,
   PixelFormat,
+  Rect,
   Texture,
   TextureAccess,
+  Window,
   WindowBuilder,
 } from "../../mod.ts";
 import { FPS } from "../utils.ts";
@@ -59,7 +61,7 @@ class Boids {
       format: "rgba8unorm-srgb",
       usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_SRC,
     });
-    const { padded, unpadded } = getRowPadding(this.dimensions.width);
+    const { padded } = getRowPadding(this.dimensions.width);
     this.outputBuffer = this.device.createBuffer({
       label: "Capture",
       size: padded * this.dimensions.height,
@@ -242,10 +244,10 @@ class Boids {
     const computePass = encoder.beginComputePass();
     computePass.setPipeline(this.computePipeline);
     computePass.setBindGroup(0, this.particleBindGroups[this.frameNum % 2]);
-    computePass.dispatch(
+    computePass.dispatchWorkgroups(
       Math.ceil(this.particleCount / this.particlesPerGroup),
     );
-    computePass.endPass();
+    computePass.end();
     encoder.copyBufferToBuffer(
       this.particleBuffers[0],
       0,
@@ -261,7 +263,7 @@ class Boids {
         {
           view: view,
           storeOp: "store",
-          loadValue: [0, 0, 0, 1],
+          loadOp: "load",
         },
       ],
     });
@@ -272,7 +274,7 @@ class Boids {
     );
     renderPass.setVertexBuffer(1, this.verticesBuffer);
     renderPass.draw(3, this.particleCount);
-    renderPass.endPass();
+    renderPass.end();
     encoder.popDebugGroup();
 
     this.frameNum += 1;
@@ -308,8 +310,13 @@ class Boids {
       buffer.set(slice, i * unpadded);
     }
     this.sdl2texture.update(buffer, this.dimensions.width * 4);
-    const rect = { x: 0, y: 0, ...this.dimensions };
-    const screen = { x: 0, y: 0, ...this.screenDimensions };
+    const rect = new Rect(0, 0, this.dimensions.width, this.dimensions.height);
+    const screen = new Rect(
+      0,
+      0,
+      this.screenDimensions.width,
+      this.screenDimensions.height,
+    );
     this.canvas.copy(this.sdl2texture, rect, screen);
     this.canvas.present();
     this.outputBuffer.unmap();
@@ -377,19 +384,18 @@ const boids = new Boids({
 }, await getDevice());
 boids.init();
 
-const tick = FPS(100);
+const tick = FPS();
 
 event_loop:
 for (const event of boids.window.events()) {
   switch (event.type) {
     // case EventType.Re: {
     //   const { width, height } = event;
-    //   boids.canvas.copy(boids.sdl2texture, { x: 0, y: 0, width, height }, {
-    //     x: 0,
-    //     y: 0,
-    //     width,
-    //     height,
-    //   });
+    //   boids.canvas.copy(
+    //     boids.sdl2texture,
+    //     new Rect(0, 0, width, height),
+    //     new Rect(0, 0, width, height),
+    //   );
     //   boids.screenDimensions = { width, height };
     //   boids.canvas.present();
     //   break;

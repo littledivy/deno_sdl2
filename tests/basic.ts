@@ -1,27 +1,17 @@
-import { Canvas } from "../mod.ts";
+import { EventType, WindowBuilder } from "../mod.ts";
+import { FPS } from "../examples/utils.ts";
 
-const canvas = new Canvas({
-  title: "Hello, Deno!",
-  height: 800,
-  width: 600,
-  centered: true,
-  fullscreen: false,
-  hidden: false,
-  resizable: true,
-  minimized: false,
-  maximized: false,
-  flags: null,
-});
-
+const window = new WindowBuilder("Hello, Deno!", 640, 480).build();
+const canvas = window.canvas();
 canvas.clear();
 canvas.present();
-// Fire up the event loop
-for await (const event of canvas) {
-  if (event.type == "draw") {
+const fps = FPS();
+for (const event of window.events()) {
+  fps();
+  if (event.type == EventType.Quit) {
+    break;
+  } else if (event.type == EventType.Draw) {
     canvas.clear();
     canvas.present();
-  }
-  if (event.type == "quit") {
-    canvas.quit();
   }
 }

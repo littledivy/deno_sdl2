@@ -13,6 +13,7 @@ const surface = font.renderSolid(Deno.args[0] || "Hello there!", color);
 const creator = canvas.textureCreator();
 const texture = creator.createTextureFromSurface(surface);
 
+// deno-lint-ignore require-await
 async function frame() {
   canvas.clear();
   canvas.copy(texture);
