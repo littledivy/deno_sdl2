@@ -1,6 +1,6 @@
 import {
+  AlignedStruct,
   i32,
-  PackedStruct,
   Struct,
   u16,
   u32,
@@ -986,17 +986,17 @@ function makeReader<
   };
 }
 
-const SDL_QuitEvent = new PackedStruct({
+const SDL_QuitEvent = new AlignedStruct({
   type: u32,
   timestamp: u32,
 });
 
-const SDL_CommonEvent = new PackedStruct({
+const SDL_CommonEvent = new AlignedStruct({
   type: u32,
   timestamp: u32,
 });
 
-const SDL_WindowEvent = new PackedStruct({
+const SDL_WindowEvent = new AlignedStruct({
   type: u32,
   timestamp: u32,
   windowID: u32,
@@ -1009,7 +1009,7 @@ const SDL_WindowEvent = new PackedStruct({
 });
 
 // deno-lint-ignore no-unused-vars
-const SDL_DisplayEvent = new PackedStruct({
+const SDL_DisplayEvent = new AlignedStruct({
   type: u32,
   timestamp: u32,
   display: u32,
@@ -1021,14 +1021,14 @@ const SDL_DisplayEvent = new PackedStruct({
   data2: i32,
 });
 
-const SDL_KeySym = new PackedStruct({
+const SDL_KeySym = new AlignedStruct({
   scancode: u32,
   sym: u32,
   _mod: u16,
   unused: u32,
 });
 
-const SDL_KeyboardEvent = new PackedStruct({
+const SDL_KeyboardEvent = new AlignedStruct({
   type: u32,
   timestamp: u32,
   windowID: u32,
@@ -1039,7 +1039,7 @@ const SDL_KeyboardEvent = new PackedStruct({
   keysym: SDL_KeySym,
 });
 
-const SDL_MouseMotionEvent = new PackedStruct({
+const SDL_MouseMotionEvent = new AlignedStruct({
   type: u32,
   timestamp: u32,
   windowID: u32,
@@ -1051,7 +1051,7 @@ const SDL_MouseMotionEvent = new PackedStruct({
   yrel: i32,
 });
 
-const SDL_MouseButtonEvent = new PackedStruct({
+const SDL_MouseButtonEvent = new AlignedStruct({
   type: u32,
   timestamp: u32,
   windowID: u32,
@@ -1064,7 +1064,7 @@ const SDL_MouseButtonEvent = new PackedStruct({
   y: i32,
 });
 
-const SDL_MouseWheelEvent = new PackedStruct({
+const SDL_MouseWheelEvent = new AlignedStruct({
   type: u32,
   timestamp: u32,
   windowID: u32,
@@ -1073,7 +1073,7 @@ const SDL_MouseWheelEvent = new PackedStruct({
   y: i32,
 });
 
-const SDL_AudioDeviceEvent = new PackedStruct({
+const SDL_AudioDeviceEvent = new AlignedStruct({
   type: u32,
   timestamp: u32,
   which: u32,
@@ -1085,11 +1085,11 @@ const SDL_AudioDeviceEvent = new PackedStruct({
   data2: i32,
 });
 
-const SDL_FirstEvent = new PackedStruct({
+const SDL_FirstEvent = new AlignedStruct({
   type: u32,
 });
 
-const SDL_LastEvent = new PackedStruct({
+const SDL_LastEvent = new AlignedStruct({
   type: u32,
 });
 
