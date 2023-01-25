@@ -1,11 +1,15 @@
 import {
+  AlignedStruct,
   i32,
-  SizedFFIType,
   Struct,
   u16,
   u32,
   u8,
-} from "https://deno.land/x/byte_type@0.1.7/ffi.ts";
+} from "https://raw.githubusercontent.com/denosaurs/byte_type/main/mod.ts";
+import {
+  InnerType,
+  SizedType,
+} from "https://raw.githubusercontent.com/denosaurs/byte_type/main/types/types.ts";
 
 let DENO_SDL2_PATH: string | undefined;
 try {
@@ -229,11 +233,11 @@ const sdl2 = Deno.dlopen(getLibraryPath("SDL2"), {
     "result": "i32",
   },
   "SDL_UpdateTexture": {
-    "parameters": ["pointer", "pointer", "pointer", "i32"],
+    "parameters": ["pointer", "buffer", "pointer", "i32"],
     "result": "i32",
   },
   "SDL_LoadBMP_RW": {
-    "parameters": ["pointer"],
+    "parameters": ["buffer"],
     "result": "pointer",
   },
   "SDL_CreateTextureFromSurface": {
@@ -271,7 +275,7 @@ const sdl2Font = Deno.dlopen(getLibraryPath("SDL2_ttf"), {
     "result": "pointer",
   },
   "TTF_RenderText_Blended": {
-    "parameters": ["pointer", "pointer", "pointer"],
+    "parameters": ["pointer", "buffer", "pointer"],
     "result": "pointer",
   },
   "TTF_CloseFont": {
@@ -418,10 +422,15 @@ function throwSDLError(): never {
  * SDL2 canvas.
  */
 export class Canvas {
+  #window: Deno.UnsafePointer;
+  #target: Deno.UnsafePointer;
   constructor(
-    private window: Deno.UnsafePointer,
-    private target: Deno.UnsafePointer,
-  ) {}
+    window: Deno.UnsafePointer,
+    target: Deno.UnsafePointer,
+  ) {
+    this.#window = window;
+    this.#target = target;
+  }
 
   /**
    * Set the color used for drawing operations (Rect, Line and Clear).
@@ -431,7 +440,13 @@ export class Canvas {
    * @param a the alpha value used to draw on the rendering target; usually SDL_ALPHA_OPAQUE (255).
    */
   setDrawColor(r: number, g: number, b: number, a: number) {
-    const ret = sdl2.symbols.SDL_SetRenderDrawColor(this.target, r, g, b, a);
+    const ret = sdl2.symbols.SDL_SetRenderDrawColor(
+      this.#target as bigint,
+      r,
+      g,
+      b,
+      a,
+    );
     if (ret < 0) {
       throwSDLError();
     }
@@ -441,7 +456,7 @@ export class Canvas {
    * Clear the current rendering target with the drawing color.
    */
   clear() {
-    const ret = sdl2.symbols.SDL_RenderClear(this.target);
+    const ret = sdl2.symbols.SDL_RenderClear(this.#target as bigint);
     if (ret < 0) {
       throwSDLError();
     }
@@ -450,7 +465,7 @@ export class Canvas {
    * Update the screen with any rendering performed since the previous call.
    */
   present() {
-    sdl2.symbols.SDL_RenderPresent(this.target);
+    sdl2.symbols.SDL_RenderPresent(this.#target as bigint);
   }
 
   /**
@@ -459,7 +474,7 @@ export class Canvas {
    * @param y the y coordinate of the point
    */
   drawPoint(x: number, y: number) {
-    const ret = sdl2.symbols.SDL_RenderDrawPoint(this.target, x, y);
+    const ret = sdl2.symbols.SDL_RenderDrawPoint(this.#target as bigint, x, y);
     if (ret < 0) {
       throwSDLError();
     }
@@ -472,7 +487,7 @@ export class Canvas {
   drawPoints(points: [number, number][]) {
     const intArray = new Int32Array(points.flat());
     const ret = sdl2.symbols.SDL_RenderDrawPoints(
-      this.target,
+      this.#target as bigint,
       Deno.UnsafePointer.of(intArray),
       intArray.length,
     );
@@ -489,7 +504,13 @@ export class Canvas {
    * @param y2 the y coordinate of the end point
    */
   drawLine(x1: number, y1: number, x2: number, y2: number) {
-    const ret = sdl2.symbols.SDL_RenderDrawLine(this.target, x1, y1, x2, y2);
+    const ret = sdl2.symbols.SDL_RenderDrawLine(
+      this.#target as bigint,
+      x1,
+      y1,
+      x2,
+      y2,
+    );
     if (ret < 0) {
       throwSDLError();
     }
@@ -502,7 +523,7 @@ export class Canvas {
   drawLines(points: [number, number][]) {
     const intArray = new Int32Array(points.flat());
     const ret = sdl2.symbols.SDL_RenderDrawLines(
-      this.target,
+      this.#target as bigint,
       Deno.UnsafePointer.of(intArray),
       intArray.length,
     );
@@ -522,7 +543,7 @@ export class Canvas {
   drawRect(x: number, y: number, w: number, h: number) {
     const intArray = new Int32Array([x, y, w, h]);
     const ret = sdl2.symbols.SDL_RenderDrawRect(
-      this.target,
+      this.#target as bigint,
       Deno.UnsafePointer.of(intArray),
     );
     if (ret < 0) {
@@ -537,7 +558,7 @@ export class Canvas {
   drawRects(rects: [number, number, number, number][]) {
     const intArray = new Int32Array(rects.flat());
     const ret = sdl2.symbols.SDL_RenderDrawRects(
-      this.target,
+      this.#target as bigint,
       Deno.UnsafePointer.of(intArray),
       intArray.length,
     );
@@ -556,7 +577,7 @@ export class Canvas {
   fillRect(x: number, y: number, w: number, h: number) {
     const intArray = new Int32Array([x, y, w, h]);
     const ret = sdl2.symbols.SDL_RenderFillRect(
-      this.target,
+      this.#target as bigint,
       Deno.UnsafePointer.of(intArray),
     );
     if (ret < 0) {
@@ -571,7 +592,7 @@ export class Canvas {
   fillRects(rects: [number, number, number, number][]) {
     const intArray = new Int32Array(rects.flat());
     const ret = sdl2.symbols.SDL_RenderFillRects(
-      this.target,
+      this.#target as bigint,
       Deno.UnsafePointer.of(intArray),
       intArray.length,
     );
@@ -588,8 +609,8 @@ export class Canvas {
    */
   copy(texture: Texture, source?: Rect, dest?: Rect) {
     const ret = sdl2.symbols.SDL_RenderCopy(
-      this.target,
-      texture[_raw],
+      this.#target as bigint,
+      texture[_raw] as bigint,
       source ? Deno.UnsafePointer.of(source[_raw]) : null,
       dest ? Deno.UnsafePointer.of(dest[_raw]) : null,
     );
@@ -603,7 +624,7 @@ export class Canvas {
    * @returns a TextureCreator object for use with creating textures
    */
   textureCreator() {
-    return new TextureCreator(this.target);
+    return new TextureCreator(this.#target);
   }
 
   /**
@@ -634,9 +655,9 @@ export class Font {
    */
   renderSolid(text: string, color: Color) {
     const raw = sdl2Font.symbols.TTF_RenderText_Solid(
-      this[_raw],
+      this[_raw] as bigint,
       asCString(text),
-      color[_raw],
+      color[_raw] as bigint,
     );
     return new Texture(raw);
   }
@@ -649,9 +670,9 @@ export class Font {
    */
   renderBlended(text: string, color: Color) {
     const raw = sdl2Font.symbols.TTF_RenderText_Blended(
-      this[_raw],
+      this[_raw] as bigint,
       asCString(text),
-      color[_raw],
+      color[_raw] as bigint,
     );
     return new Texture(raw);
   }
@@ -725,7 +746,10 @@ export enum TextureAccess {
  * A class used to create textures.
  */
 export class TextureCreator {
-  constructor(private raw: Deno.UnsafePointer) {}
+  #raw: Deno.UnsafePointer;
+  constructor(raw: Deno.UnsafePointer) {
+    this.#raw = raw;
+  }
 
   /**
    * Create a texture for a rendering context.
@@ -753,7 +777,7 @@ export class TextureCreator {
     h: number,
   ): Texture {
     const raw = sdl2.symbols.SDL_CreateTexture(
-      this.raw,
+      this.#raw as bigint,
       format,
       access,
       w,
@@ -773,8 +797,8 @@ export class TextureCreator {
 
   createTextureFromSurface(surface: Surface): Texture {
     const raw = sdl2.symbols.SDL_CreateTextureFromSurface(
-      this.raw,
-      surface[_raw],
+      this.#raw as bigint,
+      surface[_raw] as bigint,
     );
     if (raw === null) {
       throwSDLError();
@@ -799,8 +823,9 @@ export interface TextureQuery {
  */
 export class Texture {
   [_raw]: Deno.UnsafePointer;
-
+  #raw: Deno.UnsafePointer;
   constructor(private raw: Deno.UnsafePointer) {
+    this.#raw = raw;
     this[_raw] = raw;
   }
 
@@ -815,7 +840,7 @@ export class Texture {
     const h = new Uint32Array(1);
 
     const ret = sdl2.symbols.SDL_QueryTexture(
-      this.raw,
+      this.#raw as bigint,
       Deno.UnsafePointer.of(format),
       Deno.UnsafePointer.of(access),
       Deno.UnsafePointer.of(w),
@@ -839,7 +864,7 @@ export class Texture {
    */
   setColorMod(r: number, g: number, b: number) {
     const ret = sdl2.symbols.SDL_SetTextureColorMod(
-      this.raw,
+      this.#raw as bigint,
       r,
       g,
       b,
@@ -853,7 +878,7 @@ export class Texture {
    * @param a the source alpha value multiplied into copy operations
    */
   setAlphaMod(a: number) {
-    const ret = sdl2.symbols.SDL_SetTextureAlphaMod(this.raw, a);
+    const ret = sdl2.symbols.SDL_SetTextureAlphaMod(this.#raw as bigint, a);
     if (ret < 0) {
       throwSDLError();
     }
@@ -867,7 +892,7 @@ export class Texture {
    */
   update(pixels: Uint8Array, pitch: number, rect?: Rect) {
     const ret = sdl2.symbols.SDL_UpdateTexture(
-      this.raw,
+      this.#raw as bigint,
       rect ? rect[_raw] : null,
       Deno.UnsafePointer.of(pixels),
       pitch,
@@ -948,25 +973,30 @@ export class Surface {
 
 const sizeOfEvent = 56; // type (u32) + event
 const eventBuf = new Uint8Array(sizeOfEvent);
-function makeReader<T extends Record<string, SizedFFIType<unknown>>>(
-  eventType: Struct<T>,
+function makeReader<
+  T extends Record<string, SizedType<unknown>>,
+  V extends { [K in keyof T]: InnerType<T[K]> },
+>(
+  eventType: Struct<T, V>,
 ) {
   return (reader: Deno.UnsafePointerView) => {
-    return eventType.read(reader);
+    return eventType.read(
+      new DataView(reader.getArrayBuffer(eventType.byteLength)),
+    );
   };
 }
 
-const SDL_QuitEvent = new Struct({
+const SDL_QuitEvent = new AlignedStruct({
   type: u32,
   timestamp: u32,
 });
 
-const SDL_CommonEvent = new Struct({
+const SDL_CommonEvent = new AlignedStruct({
   type: u32,
   timestamp: u32,
 });
 
-const SDL_WindowEvent = new Struct({
+const SDL_WindowEvent = new AlignedStruct({
   type: u32,
   timestamp: u32,
   windowID: u32,
@@ -979,7 +1009,7 @@ const SDL_WindowEvent = new Struct({
 });
 
 // deno-lint-ignore no-unused-vars
-const SDL_DisplayEvent = new Struct({
+const SDL_DisplayEvent = new AlignedStruct({
   type: u32,
   timestamp: u32,
   display: u32,
@@ -991,14 +1021,14 @@ const SDL_DisplayEvent = new Struct({
   data2: i32,
 });
 
-const SDL_KeySym = new Struct({
+const SDL_KeySym = new AlignedStruct({
   scancode: u32,
   sym: u32,
   _mod: u16,
   unused: u32,
 });
 
-const SDL_KeyboardEvent = new Struct({
+const SDL_KeyboardEvent = new AlignedStruct({
   type: u32,
   timestamp: u32,
   windowID: u32,
@@ -1009,7 +1039,7 @@ const SDL_KeyboardEvent = new Struct({
   keysym: SDL_KeySym,
 });
 
-const SDL_MouseMotionEvent = new Struct({
+const SDL_MouseMotionEvent = new AlignedStruct({
   type: u32,
   timestamp: u32,
   windowID: u32,
@@ -1021,7 +1051,7 @@ const SDL_MouseMotionEvent = new Struct({
   yrel: i32,
 });
 
-const SDL_MouseButtonEvent = new Struct({
+const SDL_MouseButtonEvent = new AlignedStruct({
   type: u32,
   timestamp: u32,
   windowID: u32,
@@ -1034,7 +1064,7 @@ const SDL_MouseButtonEvent = new Struct({
   y: i32,
 });
 
-const SDL_MouseWheelEvent = new Struct({
+const SDL_MouseWheelEvent = new AlignedStruct({
   type: u32,
   timestamp: u32,
   windowID: u32,
@@ -1043,7 +1073,7 @@ const SDL_MouseWheelEvent = new Struct({
   y: i32,
 });
 
-const SDL_AudioDeviceEvent = new Struct({
+const SDL_AudioDeviceEvent = new AlignedStruct({
   type: u32,
   timestamp: u32,
   which: u32,
@@ -1055,11 +1085,11 @@ const SDL_AudioDeviceEvent = new Struct({
   data2: i32,
 });
 
-const SDL_FirstEvent = new Struct({
+const SDL_FirstEvent = new AlignedStruct({
   type: u32,
 });
 
-const SDL_LastEvent = new Struct({
+const SDL_LastEvent = new AlignedStruct({
   type: u32,
 });
 
@@ -1095,7 +1125,10 @@ const eventReader: Record<EventType, Reader<any>> = {
  * A window.
  */
 export class Window {
-  constructor(private raw: Deno.UnsafePointer) {}
+  #raw: Deno.UnsafePointer;
+  constructor(raw: Deno.UnsafePointer) {
+    this.#raw = raw;
+  }
 
   /**
    * Create a 2D rendering context for a window.
@@ -1103,8 +1136,8 @@ export class Window {
    */
   canvas() {
     // Hardware accelerated canvas
-    const raw = sdl2.symbols.SDL_CreateRenderer(this.raw, -1, 0);
-    return new Canvas(this.raw, raw);
+    const raw = sdl2.symbols.SDL_CreateRenderer(this.#raw as bigint, -1, 0);
+    return new Canvas(this.#raw as bigint, raw);
   }
 
   /**
@@ -1137,26 +1170,33 @@ export class Window {
  * ```
  */
 export class WindowBuilder {
-  private flags: number = 0;
+  #flags = 0;
+  #title: string;
+  #width: number;
+  #height: number;
   constructor(
-    private title: string,
-    private width: number,
-    private height: number,
-  ) {}
+    title: string,
+    width: number,
+    height: number,
+  ) {
+    this.#title = title;
+    this.#width = width;
+    this.#height = height;
+  }
 
   /**
    * Build a window.
    * @returns a window
    */
   build() {
-    const title = asCString(this.title);
+    const title = asCString(this.#title);
     const window = sdl2.symbols.SDL_CreateWindow(
       title,
       0x2FFF0000,
       0x2FFF0000,
-      this.width,
-      this.height,
-      this.flags,
+      this.#width,
+      this.#height,
+      this.#flags,
     );
     return new Window(window);
   }
@@ -1165,75 +1205,75 @@ export class WindowBuilder {
    * Set the window to be fullscreen.
    */
   fullscreen() {
-    this.flags |= 0x00000001;
+    this.#flags |= 0x00000001;
     return this;
   }
   /**
    * Set the window to be resizable.
    */
   resizable() {
-    this.flags |= 0x00000002;
+    this.#flags |= 0x00000002;
     return this;
   }
   /**
    * Set the window to be borderless.
    */
   borderless() {
-    this.flags |= 0x00000004;
+    this.#flags |= 0x00000004;
     return this;
   }
   /**
    * Set the window to be always on top.
    */
   alwaysOnTop() {
-    this.flags |= 0x00000008;
+    this.#flags |= 0x00000008;
     return this;
   }
   /**
    * Window usable with an OpenGL context
    */
   openGL() {
-    this.flags |= 0x00000010;
+    this.#flags |= 0x00000010;
     return this;
   }
   /**
    * Window should be created in high-DPI mode.
    */
   highDPI() {
-    this.flags |= 0x00000020;
+    this.#flags |= 0x00000020;
     return this;
   }
   /**
    * Window has grabbed input focus.
    */
   inputGrabbed() {
-    this.flags |= 0x00000040;
+    this.#flags |= 0x00000040;
     return this;
   }
   /**
    * Set the window to be a input focused window.
    */
   inputFocus() {
-    this.flags |= 0x00000080;
+    this.#flags |= 0x00000080;
     return this;
   }
   /**
    * Set the window to be a mouse focused window.
    */
   mouseFocus() {
-    this.flags |= 0x00000100;
+    this.#flags |= 0x00000100;
     return this;
   }
   /**
    * Set the window to be a foreign window.
    */
   foreign() {
-    this.flags |= 0x00000200;
+    this.#flags |= 0x00000200;
     return this;
   }
 
   allowHighDPI() {
-    this.flags |= 0x00000400;
+    this.#flags |= 0x00000400;
     return this;
   }
 }

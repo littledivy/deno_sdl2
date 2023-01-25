@@ -1,7 +1,6 @@
 import {
   EventType,
   PixelFormat,
-  Rect,
   TextureAccess,
   WindowBuilder,
 } from "../../mod.ts";
