@@ -1,9 +1,9 @@
 import { EventType, WindowBuilder } from "../mod.ts";
 
-import BABYLON from "npm:babylonjs@5.30.0"
-import "npm:babylonjs-loaders@5.30.0"
+import BABYLON from "npm:babylonjs@5.30.0";
+import "npm:babylonjs-loaders@5.30.0";
 import glslang from "https://deno.land/x/glslang/mod.ts";
-import "https://cdn.babylonjs.com/twgsl/twgsl.js"
+import "https://cdn.babylonjs.com/twgsl/twgsl.js";
 
 const window = new WindowBuilder("Hello, Deno!", 640, 480).build();
 const [system, windowHandle, displayHandle] = window.windowHandle();
@@ -79,7 +79,9 @@ GPUDevice.prototype.addEventListener = function (type, listener) {};
 
 const c = new CanvasCtx();
 var engine = new BABYLON.WebGPUEngine(c);
-await engine.initAsync({ glslang }, { twgsl: await globalThis.twgsl("https://cdn.babylonjs.com/twgsl/twgsl.wasm") });
+await engine.initAsync({ glslang }, {
+  twgsl: await globalThis.twgsl("https://cdn.babylonjs.com/twgsl/twgsl.wasm"),
+});
 
 var scene = createScene();
 
