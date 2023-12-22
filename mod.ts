@@ -5,6 +5,7 @@ import {
   u16,
   u32,
   u8,
+  u64,
 } from "https://deno.land/x/byte_type@0.1.7/ffi.ts";
 
 let DENO_SDL2_PATH: string | undefined;
@@ -238,6 +239,18 @@ const sdl2 = Deno.dlopen(getLibraryPath("SDL2"), {
   },
   "SDL_CreateTextureFromSurface": {
     "parameters": ["pointer", "pointer"],
+    "result": "pointer",
+  },
+  "SDL_GetWindowWMInfo": {
+    "parameters": ["pointer", "pointer"],
+    "result": "i32",
+  },
+  "SDL_GetVersion": {
+    "parameters": ["pointer"],
+    "result": "i32",
+  },
+  "SDL_Metal_CreateView": {
+    "parameters": ["pointer"],
     "result": "pointer",
   },
 });
@@ -1063,6 +1076,22 @@ const SDL_LastEvent = new Struct({
   type: u32,
 });
 
+const SDL_Version = new Struct({
+  major: u8,
+  minor: u8,
+  patch: u8,
+});
+
+const SDL_SysWMInfo = new Struct({
+  version: SDL_Version,
+  subsystem: u32,
+  window: u64,
+});
+
+/* bug in byte_type@0.1.7 where SDL_SysWMInfo.size is NaN */
+const sizeOfSDL_SysWMInfo = 3 + 4 + 64;
+const wmInfoBuf = new Uint8Array(sizeOfSDL_SysWMInfo);
+
 type Reader<T> = (reader: Deno.UnsafePointerView) => T;
 
 // deno-lint-ignore no-explicit-any
@@ -1095,7 +1124,7 @@ const eventReader: Record<EventType, Reader<any>> = {
  * A window.
  */
 export class Window {
-  constructor(private raw: Deno.UnsafePointer) {}
+  constructor(private raw: Deno.UnsafePointer, private metalView: Deno.UnsafePointer) {}
 
   /**
    * Create a 2D rendering context for a window.
@@ -1105,6 +1134,24 @@ export class Window {
     // Hardware accelerated canvas
     const raw = sdl2.symbols.SDL_CreateRenderer(this.raw, -1, 0);
     return new Canvas(this.raw, raw);
+  }
+
+  windowHandle() {
+    const wm_info = Deno.UnsafePointer.of(wmInfoBuf);
+
+    // Initialize the version info.
+    sdl2.symbols.SDL_GetVersion(wm_info);
+
+    const handle = sdl2.symbols.SDL_GetWindowWMInfo(this.raw, wm_info);
+    if (handle == 0) {
+      throwSDLError();
+    }
+
+    const view = new Deno.UnsafePointerView(wm_info);
+    const info = SDL_SysWMInfo.read(view);
+    const win = Deno.UnsafePointer.create(info.window);
+
+    return ["cocoa", win, this.metalView];
   }
 
   /**
@@ -1158,7 +1205,14 @@ export class WindowBuilder {
       this.height,
       this.flags,
     );
-    return new Window(window);
+
+    if (window === null) {
+      throwSDLError();
+    }
+
+    const metal_view = sdl2.symbols.SDL_Metal_CreateView(window);
+
+    return new Window(window, metal_view);
   }
 
   /**
