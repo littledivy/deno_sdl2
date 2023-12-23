@@ -1,4 +1,5 @@
 *.bmp
+*.dll
 
 # VS code
 .vscode/

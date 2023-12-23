@@ -242,7 +242,7 @@ const sdl2 = Deno.dlopen(getLibraryPath("SDL2"), {
   },
 });
 
-const sdl2Image = Deno.dlopen(getLibraryPath("SDL2_image"), {
+const SDL2_Image_symbols = {
   "IMG_Init": {
     "parameters": ["u32"],
     "result": "u32",
@@ -251,9 +251,9 @@ const sdl2Image = Deno.dlopen(getLibraryPath("SDL2_image"), {
     "parameters": ["buffer"],
     "result": "pointer",
   },
-});
+} as const;
 
-const sdl2Font = Deno.dlopen(getLibraryPath("SDL2_ttf"), {
+const SDL2_TTF_symbols = {
   "TTF_Init": {
     "parameters": [],
     "result": "u32",
@@ -282,7 +282,22 @@ const sdl2Font = Deno.dlopen(getLibraryPath("SDL2_ttf"), {
     "parameters": [],
     "result": "i32",
   },
-});
+} as const;
+
+let sdl2Image: Deno.DynamicLibrary<typeof SDL2_Image_symbols>,
+  sdl2Font: Deno.DynamicLibrary<typeof SDL2_TTF_symbols>;
+
+try {
+  sdl2Image = Deno.dlopen(getLibraryPath("SDL2_image"), SDL2_Image_symbols);
+} catch (_e) {
+  console.log("SDL2_image not loaded. Some features will not be available.");
+}
+
+try {
+  sdl2Font = Deno.dlopen(getLibraryPath("SDL2_ttf"), SDL2_TTF_symbols);
+} catch (_e) {
+  console.log("SDL2_ttf not loaded. Some features will not be available.");
+}
 
 let context_alive = false;
 function init() {
@@ -331,7 +346,7 @@ function init() {
   // IMG_Init
   {
     // TIF = 4, WEBP = 8
-    sdl2Image.symbols.IMG_Init(1 | 2); // png and jpg
+    sdl2Image?.symbols.IMG_Init(1 | 2); // png and jpg
   }
   // SDL_INIT_TTF
   {
@@ -344,7 +359,7 @@ function init() {
   }
   // TTF_Init
   {
-    sdl2Font.symbols.TTF_Init();
+    sdl2Font?.symbols.TTF_Init();
   }
 }
 
@@ -927,6 +942,10 @@ export class Surface {
    * @returns a Surface
    */
   static fromFile(path: string): Surface {
+    if (!sdl2Image) {
+      throw new Error("SDL2_image was not loaded");
+    }
+
     const raw = sdl2Image.symbols.IMG_Load(asCString(path));
     if (raw === null) {
       throwSDLError();
@@ -938,6 +957,10 @@ export class Surface {
    * @returns a Surface
    */
   static loadBmp(path: string): Surface {
+    if (!sdl2Image) {
+      throw new Error("SDL2_image was not loaded");
+    }
+
     const raw = sdl2.symbols.SDL_LoadBMP_RW(asCString(path));
     if (raw === null) {
       throwSDLError();
