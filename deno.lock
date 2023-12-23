@@ -1,0 +1,22 @@
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "npm:@orillusion/core": "npm:@orillusion/core@0.7.1"
+    },
+    "npm": {
+      "@orillusion/core@0.7.1": {
+        "integrity": "sha512-NgCKoOpK0NX+PoyVRhHLMsMCFkM9W3aoMwSA1ZjH5mpL2OpxZAiOe6/GMVLPyDmFnmnMDcV2MaBkmSf33n1oyw==",
+        "dependencies": {}
+      }
+    }
+  },
+  "redirects": {
+    "https://esm.sh/@orillusion/core": "https://esm.sh/@orillusion/core@0.7.1"
+  },
+  "remote": {
+    "https://deno.land/x/byte_type@0.1.7/ffi.ts": "5bc603fd9d0b695bcd1bdaeb45e6e34b0925d5cd8da41ceaec290570a55287e0",
+    "https://esm.sh/@orillusion/core@0.7.1": "ddee2bb0cb82ed2b96da9a7e672196844f3bf41c32bf476179678ebf85eb0258",
+    "https://esm.sh/v135/@orillusion/core@0.7.1/denonext/core.mjs": "8c6e4b4f89187e2cb3ce1293a407570530c16e896f7880760d502cb3966422ee"
+  }
+}
