@@ -4,6 +4,7 @@ import {
   Struct,
   u16,
   u32,
+  u64,
   u8,
 } from "https://deno.land/x/byte_type@0.1.7/ffi.ts";
 
@@ -12,6 +13,14 @@ try {
   DENO_SDL2_PATH = Deno.env.get("DENO_SDL2_PATH");
 } catch (_) {
   // ignore, this can only fail if permission is not given
+}
+
+function isMacos() {
+  return Deno.build.os === "darwin";
+}
+
+function isWindows() {
+  return Deno.build.os === "windows";
 }
 
 const OS_PREFIX = Deno.build.os === "windows" ? "" : "lib";
@@ -240,6 +249,18 @@ const sdl2 = Deno.dlopen(getLibraryPath("SDL2"), {
     "parameters": ["pointer", "pointer"],
     "result": "pointer",
   },
+  "SDL_GetWindowWMInfo": {
+    "parameters": ["pointer", "pointer"],
+    "result": "i32",
+  },
+  "SDL_GetVersion": {
+    "parameters": ["pointer"],
+    "result": "i32",
+  },
+  "SDL_Metal_CreateView": {
+    "parameters": ["pointer"],
+    "result": "pointer",
+  },
 });
 
 const SDL2_Image_symbols = {
@@ -434,8 +455,8 @@ function throwSDLError(): never {
  */
 export class Canvas {
   constructor(
-    private window: Deno.UnsafePointer,
-    private target: Deno.UnsafePointer,
+    private window: Deno.PointerValue,
+    private target: Deno.PointerValue,
   ) {}
 
   /**
@@ -1086,6 +1107,22 @@ const SDL_LastEvent = new Struct({
   type: u32,
 });
 
+const SDL_Version = new Struct({
+  major: u8,
+  minor: u8,
+  patch: u8,
+});
+
+const SDL_SysWMInfo = new Struct({
+  version: SDL_Version,
+  subsystem: u32,
+  window: u64,
+});
+
+/* bug in byte_type@0.1.7 where SDL_SysWMInfo.size is NaN */
+const sizeOfSDL_SysWMInfo = 3 + 4 + 64;
+const wmInfoBuf = new Uint8Array(sizeOfSDL_SysWMInfo);
+
 type Reader<T> = (reader: Deno.UnsafePointerView) => T;
 
 // deno-lint-ignore no-explicit-any
@@ -1118,7 +1155,7 @@ const eventReader: Record<EventType, Reader<any>> = {
  * A window.
  */
 export class Window {
-  constructor(private raw: Deno.UnsafePointer) {}
+  constructor(private raw: Deno.PointerValue, private metalView: Deno.PointerValue | null) {}
 
   /**
    * Create a 2D rendering context for a window.
@@ -1128,6 +1165,42 @@ export class Window {
     // Hardware accelerated canvas
     const raw = sdl2.symbols.SDL_CreateRenderer(this.raw, -1, 0);
     return new Canvas(this.raw, raw);
+  }
+
+  rawHandle(): [string, Deno.PointerValue, Deno.PointerValue | null] {
+    const wm_info = Deno.UnsafePointer.of(wmInfoBuf);
+
+    // Initialize the version info.
+    sdl2.symbols.SDL_GetVersion(wm_info);
+
+    const handle = sdl2.symbols.SDL_GetWindowWMInfo(this.raw, wm_info);
+    if (handle == 0) {
+      throwSDLError();
+    }
+
+    const view = new Deno.UnsafePointerView(wm_info!);
+    const info = SDL_SysWMInfo.read(view);
+    const win = Deno.UnsafePointer.create(info.window);
+
+    if (isMacos()) {
+      const SDL_SYSWM_COCOA = 4;
+      if (info.subsystem != SDL_SYSWM_COCOA) {
+        throw new Error("Expected SDL_SYSWM_COCOA on macOS");
+      }
+
+      return ["cocoa", win, this.metalView];
+    }
+
+    if (isWindows()) {
+      // const SDL_SYSWM_WINRT = 8;
+      // if (info.subsystem != SDL_SYSWM_WINRT) {
+      //   console.log(info.subsystem);
+      //   throw new Error("Expected SDL_SYSWM_WINRT on Windows");
+      // }
+      return ["winrt", win, null];
+    }
+
+    throw new Error("Unsupported platform");
   }
 
   /**
@@ -1181,7 +1254,14 @@ export class WindowBuilder {
       this.height,
       this.flags,
     );
-    return new Window(window);
+    
+    if (window === null) {
+      throwSDLError();
+    }
+
+
+    const metal_view = isMacos() ? sdl2.symbols.SDL_Metal_CreateView(window) : null;
+    return new Window(window, metal_view);
   }
 
   /**
