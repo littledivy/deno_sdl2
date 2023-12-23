@@ -1155,7 +1155,10 @@ const eventReader: Record<EventType, Reader<any>> = {
  * A window.
  */
 export class Window {
-  constructor(private raw: Deno.PointerValue, private metalView: Deno.PointerValue | null) {}
+  constructor(
+    private raw: Deno.PointerValue,
+    private metalView: Deno.PointerValue | null,
+  ) {}
 
   /**
    * Create a 2D rendering context for a window.
@@ -1254,13 +1257,14 @@ export class WindowBuilder {
       this.height,
       this.flags,
     );
-    
+
     if (window === null) {
       throwSDLError();
     }
 
-
-    const metal_view = isMacos() ? sdl2.symbols.SDL_Metal_CreateView(window) : null;
+    const metal_view = isMacos()
+      ? sdl2.symbols.SDL_Metal_CreateView(window)
+      : null;
     return new Window(window, metal_view);
   }
 
