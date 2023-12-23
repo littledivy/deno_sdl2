@@ -1120,7 +1120,7 @@ const SDL_SysWMInfo = new Struct({
 });
 
 /* bug in byte_type@0.1.7 where SDL_SysWMInfo.size is NaN */
-const sizeOfSDL_SysWMInfo = 3 + 4 + 64;
+const sizeOfSDL_SysWMInfo = 3 + 4 + 8 * 64;
 const wmInfoBuf = new Uint8Array(sizeOfSDL_SysWMInfo);
 
 type Reader<T> = (reader: Deno.UnsafePointerView) => T;
@@ -1182,25 +1182,28 @@ export class Window {
     }
 
     const view = new Deno.UnsafePointerView(wm_info!);
-    const info = SDL_SysWMInfo.read(view);
-    const win = Deno.UnsafePointer.create(info.window);
+
+    const subsystem = view.getUint32(4);
+    const window = view.getPointer(4 + 4);
 
     if (isMacos()) {
       const SDL_SYSWM_COCOA = 4;
-      if (info.subsystem != SDL_SYSWM_COCOA) {
+      if (subsystem != SDL_SYSWM_COCOA) {
         throw new Error("Expected SDL_SYSWM_COCOA on macOS");
       }
-
-      return ["cocoa", win, this.metalView];
+      return ["cocoa", window, this.metalView];
     }
 
     if (isWindows()) {
-      // const SDL_SYSWM_WINRT = 8;
-      // if (info.subsystem != SDL_SYSWM_WINRT) {
-      //   console.log(info.subsystem);
-      //   throw new Error("Expected SDL_SYSWM_WINRT on Windows");
-      // }
-      return ["winrt", win, null];
+      const SDL_SYSWM_WINDOWS = 1;
+      const SDL_SYSWM_WINRT = 8;
+      if (subsystem == SDL_SYSWM_WINDOWS) {
+        const hinstance = view.getPointer(4 + 4 + 8 + 8);
+        return ["win32", window, hinstance];
+      } else if (subsystem == SDL_SYSWM_WINRT) {
+        return ["winrt", window, null];
+      }
+      throw new Error("Expected SDL_SYSWM_WINRT or SDL_SYSWM_WINDOWS on Windows");
     }
 
     throw new Error("Unsupported platform");
