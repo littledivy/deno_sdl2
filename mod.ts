@@ -19,6 +19,10 @@ function isMacos() {
   return Deno.build.os === "darwin";
 }
 
+function isLinux() {
+  return Deno.build.os === "linux";
+}
+
 function isWindows() {
   return Deno.build.os === "windows";
 }
@@ -1170,6 +1174,30 @@ export class Window {
     return new Canvas(this.raw, raw);
   }
 
+  /**
+   * Return the raw handle of the window.
+   *
+   * platform: "cocoa" | "win32" | "winrt" | "x11" | "wayland"
+   *
+   * ```ts
+   * const [platform, handle, display] = window.rawHandle();
+   * ```
+   *
+   * on macOS:
+   * - platform: "cocoa"
+   * - handle: NSWindow
+   * - display: MTKView
+   *
+   * on Windows:
+   * - platform: "win32" | "winrt"
+   * - handle: HWND
+   * - display: null | HINSTANCE
+   *
+   * on Linux:
+   * - platform: "x11" | "wayland"
+   * - handle: Window
+   * - display: Display
+   */
   rawHandle(): [string, Deno.PointerValue, Deno.PointerValue | null] {
     const wm_info = Deno.UnsafePointer.of(wmInfoBuf);
 
@@ -1183,11 +1211,12 @@ export class Window {
 
     const view = new Deno.UnsafePointerView(wm_info!);
 
-    const subsystem = view.getUint32(4);
-    const window = view.getPointer(4 + 4);
+    const subsystem = view.getUint32(4); // u32
 
     if (isMacos()) {
       const SDL_SYSWM_COCOA = 4;
+
+      const window = view.getPointer(4 + 4); // usize
       if (subsystem != SDL_SYSWM_COCOA) {
         throw new Error("Expected SDL_SYSWM_COCOA on macOS");
       }
@@ -1197,13 +1226,32 @@ export class Window {
     if (isWindows()) {
       const SDL_SYSWM_WINDOWS = 1;
       const SDL_SYSWM_WINRT = 8;
+
+      const window = view.getPointer(4 + 4); // usize
       if (subsystem == SDL_SYSWM_WINDOWS) {
-        const hinstance = view.getPointer(4 + 4 + 8 + 8);
+        const hinstance = view.getPointer(4 + 4 + 8 + 8); // usize (gap of 8 bytes)
         return ["win32", window, hinstance];
       } else if (subsystem == SDL_SYSWM_WINRT) {
         return ["winrt", window, null];
       }
-      throw new Error("Expected SDL_SYSWM_WINRT or SDL_SYSWM_WINDOWS on Windows");
+      throw new Error(
+        "Expected SDL_SYSWM_WINRT or SDL_SYSWM_WINDOWS on Windows",
+      );
+    }
+
+    if (isLinux()) {
+      const SDL_SYSWM_X11 = 2;
+      const SDL_SYSWM_WAYLAND = 6;
+
+      const display = view.getPointer(4 + 4); // usize
+      if (subsystem == SDL_SYSWM_X11) {
+        const window = view.getPointer(4 + 4 + 8); // usize
+        return ["x11", window, display];
+      } else if (subsystem == SDL_SYSWM_WAYLAND) {
+        const surface = view.getPointer(4 + 4 + 8); // usize
+        return ["wayland", surface, display];
+      }
+      throw new Error("Expected SDL_SYSWM_X11 or SDL_SYSWM_WAYLAND on Linux");
     }
 
     throw new Error("Unsupported platform");
