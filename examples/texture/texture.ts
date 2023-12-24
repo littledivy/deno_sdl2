@@ -12,7 +12,7 @@ const canvas = window.canvas();
 const textureCreator = canvas.textureCreator();
 
 const texture = textureCreator.createTexture(
-  PixelFormat.IYUV,
+  PixelFormat.Unknown,
   TextureAccess.Streaming,
   1024,
   1024,

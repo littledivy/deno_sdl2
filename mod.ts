@@ -226,10 +226,10 @@ const sdl2 = Deno.dlopen(getLibraryPath("SDL2"), {
   "SDL_QueryTexture": {
     "parameters": [
       "pointer",
-      "pointer",
-      "pointer",
-      "pointer",
-      "pointer",
+      "buffer",
+      "buffer",
+      "buffer",
+      "buffer",
     ],
     "result": "i32",
   },
@@ -242,7 +242,7 @@ const sdl2 = Deno.dlopen(getLibraryPath("SDL2"), {
     "result": "i32",
   },
   "SDL_UpdateTexture": {
-    "parameters": ["pointer", "pointer", "pointer", "i32"],
+    "parameters": ["pointer", "pointer", "buffer", "i32"],
     "result": "i32",
   },
   "SDL_LoadBMP_RW": {
@@ -856,10 +856,10 @@ export class Texture {
 
     const ret = sdl2.symbols.SDL_QueryTexture(
       this.raw,
-      Deno.UnsafePointer.of(format),
-      Deno.UnsafePointer.of(access),
-      Deno.UnsafePointer.of(w),
-      Deno.UnsafePointer.of(h),
+      format,
+      access,
+      w,
+      h,
     );
     if (ret < 0) {
       throwSDLError();
@@ -909,7 +909,7 @@ export class Texture {
     const ret = sdl2.symbols.SDL_UpdateTexture(
       this.raw,
       rect ? rect[_raw] : null,
-      Deno.UnsafePointer.of(pixels),
+      pixels,
       pitch,
     );
     if (ret < 0) {
@@ -1277,6 +1277,10 @@ export class Window {
       yield { ...ev(view) };
     }
   }
+
+  [Symbol.dispose]() {
+    sdl2.symbols.SDL_DestroyWindow(this.raw);
+  }
 }
 
 /**
@@ -1405,7 +1409,7 @@ export class VideoSubsystem {
   currentVideoDriver(): string {
     const buf = sdl2.symbols.SDL_GetCurrentVideoDriver();
     if (buf === null) {
-      throw new Error("SDL_GetCurrentVideoDriver failed");
+      throwSDLError();
     }
     const view = new Deno.UnsafePointerView(buf);
     return view.getCString();

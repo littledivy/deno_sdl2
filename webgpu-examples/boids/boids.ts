@@ -2,11 +2,12 @@ import {
   Canvas,
   EventType,
   PixelFormat,
+  Rect,
   Texture,
   TextureAccess,
   WindowBuilder,
 } from "../../mod.ts";
-import { FPS } from "../utils.ts";
+import { FPS } from "../../examples/utils.ts";
 
 class Boids {
   particleCount: number;
@@ -242,10 +243,10 @@ class Boids {
     const computePass = encoder.beginComputePass();
     computePass.setPipeline(this.computePipeline);
     computePass.setBindGroup(0, this.particleBindGroups[this.frameNum % 2]);
-    computePass.dispatch(
+    computePass.dispatchWorkgroups(
       Math.ceil(this.particleCount / this.particlesPerGroup),
     );
-    computePass.endPass();
+    computePass.end();
     encoder.copyBufferToBuffer(
       this.particleBuffers[0],
       0,
@@ -260,8 +261,9 @@ class Boids {
       colorAttachments: [
         {
           view: view,
+          loadOp: "clear",
           storeOp: "store",
-          loadValue: [0, 0, 0, 1],
+          loadValue: { r: 0.0, g: 0.0, b: 0.0, a: 1.0 },
         },
       ],
     });
@@ -272,7 +274,7 @@ class Boids {
     );
     renderPass.setVertexBuffer(1, this.verticesBuffer);
     renderPass.draw(3, this.particleCount);
-    renderPass.endPass();
+    renderPass.end();
     encoder.popDebugGroup();
 
     this.frameNum += 1;
@@ -308,8 +310,13 @@ class Boids {
       buffer.set(slice, i * unpadded);
     }
     this.sdl2texture.update(buffer, this.dimensions.width * 4);
-    const rect = { x: 0, y: 0, ...this.dimensions };
-    const screen = { x: 0, y: 0, ...this.screenDimensions };
+    const rect = new Rect(0, 0, this.dimensions.width, this.dimensions.height);
+    const screen = new Rect(
+      0,
+      0,
+      this.screenDimensions.width,
+      this.screenDimensions.height,
+    );
     this.canvas.copy(this.sdl2texture, rect, screen);
     this.canvas.present();
     this.outputBuffer.unmap();
@@ -379,8 +386,8 @@ boids.init();
 
 const tick = FPS(100);
 
-event_loop:
-for (const event of boids.window.events()) {
+async function loop() {
+  const event = boids.window.events().next().value;
   switch (event.type) {
     // case EventType.Re: {
     //   const { width, height } = event;
@@ -396,14 +403,16 @@ for (const event of boids.window.events()) {
     // }
     case EventType.Draw: {
       await boids.update();
-      tick();
       break;
     }
     case EventType.Quit:
-      break event_loop;
     case EventType.KeyDown:
-      break event_loop;
+      Deno.exit(0);
     default:
       break;
   }
+
+  await loop();
 }
+
+await loop();
