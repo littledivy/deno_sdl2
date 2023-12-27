@@ -10,7 +10,7 @@ for (const event of window.events()) {
   if (event.type == EventType.Quit) {
     break;
   } else if (event.type == EventType.Draw) {
-    canvas.setDrawColor(0, 0,0, 255);
+    canvas.setDrawColor(0, 0, 0, 255);
     canvas.clear();
     canvas.present();
   }

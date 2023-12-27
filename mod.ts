@@ -265,6 +265,10 @@ const sdl2 = Deno.dlopen(getLibraryPath("SDL2"), {
     "parameters": ["pointer"],
     "result": "pointer",
   },
+  "SDL_RaiseWindow": {
+    "parameters": ["pointer"],
+    "result": "i32",
+  },
 });
 
 const SDL2_Image_symbols = {
@@ -1174,6 +1178,10 @@ export class Window {
     return new Canvas(this.raw, raw);
   }
 
+  raise() {
+    sdl2.symbols.SDL_RaiseWindow(this.raw);
+  }
+
   /**
    * Return the raw handle of the window.
    *
@@ -1285,28 +1293,30 @@ export class Window {
 
 // Copied from https://github.com/libsdl-org/SDL/blob/main/include/SDL3/SDL_video.h#L129 on 6/13/2023
 enum WINDOW_FLAGS {
-  FULLSCREEN           = 0x00000001,   /**< window is in fullscreen mode */
-  OPENGL               = 0x00000002,   /**< window usable with OpenGL context */
-  HIDDEN               = 0x00000008,   /**< window is not visible */
-  BORDERLESS           = 0x00000010,   /**< no window decoration */
-  RESIZABLE            = 0x00000020,   /**< window can be resized */
-  MINIMIZED            = 0x00000040,   /**< window is minimized */
-  MAXIMIZED            = 0x00000080,   /**< window is maximized */
-  MOUSE_GRABBED        = 0x00000100,   /**< window has grabbed mouse input */
-  INPUT_FOCUS          = 0x00000200,   /**< window has input focus */
-  MOUSE_FOCUS          = 0x00000400,   /**< window has mouse focus */
-  FOREIGN              = 0x00000800,   /**< window not created by SDL */
-  HIGH_PIXEL_DENSITY   = 0x00002000,   /**< window uses high pixel density back buffer if possible */
-  MOUSE_CAPTURE        = 0x00004000,   /**< window has mouse captured (unrelated to MOUSE_GRABBED) */
-  ALWAYS_ON_TOP        = 0x00008000,   /**< window should always be above others */
-  SKIP_TASKBAR         = 0x00010000,   /**< window should not be added to the taskbar */
-  UTILITY              = 0x00020000,   /**< window should be treated as a utility window */
-  TOOLTIP              = 0x00040000,   /**< window should be treated as a tooltip */
-  POPUP_MENU           = 0x00080000,   /**< window should be treated as a popup menu */
-  KEYBOARD_GRABBED     = 0x00100000,   /**< window has grabbed keyboard input */
-  VULKAN               = 0x10000000,   /**< window usable for Vulkan surface */
-  METAL                = 0x20000000,   /**< window usable for Metal view */
-  TRANSPARENT          = 0x40000000,   /**< window with transparent buffer */
+  FULLSCREEN = 0x00000001, /**< window is in fullscreen mode */
+  OPENGL = 0x00000002, /**< window usable with OpenGL context */
+  HIDDEN = 0x00000008, /**< window is not visible */
+  BORDERLESS = 0x00000010, /**< no window decoration */
+  RESIZABLE = 0x00000020, /**< window can be resized */
+  MINIMIZED = 0x00000040, /**< window is minimized */
+  MAXIMIZED = 0x00000080, /**< window is maximized */
+  MOUSE_GRABBED = 0x00000100, /**< window has grabbed mouse input */
+  INPUT_FOCUS = 0x00000200, /**< window has input focus */
+  MOUSE_FOCUS = 0x00000400, /**< window has mouse focus */
+  FOREIGN = 0x00000800, /**< window not created by SDL */
+  HIGH_PIXEL_DENSITY =
+    0x00002000, /**< window uses high pixel density back buffer if possible */
+  MOUSE_CAPTURE =
+    0x00004000, /**< window has mouse captured (unrelated to MOUSE_GRABBED) */
+  ALWAYS_ON_TOP = 0x00008000, /**< window should always be above others */
+  SKIP_TASKBAR = 0x00010000, /**< window should not be added to the taskbar */
+  UTILITY = 0x00020000, /**< window should be treated as a utility window */
+  TOOLTIP = 0x00040000, /**< window should be treated as a tooltip */
+  POPUP_MENU = 0x00080000, /**< window should be treated as a popup menu */
+  KEYBOARD_GRABBED = 0x00100000, /**< window has grabbed keyboard input */
+  VULKAN = 0x10000000, /**< window usable for Vulkan surface */
+  METAL = 0x20000000, /**< window usable for Metal view */
+  TRANSPARENT = 0x40000000, /**< window with transparent buffer */
 }
 
 /**
@@ -1348,150 +1358,150 @@ export class WindowBuilder {
       : null;
     return new Window(window, metal_view);
   }
-  
+
   /**
    * Set the window to be fullscreen.
    */
   fullscreen() {
-    this.flags |= WINDOW_FLAGS.FULLSCREEN
+    this.flags |= WINDOW_FLAGS.FULLSCREEN;
     return this;
   }
-  
+
   /**
    * Window usable with an OpenGL context
    */
   opengl() {
-    this.flags |= WINDOW_FLAGS.OPENGL
+    this.flags |= WINDOW_FLAGS.OPENGL;
     return this;
   }
-  
+
   /** window is not visible */
   hidden() {
-    this.flags |= WINDOW_FLAGS.HIDDEN
+    this.flags |= WINDOW_FLAGS.HIDDEN;
     return this;
   }
-  
+
   /**
    * Set the window to be borderless.
    */
   borderless() {
-    this.flags |= WINDOW_FLAGS.BORDERLESS
+    this.flags |= WINDOW_FLAGS.BORDERLESS;
     return this;
   }
-  
+
   /**
    * Set the window to be resizable.
    */
   resizable() {
-    this.flags |= WINDOW_FLAGS.RESIZABLE
+    this.flags |= WINDOW_FLAGS.RESIZABLE;
     return this;
   }
-  
+
   /** window is minimized */
   minimized() {
-    this.flags |= WINDOW_FLAGS.MINIMIZED
+    this.flags |= WINDOW_FLAGS.MINIMIZED;
     return this;
   }
-  
+
   /** window is maximized */
   maximized() {
-    this.flags |= WINDOW_FLAGS.MAXIMIZED
+    this.flags |= WINDOW_FLAGS.MAXIMIZED;
     return this;
   }
-  
+
   /** window has grabbed mouse input */
   mouseGrabbed() {
-    this.flags |= WINDOW_FLAGS.MOUSE_GRABBED
+    this.flags |= WINDOW_FLAGS.MOUSE_GRABBED;
     return this;
   }
-  
+
   /** window has input focus */
   inputFocus() {
-    this.flags |= WINDOW_FLAGS.INPUT_FOCUS
+    this.flags |= WINDOW_FLAGS.INPUT_FOCUS;
     return this;
   }
-  
+
   /** window has mouse focus */
   mouseFocus() {
-    this.flags |= WINDOW_FLAGS.MOUSE_FOCUS
+    this.flags |= WINDOW_FLAGS.MOUSE_FOCUS;
     return this;
   }
-  
+
   /**
    * Set the window to be a foreign window.
    */
   foreign() {
-    this.flags |= WINDOW_FLAGS.FOREIGN
+    this.flags |= WINDOW_FLAGS.FOREIGN;
     return this;
   }
-  
+
   /**
    * Window should be created in high-DPI mode.
    */
   highPixelDensity() {
-    this.flags |= WINDOW_FLAGS.HIGH_PIXEL_DENSITY
+    this.flags |= WINDOW_FLAGS.HIGH_PIXEL_DENSITY;
     return this;
   }
-  
+
   /** window has mouse captured (unrelated to MOUSE_GRABBED) */
   mouseCapture() {
-    this.flags |= WINDOW_FLAGS.MOUSE_CAPTURE
+    this.flags |= WINDOW_FLAGS.MOUSE_CAPTURE;
     return this;
   }
-  
+
   /**
    * Set the window to be always on top.
    */
   alwaysOnTop() {
-    this.flags |= WINDOW_FLAGS.ALWAYS_ON_TOP
+    this.flags |= WINDOW_FLAGS.ALWAYS_ON_TOP;
     return this;
   }
-  
+
   /** window should not be added to the taskbar */
   skipTaskbar() {
-    this.flags |= WINDOW_FLAGS.SKIP_TASKBAR
+    this.flags |= WINDOW_FLAGS.SKIP_TASKBAR;
     return this;
   }
-  
+
   /** window should be treated as a utility window */
   utility() {
-    this.flags |= WINDOW_FLAGS.UTILITY
+    this.flags |= WINDOW_FLAGS.UTILITY;
     return this;
   }
-  
+
   /** window should be treated as a tooltip */
   tooltip() {
-    this.flags |= WINDOW_FLAGS.TOOLTIP
+    this.flags |= WINDOW_FLAGS.TOOLTIP;
     return this;
   }
-  
+
   /** window should be treated as a popup menu */
   popupMenu() {
-    this.flags |= WINDOW_FLAGS.POPUP_MENU
+    this.flags |= WINDOW_FLAGS.POPUP_MENU;
     return this;
   }
-  
+
   /** window has grabbed keyboard input */
   keyboardGrabbed() {
-    this.flags |= WINDOW_FLAGS.KEYBOARD_GRABBED
+    this.flags |= WINDOW_FLAGS.KEYBOARD_GRABBED;
     return this;
   }
-  
+
   /** window usable for Vulkan surface */
   vulkan() {
-    this.flags |= WINDOW_FLAGS.VULKAN
+    this.flags |= WINDOW_FLAGS.VULKAN;
     return this;
   }
-  
+
   /** window usable for Metal view */
   metal() {
-    this.flags |= WINDOW_FLAGS.METAL
+    this.flags |= WINDOW_FLAGS.METAL;
     return this;
   }
-  
+
   /** window with transparent buffer */
   transparent() {
-    this.flags |= WINDOW_FLAGS.TRANSPARENT
+    this.flags |= WINDOW_FLAGS.TRANSPARENT;
     return this;
   }
 }
