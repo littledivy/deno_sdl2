@@ -1,6 +1,13 @@
 {
-  "version": "2",
+  "version": "3",
   "remote": {
-    "https://deno.land/x/byte_type@0.1.7/ffi.ts": "5bc603fd9d0b695bcd1bdaeb45e6e34b0925d5cd8da41ceaec290570a55287e0"
+    "https://cdn.babylonjs.com/twgsl/twgsl.js": "b4f1f66263b801210f955f74aa71f1939be647ce0fd80ea5befd12a78499d5ff",
+    "https://deno.land/std@0.89.0/encoding/base64.ts": "eecae390f1f1d1cae6f6c6d732ede5276bf4b9cd29b1d281678c054dc5cc009e",
+    "https://deno.land/x/byte_type@0.1.7/ffi.ts": "5bc603fd9d0b695bcd1bdaeb45e6e34b0925d5cd8da41ceaec290570a55287e0",
+    "https://deno.land/x/glslang@1.0.1/deps.ts": "db55acc6766bcbbfa8eb54b1a91e1180a27ce5fd11d63acd0bb0fcbce0c75a6a",
+    "https://deno.land/x/glslang@1.0.1/glslang.js": "505abc65725a94201d45d577d03c66a470aef175e0e3ac87d72acaee268c3f8c",
+    "https://deno.land/x/glslang@1.0.1/mod.ts": "5e6748cf38e1ce700f03ab446d3c8edbec226b25ec74d07ceafd1682258bbf4a",
+    "https://deno.land/x/glslang@1.0.1/types.ts": "d71bd2ed7fbf48492a328c650aa799776c5fcde32b6b48f57b0be2aa808b1456",
+    "https://deno.land/x/glslang@1.0.1/wasm.js": "c6a7438af628e2fa0775cadfd3f46706f6c52ad263eb5374a5dd59d1ebe4efe9"
   }
 }

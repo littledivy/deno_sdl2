@@ -261,6 +261,10 @@ const sdl2 = Deno.dlopen(getLibraryPath("SDL2"), {
     "parameters": ["pointer"],
     "result": "pointer",
   },
+  "SDL_RaiseWindow": {
+    "parameters": ["pointer"],
+    "result": "i32",
+  }
 });
 
 const SDL2_Image_symbols = {
@@ -1169,6 +1173,10 @@ export class Window {
     const raw = sdl2.symbols.SDL_CreateRenderer(this.raw, -1, 0);
     return new Canvas(this.raw, raw);
   }
+  
+  raise() {
+    sdl2.symbols.SDL_RaiseWindow(this.raw);
+  }
 
   rawHandle(): [string, Deno.PointerValue, Deno.PointerValue | null] {
     const wm_info = Deno.UnsafePointer.of(wmInfoBuf);
@@ -1296,7 +1304,7 @@ export class WindowBuilder {
    * Set the window to be always on top.
    */
   alwaysOnTop() {
-    this.flags |= 0x00000008;
+    this.flags |= 0x00008000;
     return this;
   }
   /**
