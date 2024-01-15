@@ -6,6 +6,7 @@ import {
   u32,
   u64,
   u8,
+  cstring,
 } from "https://deno.land/x/byte_type@0.1.7/ffi.ts";
 
 let DENO_SDL2_PATH: string | undefined;
@@ -269,6 +270,18 @@ const sdl2 = Deno.dlopen(getLibraryPath("SDL2"), {
     "parameters": ["pointer"],
     "result": "i32",
   },
+  "SDL_GetKeyName": {
+    "parameters": ["i32"],
+    "result": "pointer",
+  },
+  "SDL_StartTextInput": {
+    "parameters": [],
+    "result": "i32",
+  },
+  "SDL_StopTextInput": {
+    "parameters": [],
+    "result": "i32",
+  },
 });
 
 const SDL2_Image_symbols = {
@@ -408,6 +421,8 @@ export enum EventType {
   WindowEvent = 0x200,
   KeyDown = 0x300,
   KeyUp = 0x301,
+  TextEditing = 0x302,
+  TextInput = 0x303,
   MouseMotion = 0x400,
   MouseButtonDown = 0x401,
   MouseButtonUp = 0x402,
@@ -1046,8 +1061,8 @@ const SDL_DisplayEvent = new Struct({
 const SDL_KeySym = new Struct({
   scancode: u32,
   sym: u32,
-  _mod: u16,
-  unused: u32,
+  mod: u16,
+  unicode: u32,
 });
 
 const SDL_KeyboardEvent = new Struct({
@@ -1127,6 +1142,22 @@ const SDL_SysWMInfo = new Struct({
   window: u64,
 });
 
+const SDL_TextEditingEvent = new Struct({
+  type: u32,
+  timestamp: u32,
+  windowID: u32,
+  text: cstring,
+  start: i32,
+  length: i32,
+});
+
+const SDL_TextInputEvent = new Struct({
+  type: u32,
+  timestamp: u32,
+  windowID: u32,
+  text: cstring,
+});
+
 /* bug in byte_type@0.1.7 where SDL_SysWMInfo.size is NaN */
 const sizeOfSDL_SysWMInfo = 3 + 4 + 8 * 64;
 const wmInfoBuf = new Uint8Array(sizeOfSDL_SysWMInfo);
@@ -1147,6 +1178,8 @@ const eventReader: Record<EventType, Reader<any>> = {
   // [EventType.Display]: makeReader(SDL_DisplayEvent),
   [EventType.KeyDown]: makeReader(SDL_KeyboardEvent),
   [EventType.KeyUp]: makeReader(SDL_KeyboardEvent),
+  [EventType.TextEditing]: makeReader(SDL_TextEditingEvent),
+  [EventType.TextInput]: makeReader(SDL_TextInputEvent),
   [EventType.MouseMotion]: makeReader(SDL_MouseMotionEvent),
   [EventType.MouseButtonDown]: makeReader(SDL_MouseButtonEvent),
   [EventType.MouseButtonUp]: makeReader(SDL_MouseButtonEvent),
@@ -1158,6 +1191,20 @@ const eventReader: Record<EventType, Reader<any>> = {
   // TODO: Unrechable code
   [EventType.Draw]: makeReader(SDL_CommonEvent),
 };
+
+export function getKeyName(key: number) {
+  const name = sdl2.symbols.SDL_GetKeyName(key);
+  const view = new Deno.UnsafePointerView(name);
+  return view.getCString();
+}
+
+export function startTextInput() {
+  sdl2.symbols.SDL_StartTextInput();
+}
+
+export function stopTextInput() {
+  sdl2.symbols.SDL_StopTextInput();
+}
 
 /**
  * A window.
