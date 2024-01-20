@@ -1,4 +1,5 @@
 import {
+  cstring,
   i32,
   SizedFFIType,
   Struct,
@@ -6,7 +7,6 @@ import {
   u32,
   u64,
   u8,
-  cstring,
 } from "https://deno.land/x/byte_type@0.1.7/ffi.ts";
 
 let DENO_SDL2_PATH: string | undefined;
@@ -1230,30 +1230,10 @@ export class Window {
   }
 
   /**
-   * Return the raw handle of the window.
-   *
-   * platform: "cocoa" | "win32" | "winrt" | "x11" | "wayland"
-   *
-   * ```ts
-   * const [platform, handle, display] = window.rawHandle();
-   * ```
-   *
-   * on macOS:
-   * - platform: "cocoa"
-   * - handle: NSWindow
-   * - display: MTKView
-   *
-   * on Windows:
-   * - platform: "win32" | "winrt"
-   * - handle: HWND
-   * - display: null | HINSTANCE
-   *
-   * on Linux:
-   * - platform: "x11" | "wayland"
-   * - handle: Window
-   * - display: Display
+   * Return a Deno.UnsafeWindowSurface that can be used
+   * with WebGPU.
    */
-  rawHandle(): [string, Deno.PointerValue, Deno.PointerValue | null] {
+  windowSurface(): Deno.UnsafeWindowSurface {
     const wm_info = Deno.UnsafePointer.of(wmInfoBuf);
 
     // Initialize the version info.
@@ -1275,7 +1255,7 @@ export class Window {
       if (subsystem != SDL_SYSWM_COCOA) {
         throw new Error("Expected SDL_SYSWM_COCOA on macOS");
       }
-      return ["cocoa", window, this.metalView];
+      return new Deno.UnsafeWindowSurface("cocoa", window, this.metalView);
     }
 
     if (isWindows()) {
@@ -1287,7 +1267,7 @@ export class Window {
         const hinstance = view.getPointer(4 + 4 + 8 + 8); // usize (gap of 8 bytes)
         return ["win32", window, hinstance];
       } else if (subsystem == SDL_SYSWM_WINRT) {
-        return ["winrt", window, null];
+        return new Deno.UnsafeWindowSurface("winrt", window, null);
       }
       throw new Error(
         "Expected SDL_SYSWM_WINRT or SDL_SYSWM_WINDOWS on Windows",
@@ -1301,10 +1281,10 @@ export class Window {
       const display = view.getPointer(4 + 4); // usize
       if (subsystem == SDL_SYSWM_X11) {
         const window = view.getPointer(4 + 4 + 8); // usize
-        return ["x11", window, display];
+        return new Deno.UnsafeWindowSurface("x11", window, display);
       } else if (subsystem == SDL_SYSWM_WAYLAND) {
         const surface = view.getPointer(4 + 4 + 8); // usize
-        return ["wayland", surface, display];
+        return new Deno.UnsafeWindowSurface("wayland", surface, display);
       }
       throw new Error("Expected SDL_SYSWM_X11 or SDL_SYSWM_WAYLAND on Linux");
     }
