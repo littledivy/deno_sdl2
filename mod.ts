@@ -1251,7 +1251,7 @@ export class Window {
     if (isMacos()) {
       const SDL_SYSWM_COCOA = 4;
 
-      const window = view.getPointer(4 + 4); // usize
+      const window = view.getPointer(4 + 4)!; // usize
       if (subsystem != SDL_SYSWM_COCOA) {
         throw new Error("Expected SDL_SYSWM_COCOA on macOS");
       }
@@ -1262,10 +1262,10 @@ export class Window {
       const SDL_SYSWM_WINDOWS = 1;
       const SDL_SYSWM_WINRT = 8;
 
-      const window = view.getPointer(4 + 4); // usize
+      const window = view.getPointer(4 + 4)!; // usize
       if (subsystem == SDL_SYSWM_WINDOWS) {
-        const hinstance = view.getPointer(4 + 4 + 8 + 8); // usize (gap of 8 bytes)
-        return ["win32", window, hinstance];
+        const hinstance = view.getPointer(4 + 4 + 8 + 8)!; // usize (gap of 8 bytes)
+        return new Deno.UnsafeWindowSurface("win32", window, hinstance);
       } else if (subsystem == SDL_SYSWM_WINRT) {
         return new Deno.UnsafeWindowSurface("winrt", window, null);
       }
@@ -1278,12 +1278,12 @@ export class Window {
       const SDL_SYSWM_X11 = 2;
       const SDL_SYSWM_WAYLAND = 6;
 
-      const display = view.getPointer(4 + 4); // usize
+      const display = view.getPointer(4 + 4)!; // usize
       if (subsystem == SDL_SYSWM_X11) {
-        const window = view.getPointer(4 + 4 + 8); // usize
+        const window = view.getPointer(4 + 4 + 8)!; // usize
         return new Deno.UnsafeWindowSurface("x11", window, display);
       } else if (subsystem == SDL_SYSWM_WAYLAND) {
-        const surface = view.getPointer(4 + 4 + 8); // usize
+        const surface = view.getPointer(4 + 4 + 8)!; // usize
         return new Deno.UnsafeWindowSurface("wayland", surface, display);
       }
       throw new Error("Expected SDL_SYSWM_X11 or SDL_SYSWM_WAYLAND on Linux");
@@ -1302,7 +1302,7 @@ export class Window {
       if (!pending) {
         yield { type: EventType.Draw };
       }
-      const view = new Deno.UnsafePointerView(event);
+      const view = new Deno.UnsafePointerView(event!);
       const type = view.getUint32();
       const ev = eventReader[type as EventType];
       if (!ev) {
