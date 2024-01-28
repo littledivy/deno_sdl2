@@ -69,6 +69,10 @@ const sdl2 = Deno.dlopen(getLibraryPath("SDL2"), {
     "parameters": ["pointer"],
     "result": "i32",
   },
+  "SDL_WaitEvent": {
+    "parameters": ["pointer"],
+    "result": "i32",
+  },
   "SDL_GetCurrentVideoDriver": {
     "parameters": [],
     "result": "pointer",
@@ -243,11 +247,11 @@ const sdl2 = Deno.dlopen(getLibraryPath("SDL2"), {
     "result": "i32",
   },
   "SDL_UpdateTexture": {
-    "parameters": ["pointer", "pointer", "buffer", "i32"],
+    "parameters": ["pointer", "buffer", "buffer", "i32"],
     "result": "i32",
   },
   "SDL_LoadBMP_RW": {
-    "parameters": ["pointer"],
+    "parameters": ["buffer"],
     "result": "pointer",
   },
   "SDL_CreateTextureFromSurface": {
@@ -313,7 +317,7 @@ const SDL2_TTF_symbols = {
     "result": "pointer",
   },
   "TTF_RenderText_Blended": {
-    "parameters": ["pointer", "pointer", "pointer"],
+    "parameters": ["pointer", "buffer", "pointer"],
     "result": "pointer",
   },
   "TTF_CloseFont": {
@@ -350,12 +354,12 @@ function init() {
   const result = sdl2.symbols.SDL_Init(0);
   if (result != 0) {
     const errPtr = sdl2.symbols.SDL_GetError();
-    const view = new Deno.UnsafePointerView(errPtr);
+    const view = new Deno.UnsafePointerView(errPtr!);
     throw new Error(`SDL_Init failed: ${view.getCString()}`);
   }
 
   const platform = sdl2.symbols.SDL_GetPlatform();
-  const view = new Deno.UnsafePointerView(platform);
+  const view = new Deno.UnsafePointerView(platform!);
   console.log(`SDL2 initialized on ${view.getCString()}`);
   // Initialize subsystems
   // SDL_INIT_EVENTS
@@ -363,7 +367,7 @@ function init() {
     const result = sdl2.symbols.SDL_InitSubSystem(0x00000001);
     if (result != 0) {
       const errPtr = sdl2.symbols.SDL_GetError();
-      const view = new Deno.UnsafePointerView(errPtr);
+      const view = new Deno.UnsafePointerView(errPtr!);
       throw new Error(`SDL_InitSubSystem failed: ${view.getCString()}`);
     }
   }
@@ -372,7 +376,7 @@ function init() {
     const result = sdl2.symbols.SDL_InitSubSystem(0x00000010);
     if (result != 0) {
       const errPtr = sdl2.symbols.SDL_GetError();
-      const view = new Deno.UnsafePointerView(errPtr);
+      const view = new Deno.UnsafePointerView(errPtr!);
       throw new Error(`SDL_InitSubSystem failed: ${view.getCString()}`);
     }
   }
@@ -381,7 +385,7 @@ function init() {
     const result = sdl2.symbols.SDL_InitSubSystem(0x00000004);
     if (result != 0) {
       const errPtr = sdl2.symbols.SDL_GetError();
-      const view = new Deno.UnsafePointerView(errPtr);
+      const view = new Deno.UnsafePointerView(errPtr!);
       throw new Error(`SDL_InitSubSystem failed: ${view.getCString()}`);
     }
   }
@@ -395,7 +399,7 @@ function init() {
     const result = sdl2.symbols.SDL_InitSubSystem(0x00000100);
     if (result != 0) {
       const errPtr = sdl2.symbols.SDL_GetError();
-      const view = new Deno.UnsafePointerView(errPtr);
+      const view = new Deno.UnsafePointerView(errPtr!);
       throw new Error(`SDL_InitSubSystem failed: ${view.getCString()}`);
     }
   }
@@ -469,7 +473,7 @@ function asCString(str: string): Uint8Array {
 
 function throwSDLError(): never {
   const error = sdl2.symbols.SDL_GetError();
-  const view = Deno.UnsafePointerView.getCString(error);
+  const view = Deno.UnsafePointerView.getCString(error!);
   throw new Error(`SDL Error: ${view}`);
 }
 
@@ -681,8 +685,8 @@ export class Canvas {
  * Font is a helper class for rendering text.
  */
 export class Font {
-  [_raw]: Deno.UnsafePointer;
-  constructor(raw: Deno.UnsafePointer) {
+  [_raw]: Deno.PointerValue;
+  constructor(raw: Deno.PointerValue) {
     this[_raw] = raw;
   }
   /**
@@ -720,7 +724,7 @@ export class Font {
  * Color is a helper class for representing colors.
  */
 export class Color {
-  [_raw]: Deno.UnsafePointer;
+  [_raw]: Deno.PointerValue;
   constructor(r: number, g: number, b: number, a: number = 0xff) {
     const raw = new Uint8Array([r, g, b, a]);
     this[_raw] = Deno.UnsafePointer.of(raw);
@@ -784,7 +788,7 @@ export enum TextureAccess {
  * A class used to create textures.
  */
 export class TextureCreator {
-  constructor(private raw: Deno.UnsafePointer) {}
+  constructor(private raw: Deno.PointerValue) {}
 
   /**
    * Create a texture for a rendering context.
@@ -857,9 +861,9 @@ export interface TextureQuery {
  * @see https://wiki.libsdl.org/SDL2/SDL_Texture
  */
 export class Texture {
-  [_raw]: Deno.UnsafePointer;
+  [_raw]: Deno.PointerValue;
 
-  constructor(private raw: Deno.UnsafePointer) {
+  constructor(private raw: Deno.PointerValue) {
     this[_raw] = raw;
   }
 
@@ -975,8 +979,8 @@ export class Rect {
  * A structure that contains a collection of pixels used in software blitting.
  */
 export class Surface {
-  [_raw]: Deno.UnsafePointer;
-  constructor(raw: Deno.UnsafePointer) {
+  [_raw]: Deno.PointerValue;
+  constructor(raw: Deno.PointerValue) {
     this[_raw] = raw;
   }
 
@@ -1146,6 +1150,7 @@ const SDL_TextEditingEvent = new Struct({
   type: u32,
   timestamp: u32,
   windowID: u32,
+  // @ts-ignore
   text: cstring,
   start: i32,
   length: i32,
@@ -1155,6 +1160,7 @@ const SDL_TextInputEvent = new Struct({
   type: u32,
   timestamp: u32,
   windowID: u32,
+  // @ts-ignore
   text: cstring,
 });
 
@@ -1194,7 +1200,7 @@ const eventReader: Record<EventType, Reader<any>> = {
 
 export function getKeyName(key: number) {
   const name = sdl2.symbols.SDL_GetKeyName(key);
-  const view = new Deno.UnsafePointerView(name);
+  const view = new Deno.UnsafePointerView(name!);
   return view.getCString();
 }
 
@@ -1295,12 +1301,24 @@ export class Window {
   /**
    * Events from the window.
    */
-  *events() {
+  async *events(wait = false) {
     while (true) {
       const event = Deno.UnsafePointer.of(eventBuf);
-      const pending = sdl2.symbols.SDL_PollEvent(event) == 1;
+
+      const shouldWait = wait ||
+        sdl2.symbols.SDL_GetWindowFlags(this.raw) &
+          (WINDOW_FLAGS.MINIMIZED | WINDOW_FLAGS.HIDDEN);
+      const pending = (shouldWait
+        ? sdl2.symbols.SDL_WaitEvent(event)
+        : sdl2.symbols.SDL_PollEvent(event)) == 1;
       if (!pending) {
         yield { type: EventType.Draw };
+      }
+      if (shouldWait) {
+        // Run microtasks.
+        await new Promise((resolve) =>
+          setTimeout(resolve, 0)
+        );
       }
       const view = new Deno.UnsafePointerView(event!);
       const type = view.getUint32();
