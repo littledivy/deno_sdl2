@@ -7,7 +7,7 @@ https://user-images.githubusercontent.com/34997667/160436698-9045ba0c-3fc8-45f9-
 ### get started
 
 ```typescript
-import { EventType, WindowBuilder } from "https://deno.land/x/sdl2/mod.ts";
+import { EventType, WindowBuilder } from "jsr:@divy/sdl2@0.10.1";
 
 const window = new WindowBuilder("Hello, Deno!", 640, 480).build();
 const canvas = window.canvas();
@@ -28,7 +28,7 @@ for (const event of window.events()) {
 ```
 
 ```shell
-~> deno run --allow-ffi --unstable https://deno.land/x/sdl2/examples/hello.ts
+~> deno run --allow-ffi --unstable https://jsr.io/@divy/sdl2/0.10.1/examples/hello.ts
 ```
 
 ### installing sdl2

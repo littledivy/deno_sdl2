@@ -5,7 +5,7 @@ const window = new WindowBuilder("Hello, Deno!", 640, 480).build();
 const canvas = window.canvas();
 
 const fps = FPS();
-for (const event of window.events()) {
+for await (const event of window.events()) {
   fps();
   if (event.type == EventType.Quit) {
     break;
