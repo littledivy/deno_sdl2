@@ -7,7 +7,7 @@ import {
   u32,
   u64,
   u8,
-} from "https://deno.land/x/byte_type@0.1.7/ffi.ts";
+} from "./byte_type.ts";
 
 let DENO_SDL2_PATH: string | undefined;
 try {
@@ -665,7 +665,7 @@ export class Canvas {
    * TextureCreator is a helper class for creating textures.
    * @returns a TextureCreator object for use with creating textures
    */
-  textureCreator() {
+  textureCreator(): TextureCreator {
     return new TextureCreator(this.target);
   }
 
@@ -675,7 +675,7 @@ export class Canvas {
    * @param size point size to use for the newly-opened font
    * @returns a Font object for use with rendering text
    */
-  loadFont(path: string, size: number) {
+  loadFont(path: string, size: number): Font {
     const raw = sdl2Font.symbols.TTF_OpenFont(asCString(path), size);
     return new Font(raw);
   }
@@ -695,7 +695,7 @@ export class Font {
    * @param color the foreground color of the text
    * @returns a Texture object
    */
-  renderSolid(text: string, color: Color) {
+  renderSolid(text: string, color: Color): Texture {
     const raw = sdl2Font.symbols.TTF_RenderText_Solid(
       this[_raw],
       asCString(text),
@@ -710,7 +710,7 @@ export class Font {
    * @param color the foreground color of the text
    * @returns a Texture object
    */
-  renderBlended(text: string, color: Color) {
+  renderBlended(text: string, color: Color): Texture {
     const raw = sdl2Font.symbols.TTF_RenderText_Blended(
       this[_raw],
       asCString(text),
@@ -953,25 +953,25 @@ export class Rect {
   /**
    * The x coordinate of the rectangle.
    */
-  get x() {
+  get x(): number {
     return this[_raw][0];
   }
   /**
    * The y coordinate of the rectangle.
    */
-  get y() {
+  get y(): number {
     return this[_raw][1];
   }
   /**
    * The width of the rectangle.
    */
-  get width() {
+  get width(): number {
     return this[_raw][2];
   }
   /**
    * The height of the rectangle.
    */
-  get height() {
+  get height(): number {
     return this[_raw][3];
   }
 }
@@ -1198,7 +1198,7 @@ const eventReader: Record<EventType, Reader<any>> = {
   [EventType.Draw]: makeReader(SDL_CommonEvent),
 };
 
-export function getKeyName(key: number) {
+export function getKeyName(key: number): string {
   const name = sdl2.symbols.SDL_GetKeyName(key);
   const view = new Deno.UnsafePointerView(name!);
   return view.getCString();
@@ -1225,7 +1225,7 @@ export class Window {
    * Create a 2D rendering context for a window.
    * @returns a valid rendering context (Canvas)
    */
-  canvas() {
+  canvas(): Canvas {
     // Hardware accelerated canvas
     const raw = sdl2.symbols.SDL_CreateRenderer(this.raw, -1, 0);
     return new Canvas(this.raw, raw);
@@ -1273,7 +1273,8 @@ export class Window {
         const hinstance = view.getPointer(4 + 4 + 8 + 8)!; // usize (gap of 8 bytes)
         return new Deno.UnsafeWindowSurface("win32", window, hinstance);
       } else if (subsystem == SDL_SYSWM_WINRT) {
-        return new Deno.UnsafeWindowSurface("winrt", window, null);
+        throw new Error("WinRT is not supported");
+        // return new Deno.UnsafeWindowSurface("winrt", window, null);
       }
       throw new Error(
         "Expected SDL_SYSWM_WINRT or SDL_SYSWM_WINDOWS on Windows",
@@ -1290,7 +1291,8 @@ export class Window {
         return new Deno.UnsafeWindowSurface("x11", window, display);
       } else if (subsystem == SDL_SYSWM_WAYLAND) {
         const surface = view.getPointer(4 + 4 + 8)!; // usize
-        return new Deno.UnsafeWindowSurface("wayland", surface, display);
+        throw new Error("Wayland is not supported");
+        // return new Deno.UnsafeWindowSurface("wayland", surface, display);
       }
       throw new Error("Expected SDL_SYSWM_X11 or SDL_SYSWM_WAYLAND on Linux");
     }
@@ -1301,7 +1303,7 @@ export class Window {
   /**
    * Events from the window.
    */
-  async *events(wait = false) {
+  async *events(wait = false): AsyncGenerator<Event> {
     while (true) {
       const event = Deno.UnsafePointer.of(eventBuf);
 
@@ -1383,7 +1385,7 @@ export class WindowBuilder {
    * Build a window.
    * @returns a window
    */
-  build() {
+  build(): Window {
     const title = asCString(this.title);
     const window = sdl2.symbols.SDL_CreateWindow(
       title,
@@ -1407,7 +1409,7 @@ export class WindowBuilder {
   /**
    * Set the window to be fullscreen.
    */
-  fullscreen() {
+  fullscreen(): WindowBuilder {
     this.flags |= WINDOW_FLAGS.FULLSCREEN;
     return this;
   }
@@ -1415,13 +1417,13 @@ export class WindowBuilder {
   /**
    * Window usable with an OpenGL context
    */
-  opengl() {
+  opengl(): WindowBuilder {
     this.flags |= WINDOW_FLAGS.OPENGL;
     return this;
   }
 
   /** window is not visible */
-  hidden() {
+  hidden(): WindowBuilder {
     this.flags |= WINDOW_FLAGS.HIDDEN;
     return this;
   }
@@ -1429,7 +1431,7 @@ export class WindowBuilder {
   /**
    * Set the window to be borderless.
    */
-  borderless() {
+  borderless(): WindowBuilder {
     this.flags |= WINDOW_FLAGS.BORDERLESS;
     return this;
   }
@@ -1437,37 +1439,37 @@ export class WindowBuilder {
   /**
    * Set the window to be resizable.
    */
-  resizable() {
+  resizable(): WindowBuilder {
     this.flags |= WINDOW_FLAGS.RESIZABLE;
     return this;
   }
 
   /** window is minimized */
-  minimized() {
+  minimized(): WindowBuilder {
     this.flags |= WINDOW_FLAGS.MINIMIZED;
     return this;
   }
 
   /** window is maximized */
-  maximized() {
+  maximized(): WindowBuilder {
     this.flags |= WINDOW_FLAGS.MAXIMIZED;
     return this;
   }
 
   /** window has grabbed mouse input */
-  mouseGrabbed() {
+  mouseGrabbed(): WindowBuilder {
     this.flags |= WINDOW_FLAGS.MOUSE_GRABBED;
     return this;
   }
 
   /** window has input focus */
-  inputFocus() {
+  inputFocus(): WindowBuilder {
     this.flags |= WINDOW_FLAGS.INPUT_FOCUS;
     return this;
   }
 
   /** window has mouse focus */
-  mouseFocus() {
+  mouseFocus(): WindowBuilder {
     this.flags |= WINDOW_FLAGS.MOUSE_FOCUS;
     return this;
   }
@@ -1475,7 +1477,7 @@ export class WindowBuilder {
   /**
    * Set the window to be a foreign window.
    */
-  foreign() {
+  foreign(): WindowBuilder {
     this.flags |= WINDOW_FLAGS.FOREIGN;
     return this;
   }
@@ -1483,13 +1485,13 @@ export class WindowBuilder {
   /**
    * Window should be created in high-DPI mode.
    */
-  highPixelDensity() {
+  highPixelDensity(): WindowBuilder {
     this.flags |= WINDOW_FLAGS.HIGH_PIXEL_DENSITY;
     return this;
   }
 
   /** window has mouse captured (unrelated to MOUSE_GRABBED) */
-  mouseCapture() {
+  mouseCapture(): WindowBuilder {
     this.flags |= WINDOW_FLAGS.MOUSE_CAPTURE;
     return this;
   }
@@ -1497,55 +1499,55 @@ export class WindowBuilder {
   /**
    * Set the window to be always on top.
    */
-  alwaysOnTop() {
+  alwaysOnTop(): WindowBuilder {
     this.flags |= WINDOW_FLAGS.ALWAYS_ON_TOP;
     return this;
   }
 
   /** window should not be added to the taskbar */
-  skipTaskbar() {
+  skipTaskbar(): WindowBuilder {
     this.flags |= WINDOW_FLAGS.SKIP_TASKBAR;
     return this;
   }
 
   /** window should be treated as a utility window */
-  utility() {
+  utility(): WindowBuilder {
     this.flags |= WINDOW_FLAGS.UTILITY;
     return this;
   }
 
   /** window should be treated as a tooltip */
-  tooltip() {
+  tooltip(): WindowBuilder {
     this.flags |= WINDOW_FLAGS.TOOLTIP;
     return this;
   }
 
   /** window should be treated as a popup menu */
-  popupMenu() {
+  popupMenu(): WindowBuilder {
     this.flags |= WINDOW_FLAGS.POPUP_MENU;
     return this;
   }
 
   /** window has grabbed keyboard input */
-  keyboardGrabbed() {
+  keyboardGrabbed(): WindowBuilder {
     this.flags |= WINDOW_FLAGS.KEYBOARD_GRABBED;
     return this;
   }
 
   /** window usable for Vulkan surface */
-  vulkan() {
+  vulkan(): WindowBuilder {
     this.flags |= WINDOW_FLAGS.VULKAN;
     return this;
   }
 
   /** window usable for Metal view */
-  metal() {
+  metal(): WindowBuilder {
     this.flags |= WINDOW_FLAGS.METAL;
     return this;
   }
 
   /** window with transparent buffer */
-  transparent() {
+  transparent(): WindowBuilder {
     this.flags |= WINDOW_FLAGS.TRANSPARENT;
     return this;
   }
