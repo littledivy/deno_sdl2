@@ -25,3 +25,6 @@ jobs:
           set -xeuo pipefail
           deno cache --unstable mod.ts
           deno fmt --check
+
+      - name: publish
+        run: deno publish --provenance
