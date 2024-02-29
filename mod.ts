@@ -1303,7 +1303,7 @@ export class Window {
   /**
    * Events from the window.
    */
-  async *events(wait = false): AsyncGenerator<Event> {
+  async *events(wait = false): AsyncGenerator<any> {
     while (true) {
       const event = Deno.UnsafePointer.of(eventBuf);
 
