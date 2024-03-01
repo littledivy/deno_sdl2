@@ -31,4 +31,4 @@ jobs:
           deno fmt --check
 
       - name: publish
-        run: deno publish --provenance
+        run: deno publish
