@@ -1,6 +1,6 @@
 {
   "name": "@divy/sdl2",
-  "version": "0.10.2",
+  "version": "0.10.4",
   "exports": "./mod.ts",
   "lint": {
     "rules": {

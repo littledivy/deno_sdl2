@@ -7,7 +7,7 @@ https://user-images.githubusercontent.com/34997667/160436698-9045ba0c-3fc8-45f9-
 ### get started
 
 ```typescript
-import { EventType, WindowBuilder } from "jsr:@divy/sdl2@0.10.1";
+import { EventType, WindowBuilder } from "jsr:@divy/sdl2@0.10";
 
 const window = new WindowBuilder("Hello, Deno!", 640, 480).build();
 const canvas = window.canvas();
