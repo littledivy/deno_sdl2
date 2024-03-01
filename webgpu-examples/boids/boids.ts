@@ -5,9 +5,9 @@ import {
   Rect,
   Texture,
   TextureAccess,
+  Window,
   WindowBuilder,
 } from "../../mod.ts";
-import { FPS } from "../../examples/utils.ts";
 
 class Boids {
   particleCount: number;
@@ -60,7 +60,7 @@ class Boids {
       format: "rgba8unorm-srgb",
       usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_SRC,
     });
-    const { padded, unpadded } = getRowPadding(this.dimensions.width);
+    const { padded } = getRowPadding(this.dimensions.width);
     this.outputBuffer = this.device.createBuffer({
       label: "Capture",
       size: padded * this.dimensions.height,
@@ -263,7 +263,7 @@ class Boids {
           view: view,
           loadOp: "clear",
           storeOp: "store",
-          loadValue: { r: 0.0, g: 0.0, b: 0.0, a: 1.0 },
+          clearValue: { r: 0.0, g: 0.0, b: 0.0, a: 1.0 },
         },
       ],
     });
@@ -384,10 +384,8 @@ const boids = new Boids({
 }, await getDevice());
 boids.init();
 
-const tick = FPS(100);
-
 async function loop() {
-  const event = boids.window.events().next().value;
+  const event = (await boids.window.events().next()).value;
   switch (event.type) {
     // case EventType.Re: {
     //   const { width, height } = event;
@@ -408,6 +406,7 @@ async function loop() {
     case EventType.Quit:
     case EventType.KeyDown:
       Deno.exit(0);
+      break;
     default:
       break;
   }

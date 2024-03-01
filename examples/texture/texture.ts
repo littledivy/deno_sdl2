@@ -1,7 +1,6 @@
 import {
   EventType,
   PixelFormat,
-  Rect,
   TextureAccess,
   WindowBuilder,
 } from "../../mod.ts";
@@ -23,7 +22,7 @@ canvas.copy(texture);
 canvas.present();
 
 event_loop:
-for (const event of window.events()) {
+for await (const event of window.events()) {
   switch (event.type) {
     case EventType.Quit:
     case EventType.KeyDown:
