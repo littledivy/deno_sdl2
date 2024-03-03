@@ -12,7 +12,7 @@ import { EventType, WindowBuilder } from "jsr:@divy/sdl2@0.10";
 const window = new WindowBuilder("Hello, Deno!", 640, 480).build();
 const canvas = window.canvas();
 
-for (const event of window.events()) {
+for await (const event of window.events()) {
   if (event.type == EventType.Quit) {
     break;
   } else if (event.type == EventType.Draw) {

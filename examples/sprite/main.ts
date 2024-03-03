@@ -118,7 +118,7 @@ function frame() {
   sleepSync(10);
 }
 
-for (const event of window.events()) {
+for await (const event of window.events()) {
   switch (event.type) {
     case EventType.Draw:
       frame();

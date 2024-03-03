@@ -112,7 +112,7 @@ async function frame() {
 }
 
 // Fire up the event loop
-for (const event of window.events()) {
+for await (const event of window.events()) {
   switch (event.type) {
     case EventType.Draw:
       await frame();

@@ -22,7 +22,7 @@ for (let i = 0; i < star_count; i++) {
   stars.push(star);
 }
 
-for (const event of window.events()) {
+for await (const event of window.events()) {
   if (event.type == EventType.Quit) Deno.exit(0);
   else if (event.type == EventType.Draw) {
     canvas.setDrawColor(0, 0, 0, 255);

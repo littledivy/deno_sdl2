@@ -20,7 +20,7 @@ async function frame() {
   stepFrame();
 }
 
-for (const event of window.events()) {
+for await (const event of window.events()) {
   if (event.type == EventType.Quit) Deno.exit(0);
   else if (event.type == EventType.Draw) frame();
 }
