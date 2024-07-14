@@ -1250,7 +1250,7 @@ export class Window {
   static deserialize(data: ArrayBuffer): Deno.UnsafeWindowSurface {
     const [surface, p1, p2] = new BigInt64Array(data);
     return new Deno.UnsafeWindowSurface(
-      systems[surface],
+      systems[Number(surface)],
       Deno.UnsafePointer.create(p1),
       Deno.UnsafePointer.create(p2),
     );
@@ -1265,7 +1265,11 @@ export class Window {
     return new Deno.UnsafeWindowSurface(surface, p1, p2);
   }
 
-  #windowSurface(): [string, Deno.PointerValue, Deno.PointerValue] {
+  #windowSurface(): [
+    typeof systems[number],
+    Deno.PointerValue,
+    Deno.PointerValue,
+  ] {
     const wm_info = Deno.UnsafePointer.of(wmInfoBuf);
 
     // Initialize the version info.
