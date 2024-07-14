@@ -1212,6 +1212,8 @@ export function stopTextInput() {
   sdl2.symbols.SDL_StopTextInput();
 }
 
+const systems = ["cocoa", "win32", "x11", "wayland"] as const;
+
 /**
  * A window.
  */
@@ -1235,11 +1237,35 @@ export class Window {
     sdl2.symbols.SDL_RaiseWindow(this.raw);
   }
 
+  serialize(): ArrayBuffer {
+    const [surface, p1, p2] = this.#windowSurface();
+    const buf = new BigInt64Array([
+      BigInt(systems.indexOf(surface)),
+      Deno.UnsafePointer.value(p1),
+      Deno.UnsafePointer.value(p2),
+    ]);
+    return buf.buffer;
+  }
+
+  static deserialize(data: ArrayBuffer): Deno.UnsafeWindowSurface {
+    const [surface, p1, p2] = new BigInt64Array(data);
+    return new Deno.UnsafeWindowSurface(
+      systems[surface],
+      Deno.UnsafePointer.create(p1),
+      Deno.UnsafePointer.create(p2),
+    );
+  }
+
   /**
    * Return a Deno.UnsafeWindowSurface that can be used
    * with WebGPU.
    */
   windowSurface(): Deno.UnsafeWindowSurface {
+    const [surface, p1, p2] = this.#windowSurface();
+    return new Deno.UnsafeWindowSurface(surface, p1, p2);
+  }
+
+  #windowSurface(): [string, Deno.PointerValue, Deno.PointerValue] {
     const wm_info = Deno.UnsafePointer.of(wmInfoBuf);
 
     // Initialize the version info.
@@ -1261,7 +1287,7 @@ export class Window {
       if (subsystem != SDL_SYSWM_COCOA) {
         throw new Error("Expected SDL_SYSWM_COCOA on macOS");
       }
-      return new Deno.UnsafeWindowSurface("cocoa", window, this.metalView);
+      return ["cocoa", window, this.metalView];
     }
 
     if (isWindows()) {
@@ -1271,7 +1297,7 @@ export class Window {
       const window = view.getPointer(4 + 4)!; // usize
       if (subsystem == SDL_SYSWM_WINDOWS) {
         const hinstance = view.getPointer(4 + 4 + 8 + 8)!; // usize (gap of 8 bytes)
-        return new Deno.UnsafeWindowSurface("win32", window, hinstance);
+        return ["win32", window, hinstance];
       } else if (subsystem == SDL_SYSWM_WINRT) {
         throw new Error("WinRT is not supported");
         // return new Deno.UnsafeWindowSurface("winrt", window, null);
@@ -1288,11 +1314,10 @@ export class Window {
       const display = view.getPointer(4 + 4)!; // usize
       if (subsystem == SDL_SYSWM_X11) {
         const window = view.getPointer(4 + 4 + 8)!; // usize
-        return new Deno.UnsafeWindowSurface("x11", window, display);
+        return ["x11", window, display];
       } else if (subsystem == SDL_SYSWM_WAYLAND) {
         const surface = view.getPointer(4 + 4 + 8)!; // usize
-        throw new Error("Wayland is not supported");
-        // return new Deno.UnsafeWindowSurface("wayland", surface, display);
+        return ["wayland", surface, display];
       }
       throw new Error("Expected SDL_SYSWM_X11 or SDL_SYSWM_WAYLAND on Linux");
     }
@@ -1303,7 +1328,7 @@ export class Window {
   /**
    * Events from the window.
    */
-  async *events(wait = false): AsyncGenerator<any> {
+  *events(wait = false): Generator<any> {
     while (true) {
       const event = Deno.UnsafePointer.of(eventBuf);
 
@@ -1315,12 +1340,6 @@ export class Window {
         : sdl2.symbols.SDL_PollEvent(event)) == 1;
       if (!pending) {
         yield { type: EventType.Draw };
-      }
-      if (shouldWait) {
-        // Run microtasks.
-        await new Promise((resolve) =>
-          setTimeout(resolve, 0)
-        );
       }
       const view = new Deno.UnsafePointerView(event!);
       const type = view.getUint32();
