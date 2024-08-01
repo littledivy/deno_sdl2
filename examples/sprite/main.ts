@@ -1,7 +1,16 @@
 import { EventType, Rect, Surface, WindowBuilder } from "../../mod.ts";
-import { drawMap, sleepSync, Sprite } from "./util.ts";
+import { drawMap, Sprite } from "./util.ts";
 
-const canvasSize = { width: 400, height: 400 };
+function sleepSync(ms: number) {
+  const start = Date.now();
+  while (true) {
+    if (Date.now() - start > ms) {
+      break;
+    }
+  }
+}
+
+const canvasSize = { width: 1000, height:800 };
 const window = new WindowBuilder(
   "Hello, Deno!",
   canvasSize.width,
@@ -15,14 +24,22 @@ const creator = canv.textureCreator();
 const texture = creator.createTextureFromSurface(surface);
 
 const map = [
-  [8, 8, 9, 8, 11, 8, 8, 8],
-  [8, 8, 8, 8, 8, 8, 8, 8],
-  [8, 10, 8, 8, 8, 8, 8, 8],
-  [8, 8, 8, 8, 8, 8, 8, 8],
-  [8, 8, 8, 8, 8, 8, 10, 8],
-  [8, 8, 8, 8, 8, 9, 8, 8],
-  [10, 8, 8, 8, 8, 8, 8, 8],
-  [8, 8, 11, 8, 8, 8, 8, 8],
+  [8, 8, 9, 8, 11, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8],
+  [8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 10, 8, 8, 8, 8],
+  [8, 10, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 10, 8, 8],
+  [8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 10, 8, 8, 8],
+  [8, 8, 8, 8, 8, 8, 10, 8, 8, 8, 8, 8, 8, 8, 8],
+  [8, 8, 8, 8, 8, 9, 8, 8, 8, 8, 8, 8, 8, 8, 8],
+  [10, 8, 8, 8, 8, 8, 8, 8, 8, 8, 10, 8, 8, 8, 8],
+  [8, 8, 11, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 10, 8],
+  [8, 8, 9, 8, 11, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8],
+  [8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 10, 8, 8, 8, 8],
+  [8, 10, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 10, 8, 8],
+  [8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 10, 8, 8, 8],
+  [8, 8, 8, 8, 8, 8, 10, 8, 8, 8, 8, 8, 8, 8, 8],
+  [8, 8, 8, 8, 8, 9, 8, 8, 8, 8, 8, 8, 8, 8, 8],
+  [10, 8, 8, 8, 8, 8, 8, 8, 8, 8, 10, 8, 8, 8, 8],
+  [8, 8, 11, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 10, 8],
 ];
 
 const denoTextureFrames = [
@@ -52,33 +69,31 @@ function createShadowInstance() {
   return shadow;
 }
 
-function createDenoInstance() {
+function createDenoInstance(id) {
   const deno = new Sprite(texture, denoTextureFrames);
   deno.x = random(0, canvasSize.width);
   deno.y = random(0, canvasSize.height);
   deno.originX = deno.frames[0].width / 2;
   deno.originY = deno.frames[0].height;
   deno.scale = 4;
-  deno.vx = 2;
-  deno.vy = 1;
+  deno.vx = 0;
+  deno.vy = 0;
+  deno.id = id || 0;
   return deno;
 }
 
 const denos: Sprite[] = [];
-
-for (let i = 0; i < 1; i++) {
-  denos.push(createDenoInstance());
-}
-
+const self = createDenoInstance();
 const shadow = createShadowInstance();
 
 let cnt = 0;
+let mouse = { x: 0, y: 0 };
 
-function frame() {
+function frame(e) {
   canv.clear();
-  drawMap(texture, canv, map, 16);
+  const tiles = drawMap(texture, canv, map, 16);
 
-  for (const deno of denos) {
+  for (const deno of [...denos, self]) {
     deno.tick();
     shadow.draw(canv);
     deno.draw(canv);
@@ -111,10 +126,24 @@ function frame() {
       }
     }
 
-    cnt++;
+    deno.vx = (mouse.x - deno.x) / 100;
+    deno.vy = (mouse.y - deno.y) / 100;
+
+    // check for collision with tiles on map
+    for (const tile of tiles) {
+      if (deno.x < tile.x + tile.width &&
+	deno.x + deno.frames[0].width * deno.scale > tile.x &&
+	deno.y < tile.y + tile.height &&
+	deno.y + deno.frames[0].height * deno.scale > tile.y) {
+	deno.x -= deno.vx;
+	deno.y -= deno.vy;
+      }
+    }
   }
 
+  cnt++;
   canv.present();
+
   sleepSync(10);
 }
 
@@ -125,6 +154,10 @@ for await (const event of window.events()) {
       break;
     case EventType.Quit:
       Deno.exit(0);
+      break;
+    case EventType.MouseMotion:
+      mouse.x = event.x;
+      mouse.y = event.y;
       break;
     default:
       break;

@@ -409,7 +409,10 @@ function init() {
   }
 }
 
-init();
+if (typeof window !== "undefined") {
+ init();
+}
+
 /**
  * An enum that contains structures for the different event types.
  */
@@ -485,6 +488,15 @@ export class Canvas {
     private window: Deno.PointerValue,
     private target: Deno.PointerValue,
   ) {}
+
+  serialize(): ArrayBuffer {
+    return new BigUint64Array([Deno.UnsafePointer.value(this.target)]).buffer;
+  }
+
+  static deserialize(data: ArrayBuffer): Canvas {
+    const [ptr] = new BigUint64Array(data);
+    return new Canvas(null!, Deno.UnsafePointer.create(ptr));
+  }
 
   /**
    * Set the color used for drawing operations (Rect, Line and Clear).
@@ -1332,7 +1344,7 @@ export class Window {
   /**
    * Events from the window.
    */
-  *events(wait = false): Generator<any> {
+  async *events(wait = false): AsyncGenerator<any> {
     while (true) {
       const event = Deno.UnsafePointer.of(eventBuf);
 
@@ -1342,6 +1354,12 @@ export class Window {
       const pending = (shouldWait
         ? sdl2.symbols.SDL_WaitEvent(event)
         : sdl2.symbols.SDL_PollEvent(event)) == 1;
+      if (shouldWait) {
+        // Run microtasks.
+        await new Promise((resolve) =>
+          setTimeout(resolve, 0)
+        );
+      }
       if (!pending) {
         yield { type: EventType.Draw };
       }
