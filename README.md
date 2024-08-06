@@ -28,7 +28,7 @@ for await (const event of window.events()) {
 ```
 
 ```shell
-~> deno run --allow-ffi --unstable https://jsr.io/@divy/sdl2/0.10.1/examples/hello.ts
+~> deno run --allow-env --allow-ffi --unstable-ffi https://jsr.io/@divy/sdl2/0.10.1/examples/hello.ts
 ```
 
 ### installing sdl2
