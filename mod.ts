@@ -286,6 +286,10 @@ const sdl2 = Deno.dlopen(getLibraryPath("SDL2"), {
     "parameters": [],
     "result": "i32",
   },
+  "SDL_RWFromMem": {
+    "parameters": ["buffer", "i32"],
+    "result": "pointer",
+  },
 });
 
 const SDL2_Image_symbols = {
@@ -297,6 +301,10 @@ const SDL2_Image_symbols = {
     "parameters": ["buffer"],
     "result": "pointer",
   },
+  "IMG_Load_RW": {
+    "parameters": ["pointer"],
+    "result": "pointer",
+  },
 } as const;
 
 const SDL2_TTF_symbols = {
@@ -306,6 +314,10 @@ const SDL2_TTF_symbols = {
   },
   "TTF_OpenFont": {
     "parameters": ["buffer", "i32"],
+    "result": "pointer",
+  },
+  "TTF_OpenFontRW": {
+    "parameters": ["pointer", "i32", "i32"],
     "result": "pointer",
   },
   "TTF_RenderText_Solid": {
@@ -410,6 +422,7 @@ function init() {
 }
 
 init();
+
 /**
  * An enum that contains structures for the different event types.
  */
@@ -485,6 +498,15 @@ export class Canvas {
     private window: Deno.PointerValue,
     private target: Deno.PointerValue,
   ) {}
+
+  serialize(): ArrayBuffer {
+    return new BigUint64Array([Deno.UnsafePointer.value(this.target)]).buffer;
+  }
+
+  static deserialize(data: ArrayBuffer): Canvas {
+    const [ptr] = new BigUint64Array(data);
+    return new Canvas(null!, Deno.UnsafePointer.create(ptr));
+  }
 
   /**
    * Set the color used for drawing operations (Rect, Line and Clear).
@@ -677,6 +699,18 @@ export class Canvas {
    */
   loadFont(path: string, size: number): Font {
     const raw = sdl2Font.symbols.TTF_OpenFont(asCString(path), size);
+    return new Font(raw);
+  }
+
+  loadFontRaw(data: Uint8Array, size: number): Font {
+    const rwops = sdl2.symbols.SDL_RWFromMem(data, data.byteLength);
+    if (rwops === null) {
+      throwSDLError();
+    }
+    const raw = sdl2Font.symbols.TTF_OpenFontRW(rwops, 1, size);
+    if (raw === null) {
+      throwSDLError();
+    }
     return new Font(raw);
   }
 }
@@ -1015,6 +1049,20 @@ export class Surface {
     }
     return new Surface(raw);
   }
+
+  static fromRaw(data: Uint8Array): Surface {
+    if (!sdl2Image) {
+      throw new Error("SDL2_image was not loaded");
+    }
+
+    const rwops = sdl2.symbols.SDL_RWFromMem(data, data.byteLength);
+    const raw = sdl2Image.symbols.IMG_Load_RW(rwops);
+    if (raw === null) {
+      throwSDLError();
+    }
+
+    return new Surface(raw);
+  }
 }
 
 const sizeOfEvent = 56; // type (u32) + event
@@ -1332,7 +1380,7 @@ export class Window {
   /**
    * Events from the window.
    */
-  *events(wait = false): Generator<any> {
+  async *events(wait = false): AsyncGenerator<any> {
     while (true) {
       const event = Deno.UnsafePointer.of(eventBuf);
 
@@ -1342,6 +1390,12 @@ export class Window {
       const pending = (shouldWait
         ? sdl2.symbols.SDL_WaitEvent(event)
         : sdl2.symbols.SDL_PollEvent(event)) == 1;
+      if (shouldWait) {
+        // Run microtasks.
+        await new Promise((resolve) =>
+          setTimeout(resolve, 0)
+        );
+      }
       if (!pending) {
         yield { type: EventType.Draw };
       }

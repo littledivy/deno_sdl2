@@ -1,11 +1,5 @@
 import { Canvas, Rect, Texture } from "../../mod.ts";
 
-export function sleepSync(timeout: number) {
-  const sab = new SharedArrayBuffer(1024);
-  const int32 = new Int32Array(sab);
-  Atomics.wait(int32, 0, 0, timeout);
-}
-
 export interface Area {
   x: number;
   y: number;
@@ -18,7 +12,8 @@ export function drawMap(
   canvas: Canvas,
   map: number[][],
   chipSize: number,
-) {
+): Rect[] {
+  const frames: Rect[] = [];
   for (let i = 0; i < map.length; i++) {
     for (let j = 0; j < map[i].length; j++) {
       const chip = map[i][j];
@@ -34,6 +29,9 @@ export function drawMap(
         chipSize * 4,
         chipSize * 4,
       );
+      // 9 = cactus
+      // 8 = normal tile
+      if (chip === 9) frames.push(dst);
       canvas.copy(
         texture,
         src,
@@ -41,6 +39,7 @@ export function drawMap(
       );
     }
   }
+  return frames;
 }
 
 export class Sprite {
