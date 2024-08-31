@@ -286,6 +286,10 @@ const sdl2 = Deno.dlopen(getLibraryPath("SDL2"), {
     "parameters": [],
     "result": "i32",
   },
+  "SDL_RWFromMem": {
+    "parameters": ["buffer", "i32"],
+    "result": "pointer",
+  },
 });
 
 const SDL2_Image_symbols = {
@@ -297,6 +301,10 @@ const SDL2_Image_symbols = {
     "parameters": ["buffer"],
     "result": "pointer",
   },
+  "IMG_Load_RW": {
+    "parameters": ["pointer"],
+    "result": "pointer",
+  },
 } as const;
 
 const SDL2_TTF_symbols = {
@@ -306,6 +314,10 @@ const SDL2_TTF_symbols = {
   },
   "TTF_OpenFont": {
     "parameters": ["buffer", "i32"],
+    "result": "pointer",
+  },
+  "TTF_OpenFontRW": {
+    "parameters": ["pointer", "i32", "i32"],
     "result": "pointer",
   },
   "TTF_RenderText_Solid": {
@@ -409,9 +421,7 @@ function init() {
   }
 }
 
-if (typeof window !== "undefined") {
- init();
-}
+init();
 
 /**
  * An enum that contains structures for the different event types.
@@ -689,6 +699,18 @@ export class Canvas {
    */
   loadFont(path: string, size: number): Font {
     const raw = sdl2Font.symbols.TTF_OpenFont(asCString(path), size);
+    return new Font(raw);
+  }
+
+  loadFontRaw(data: Uint8Array, size: number): Font {
+    const rwops = sdl2.symbols.SDL_RWFromMem(data, data.byteLength);
+    if (rwops === null) {
+      throwSDLError();
+    }
+    const raw = sdl2Font.symbols.TTF_OpenFontRW(rwops, 1, size);
+    if (raw === null) {
+      throwSDLError();
+    }
     return new Font(raw);
   }
 }
@@ -1025,6 +1047,20 @@ export class Surface {
     if (raw === null) {
       throwSDLError();
     }
+    return new Surface(raw);
+  }
+
+  static fromRaw(data: Uint8Array): Surface {
+    if (!sdl2Image) {
+      throw new Error("SDL2_image was not loaded");
+    }
+
+    const rwops = sdl2.symbols.SDL_RWFromMem(data, data.byteLength);
+    const raw = sdl2Image.symbols.IMG_Load_RW(rwops);
+    if (raw === null) {
+      throwSDLError();
+    }
+
     return new Surface(raw);
   }
 }

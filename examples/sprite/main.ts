@@ -10,7 +10,7 @@ function sleepSync(ms: number) {
   }
 }
 
-const canvasSize = { width: 1000, height:800 };
+const canvasSize = { width: 1000, height: 800 };
 const window = new WindowBuilder(
   "Hello, Deno!",
   canvasSize.width,
@@ -131,12 +131,14 @@ function frame(e) {
 
     // check for collision with tiles on map
     for (const tile of tiles) {
-      if (deno.x < tile.x + tile.width &&
-	deno.x + deno.frames[0].width * deno.scale > tile.x &&
-	deno.y < tile.y + tile.height &&
-	deno.y + deno.frames[0].height * deno.scale > tile.y) {
-	deno.x -= deno.vx;
-	deno.y -= deno.vy;
+      if (
+        deno.x < tile.x + tile.width &&
+        deno.x + deno.frames[0].width * deno.scale > tile.x &&
+        deno.y < tile.y + tile.height &&
+        deno.y + deno.frames[0].height * deno.scale > tile.y
+      ) {
+        deno.x -= deno.vx;
+        deno.y -= deno.vy;
       }
     }
   }
