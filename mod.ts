@@ -1,7 +1,8 @@
+// deno-lint-ignore-file no-unused-vars
 import {
   cstring,
   i32,
-  SizedFFIType,
+  type SizedFFIType,
   Struct,
   u16,
   u32,
@@ -1097,7 +1098,6 @@ const SDL_WindowEvent = new Struct({
   data2: i32,
 });
 
-// deno-lint-ignore no-unused-vars
 const SDL_DisplayEvent = new Struct({
   type: u32,
   timestamp: u32,
@@ -1198,7 +1198,7 @@ const SDL_TextEditingEvent = new Struct({
   type: u32,
   timestamp: u32,
   windowID: u32,
-  // @ts-ignore
+  // @ts-ignore cstring
   text: cstring,
   start: i32,
   length: i32,
@@ -1208,7 +1208,7 @@ const SDL_TextInputEvent = new Struct({
   type: u32,
   timestamp: u32,
   windowID: u32,
-  // @ts-ignore
+  // @ts-ignore cstring
   text: cstring,
 });
 
@@ -1297,11 +1297,13 @@ export class Window {
 
   static deserialize(data: ArrayBuffer): Deno.UnsafeWindowSurface {
     const [surface, p1, p2] = new BigInt64Array(data);
-    return new Deno.UnsafeWindowSurface(
-      systems[Number(surface)],
-      Deno.UnsafePointer.create(p1),
-      Deno.UnsafePointer.create(p2),
-    );
+    return new Deno.UnsafeWindowSurface({
+      system: systems[Number(surface)],
+      windowHandle: Deno.UnsafePointer.create(p1),
+      displayHandle: Deno.UnsafePointer.create(p2),
+      width: 0,
+      height: 0,
+    });
   }
 
   /**
@@ -1310,7 +1312,13 @@ export class Window {
    */
   windowSurface(): Deno.UnsafeWindowSurface {
     const [surface, p1, p2] = this.#windowSurface();
-    return new Deno.UnsafeWindowSurface(surface, p1, p2);
+    return new Deno.UnsafeWindowSurface({
+      system: surface,
+      windowHandle: p1,
+      displayHandle: p2,
+      width: 0,
+      height: 0,
+    });
   }
 
   #windowSurface(): [
@@ -1380,6 +1388,7 @@ export class Window {
   /**
    * Events from the window.
    */
+  // deno-lint-ignore no-explicit-any
   async *events(wait = false): AsyncGenerator<any> {
     while (true) {
       const event = Deno.UnsafePointer.of(eventBuf);
