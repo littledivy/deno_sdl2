@@ -79,9 +79,9 @@ sudo apt install libsdl2-dev libsdl2-image-dev libsdl2-ttf-dev
 
 ### security
 
-you need `--allow-ffi` to use SDL2. `deno_sdl2` needs access to
-system's SDL2 library. Deno's permission model does not work well with FFI
-libraries, use at your own risk.
+you need `--allow-ffi` to use SDL2. `deno_sdl2` needs access to system's SDL2
+library. Deno's permission model does not work well with FFI libraries, use at
+your own risk.
 
 ### projects using `deno_sdl2`
 
