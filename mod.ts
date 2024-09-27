@@ -1295,14 +1295,18 @@ export class Window {
     return buf.buffer;
   }
 
-  static deserialize(data: ArrayBuffer): Deno.UnsafeWindowSurface {
+  static deserialize(
+    data: ArrayBuffer,
+    width: number,
+    height: number,
+  ): Deno.UnsafeWindowSurface {
     const [surface, p1, p2] = new BigInt64Array(data);
     return new Deno.UnsafeWindowSurface({
       system: systems[Number(surface)],
       windowHandle: Deno.UnsafePointer.create(p1),
       displayHandle: Deno.UnsafePointer.create(p2),
-      width: 0,
-      height: 0,
+      width,
+      height,
     });
   }
 
@@ -1310,14 +1314,14 @@ export class Window {
    * Return a Deno.UnsafeWindowSurface that can be used
    * with WebGPU.
    */
-  windowSurface(): Deno.UnsafeWindowSurface {
+  windowSurface(width: number, height: number): Deno.UnsafeWindowSurface {
     const [surface, p1, p2] = this.#windowSurface();
     return new Deno.UnsafeWindowSurface({
       system: surface,
       windowHandle: p1,
       displayHandle: p2,
-      width: 0,
-      height: 0,
+      width,
+      height,
     });
   }
 

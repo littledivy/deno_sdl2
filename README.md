@@ -4,10 +4,12 @@ deno_sdl2 provides bindings to sdl2, sdl2_ttf and sdl2_image.
 
 https://user-images.githubusercontent.com/34997667/160436698-9045ba0c-3fc8-45f9-8038-4194e5d3dcc8.mov
 
+Minimum supported Deno version: 2.0.0-rc.5
+
 ### get started
 
 ```typescript
-import { EventType, WindowBuilder } from "jsr:@divy/sdl2@0.10";
+import { EventType, WindowBuilder } from "jsr:@divy/sdl2@0.13";
 
 const window = new WindowBuilder("Hello, Deno!", 640, 480).build();
 const canvas = window.canvas();
@@ -28,7 +30,7 @@ for await (const event of window.events()) {
 ```
 
 ```shell
-~> deno run --allow-env --allow-ffi --unstable-ffi https://jsr.io/@divy/sdl2/0.10.1/examples/hello.ts
+deno run --allow-env --allow-ffi https://jsr.io/@divy/sdl2/0.13.0/examples/hello.ts
 ```
 
 ### installing sdl2
@@ -77,7 +79,7 @@ sudo apt install libsdl2-dev libsdl2-image-dev libsdl2-ttf-dev
 
 ### security
 
-you need `--allow-ffi --unstable` to use SDL2. `deno_sdl2` needs access to
+you need `--allow-ffi` to use SDL2. `deno_sdl2` needs access to
 system's SDL2 library. Deno's permission model does not work well with FFI
 libraries, use at your own risk.
 
