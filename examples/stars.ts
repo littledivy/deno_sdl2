@@ -18,7 +18,7 @@ const cy = HEIGHT / 2;
 const random = (u: number, l: number) => Math.random() * (u - l) + l;
 
 for (let i = 0; i < star_count; i++) {
-  let star = [random(-25, 25), random(-25, 25), random(1, depth)];
+  const star = [random(-25, 25), random(-25, 25), random(1, depth)];
   stars.push(star);
 }
 

@@ -87,9 +87,9 @@ const self = createDenoInstance();
 const shadow = createShadowInstance();
 
 let cnt = 0;
-let mouse = { x: 0, y: 0 };
+const mouse = { x: 0, y: 0 };
 
-function frame(e) {
+function frame() {
   canv.clear();
   const tiles = drawMap(texture, canv, map, 16);
 

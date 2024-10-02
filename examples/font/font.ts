@@ -13,7 +13,7 @@ const surface = font.renderSolid(Deno.args[0] || "Hello there!", color);
 const creator = canvas.textureCreator();
 const texture = creator.createTextureFromSurface(surface);
 
-async function frame() {
+function frame() {
   canvas.clear();
   canvas.copy(texture);
   canvas.present();

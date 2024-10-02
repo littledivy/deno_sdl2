@@ -1,4 +1,4 @@
-import { Canvas, Rect, Texture } from "../../mod.ts";
+import { type Canvas, Rect, type Texture } from "../../mod.ts";
 
 export interface Area {
   x: number;

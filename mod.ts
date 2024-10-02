@@ -730,13 +730,13 @@ export class Font {
    * @param color the foreground color of the text
    * @returns a Texture object
    */
-  renderSolid(text: string, color: Color): Texture {
+  renderSolid(text: string, color: Color): Surface {
     const raw = sdl2Font.symbols.TTF_RenderText_Solid(
       this[_raw],
       asCString(text),
       color[_raw],
     );
-    return new Texture(raw);
+    return new Surface(raw);
   }
 
   /**
@@ -745,13 +745,13 @@ export class Font {
    * @param color the foreground color of the text
    * @returns a Texture object
    */
-  renderBlended(text: string, color: Color): Texture {
+  renderBlended(text: string, color: Color): Surface {
     const raw = sdl2Font.symbols.TTF_RenderText_Blended(
       this[_raw],
       asCString(text),
       color[_raw],
     );
-    return new Texture(raw);
+    return new Surface(raw);
   }
 }
 

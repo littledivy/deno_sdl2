@@ -1,11 +1,11 @@
 import {
-  Canvas,
+  type Canvas,
   EventType,
   PixelFormat,
   Rect,
-  Texture,
+  type Texture,
   TextureAccess,
-  Window,
+  type Window,
   WindowBuilder,
 } from "../../mod.ts";
 
