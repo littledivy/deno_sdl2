@@ -68,9 +68,6 @@ Grab prebuilt libraries from:
 Take `SDL2.dll`, `SDL2_image.dll` and `SDL2_ttf.dll` from each respectively and
 put them into cwd or `C:\Windows\System32\`.
 
-> Windows is expected to work but I do not accept Windows-specifc issues. Open a
-> PR directly with a fix.
-
 Linux (x64):
 
 ```shell
