@@ -164,7 +164,7 @@ class Boids {
       },
       fragment: {
         module: drawShader,
-        entryPoint: "main",
+        entryPoint: "frag_main",
         targets: [
           {
             format: "rgba8unorm-srgb",
