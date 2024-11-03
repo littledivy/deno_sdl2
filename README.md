@@ -1,4 +1,4 @@
-### Deno SDL2 b
+### Deno SDL2
 
 deno_sdl2 provides bindings to sdl2, sdl2_ttf and sdl2_image.
 
