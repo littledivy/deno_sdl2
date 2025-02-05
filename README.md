@@ -35,7 +35,7 @@ deno run --allow-env --allow-ffi https://jsr.io/@divy/sdl2/0.14.0/examples/hello
 
 ### installing sdl2
 
-Follow https://wiki.libsdl.org/Installation to install the dynamic library.
+Follow https://wiki.libsdl.org/SDL2/Installation to install the dynamic library.
 
 TL;DR
 
