@@ -15,7 +15,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest]
+        os: [ubuntu-latest, minimetal-m1]
       fail-fast: false
     steps:
       - uses: actions/checkout@v2
