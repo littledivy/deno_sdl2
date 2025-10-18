@@ -211,7 +211,7 @@ const sdl2 = Deno.dlopen(getLibraryPath("SDL2"), {
       "pointer",
       "pointer",
       "pointer",
-      "f32",
+      "f64",
       "pointer",
       "u32",
     ],
@@ -699,6 +699,38 @@ export class Canvas {
   }
 
   /**
+   * Copy a portion of the texture to the current rendering target, with optional rotation and flipping.
+   * @param texture the source texture
+   * @param source the source rectangle, or null to copy the entire texture
+   * @param dest the destination rectangle, or null for the entire rendering target; the texture will be stretched to fill the given rectangle
+   * @param angle the angle of rotation, in degrees, clockwise
+   * @param center the point around which to rotate, or null to rotate around the center of the destination rectangle
+   * @param options for flipping the texture
+   */
+  copyEx(
+    texture: Texture,
+    source?: Rect,
+    dest?: Rect,
+    angle: number = 0,
+    center?: Point,
+    options: { flipHorizontal?: boolean; flipVertical?: boolean } = {},
+  ) {
+    const ret = sdl2.symbols.SDL_RenderCopyEx(
+      this.target,
+      texture[_raw],
+      source ? Deno.UnsafePointer.of(source[_raw] as BufferSource) : null,
+      dest ? Deno.UnsafePointer.of(dest[_raw] as BufferSource) : null,
+      angle,
+      center ? Deno.UnsafePointer.of(center[_raw] as BufferSource) : null,
+      (options.flipHorizontal ? 0x00000001 : 0) |
+        (options.flipVertical ? 0x00000002 : 0),
+    );
+    if (ret < 0) {
+      throwSDLError();
+    }
+  }
+
+  /**
    * TextureCreator is a helper class for creating textures.
    * @returns a TextureCreator object for use with creating textures
    */
@@ -801,6 +833,17 @@ export class Color {
     this[_raw] = new Uint8Array([r, g, b, a]);
   }
 }
+
+/**
+ * Point is a helper class for representing a point in 2D space.
+ */
+export class Point {
+  [_raw]: Int32Array;
+  constructor(x: number, y: number) {
+    this[_raw] = new Int32Array([x, y]);
+  }
+}
+
 /**
  * A structure that contains pixel format information.
  * @see https://wiki.libsdl.org/SDL2/SDL_PixelFormat
