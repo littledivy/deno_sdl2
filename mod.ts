@@ -260,8 +260,8 @@ const sdl2 = Deno.dlopen(getLibraryPath("SDL2"), {
     "result": "pointer",
   },
   "SDL_FreeSurface": {
-    "parameters": [ "pointer" ],
-    "result": "void"
+    "parameters": ["pointer"],
+    "result": "void",
   },
   "SDL_GetWindowWMInfo": {
     "parameters": ["pointer", "pointer"],
@@ -328,11 +328,19 @@ const SDL2_TTF_symbols = {
     "result": "pointer",
   },
   "TTF_RenderUTF8_Solid": {
-    "parameters": ["pointer", "pointer", <Deno.NativeType>{ struct: SDL2_color_struct}],
+    "parameters": [
+      "pointer",
+      "pointer",
+      <Deno.NativeType> { struct: SDL2_color_struct },
+    ],
     "result": "pointer",
   },
   "TTF_RenderUTF8_Blended": {
-    "parameters": ["pointer", "pointer", <Deno.NativeType>{ struct: SDL2_color_struct}],
+    "parameters": [
+      "pointer",
+      "pointer",
+      <Deno.NativeType> { struct: SDL2_color_struct },
+    ],
     "result": "pointer",
   },
   "TTF_CloseFont": {
@@ -340,7 +348,7 @@ const SDL2_TTF_symbols = {
     "result": "i32",
   },
   "TTF_SizeUTF8": {
-    "parameters": [ "pointer", "buffer", "pointer", "pointer" ],
+    "parameters": ["pointer", "buffer", "pointer", "pointer"],
     "result": "i32",
   },
   "TTF_Quit": {
@@ -705,7 +713,10 @@ export class Canvas {
    * @returns a Font object for use with rendering text
    */
   loadFont(path: string, size: number): Font {
-    const raw = sdl2Font.symbols.TTF_OpenFont(asCString(path) as BufferSource, size);
+    const raw = sdl2Font.symbols.TTF_OpenFont(
+      asCString(path) as BufferSource,
+      size,
+    );
     return new Font(raw);
   }
 
@@ -765,17 +776,17 @@ export class Font {
    * @param text text to measure, in utf8 encoding.
    * @returns an object with width and height properties
    */
-  textSize(text: string): { width: number; height: number; } {
+  textSize(text: string): { width: number; height: number } {
     const w = new Int32Array(1);
     const h = new Int32Array(1);
     const ret = sdl2Font.symbols.TTF_SizeUTF8(
-        this[ _raw ],
-        asCString(text) as BufferSource,
-        Deno.UnsafePointer.of(w),
-        Deno.UnsafePointer.of(h),
+      this[_raw],
+      asCString(text) as BufferSource,
+      Deno.UnsafePointer.of(w),
+      Deno.UnsafePointer.of(h),
     );
     if (ret < 0) {
-        throwSDLError();
+      throwSDLError();
     }
     return { width: w[0], height: h[0] };
   }
@@ -787,7 +798,7 @@ export class Font {
 export class Color {
   [_raw]: Uint8Array;
   constructor(r: number, g: number, b: number, a: number = 0xff) {
-      this[ _raw ] = new Uint8Array([ r, g, b, a ]);
+    this[_raw] = new Uint8Array([r, g, b, a]);
   }
 }
 /**
@@ -1081,7 +1092,10 @@ export class Surface {
       throw new Error("SDL2_image was not loaded");
     }
 
-    const rwops = sdl2.symbols.SDL_RWFromMem(data as BufferSource, data.byteLength);
+    const rwops = sdl2.symbols.SDL_RWFromMem(
+      data as BufferSource,
+      data.byteLength,
+    );
     const raw = sdl2Image.symbols.IMG_Load_RW(rwops);
     if (raw === null) {
       throwSDLError();
@@ -1094,7 +1108,7 @@ export class Surface {
     sdl2.symbols.SDL_FreeSurface(this[_raw]);
   }
 
-  [ Symbol.dispose ]() {
+  [Symbol.dispose]() {
     this.free();
   }
 }
