@@ -1444,15 +1444,16 @@ export class Window {
       }
       if (!pending) {
         yield { type: EventType.Draw };
+      } else {
+        const view = new Deno.UnsafePointerView(event!);
+        const type = view.getUint32();
+        const ev = eventReader[type as EventType];
+        if (!ev) {
+          // throw new Error(`Unknown event type: ${type}`);
+          continue;
+        }
+        yield { ...ev(view) };
       }
-      const view = new Deno.UnsafePointerView(event!);
-      const type = view.getUint32();
-      const ev = eventReader[type as EventType];
-      if (!ev) {
-        // throw new Error(`Unknown event type: ${type}`);
-        continue;
-      }
-      yield { ...ev(view) };
     }
   }
 
