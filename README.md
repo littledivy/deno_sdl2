@@ -4,12 +4,12 @@ deno_sdl2 provides bindings to sdl2, sdl2_ttf and sdl2_image.
 
 https://user-images.githubusercontent.com/34997667/160436698-9045ba0c-3fc8-45f9-8038-4194e5d3dcc8.mov
 
-Minimum supported Deno version: 2.0.0-rc.7
+Minimum supported Deno version: 2.3.0
 
 ### get started
 
 ```typescript
-import { EventType, WindowBuilder } from "jsr:@divy/sdl2@0.14";
+import { EventType, WindowBuilder } from "jsr:@divy/sdl2@0.15";
 
 const window = new WindowBuilder("Hello, Deno!", 640, 480).build();
 const canvas = window.canvas();
@@ -30,7 +30,7 @@ for await (const event of window.events()) {
 ```
 
 ```shell
-deno run --allow-env --allow-ffi https://jsr.io/@divy/sdl2/0.14.0/examples/hello.ts
+deno run --allow-env --allow-ffi https://jsr.io/@divy/sdl2/0.15.0/examples/hello.ts
 ```
 
 ### installing sdl2
