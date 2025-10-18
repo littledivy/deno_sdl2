@@ -259,6 +259,10 @@ const sdl2 = Deno.dlopen(getLibraryPath("SDL2"), {
     "parameters": ["pointer", "pointer"],
     "result": "pointer",
   },
+  "SDL_FreeSurface": {
+    "parameters": [ "pointer" ],
+    "result": "void"
+  },
   "SDL_GetWindowWMInfo": {
     "parameters": ["pointer", "pointer"],
     "result": "i32",
@@ -1063,6 +1067,14 @@ export class Surface {
     }
 
     return new Surface(raw);
+  }
+
+  free() {
+    sdl2.symbols.SDL_FreeSurface(this[_raw]);
+  }
+
+  [ Symbol.dispose ]() {
+    this.free();
   }
 }
 
