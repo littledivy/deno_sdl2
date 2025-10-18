@@ -308,6 +308,8 @@ const SDL2_Image_symbols = {
   },
 } as const;
 
+const SDL2_color_struct = ["u8", "u8", "u8", "u8"] as Deno.NativeType[];
+
 const SDL2_TTF_symbols = {
   "TTF_Init": {
     "parameters": [],
@@ -321,20 +323,20 @@ const SDL2_TTF_symbols = {
     "parameters": ["pointer", "i32", "i32"],
     "result": "pointer",
   },
-  "TTF_RenderText_Solid": {
-    "parameters": ["pointer", "buffer", "pointer"],
+  "TTF_RenderUTF8_Solid": {
+    "parameters": ["pointer", "pointer", <Deno.NativeType>{ struct: SDL2_color_struct}],
     "result": "pointer",
   },
-  "TTF_RenderText_Shaded": {
-    "parameters": ["pointer", "pointer", "pointer", "pointer"],
-    "result": "pointer",
-  },
-  "TTF_RenderText_Blended": {
-    "parameters": ["pointer", "buffer", "pointer"],
+  "TTF_RenderUTF8_Blended": {
+    "parameters": ["pointer", "pointer", <Deno.NativeType>{ struct: SDL2_color_struct}],
     "result": "pointer",
   },
   "TTF_CloseFont": {
     "parameters": ["pointer"],
+    "result": "i32",
+  },
+  "TTF_SizeUTF8": {
+    "parameters": [ "pointer", "buffer", "pointer", "pointer" ],
     "result": "i32",
   },
   "TTF_Quit": {
@@ -676,8 +678,8 @@ export class Canvas {
     const ret = sdl2.symbols.SDL_RenderCopy(
       this.target,
       texture[_raw],
-      source ? Deno.UnsafePointer.of(source[_raw]) : null,
-      dest ? Deno.UnsafePointer.of(dest[_raw]) : null,
+      source ? Deno.UnsafePointer.of(source[_raw] as BufferSource) : null,
+      dest ? Deno.UnsafePointer.of(dest[_raw] as BufferSource) : null,
     );
     if (ret < 0) {
       throwSDLError();
@@ -699,7 +701,7 @@ export class Canvas {
    * @returns a Font object for use with rendering text
    */
   loadFont(path: string, size: number): Font {
-    const raw = sdl2Font.symbols.TTF_OpenFont(asCString(path), size);
+    const raw = sdl2Font.symbols.TTF_OpenFont(asCString(path) as BufferSource, size);
     return new Font(raw);
   }
 
@@ -726,32 +728,52 @@ export class Font {
   }
   /**
    * Render a solid color version of the text.
-   * @param text text to render, in Latin1 encoding.
+   * @param text text to render, in utf8 encoding.
    * @param color the foreground color of the text
    * @returns a Texture object
    */
   renderSolid(text: string, color: Color): Surface {
-    const raw = sdl2Font.symbols.TTF_RenderText_Solid(
+    const raw = sdl2Font.symbols.TTF_RenderUTF8_Solid(
       this[_raw],
-      asCString(text),
-      color[_raw],
+      Deno.UnsafePointer.of(asCString(text) as BufferSource),
+      color[_raw] as BufferSource,
     );
     return new Surface(raw);
   }
 
   /**
    * Render text at high quality to a new ARGB surface.
-   * @param text text to render, in Latin1 encoding.
+   * @param text text to render, in utf8 encoding.
    * @param color the foreground color of the text
    * @returns a Texture object
    */
   renderBlended(text: string, color: Color): Surface {
-    const raw = sdl2Font.symbols.TTF_RenderText_Blended(
+    const raw = sdl2Font.symbols.TTF_RenderUTF8_Blended(
       this[_raw],
-      asCString(text),
-      color[_raw],
+      Deno.UnsafePointer.of(asCString(text) as BufferSource),
+      color[_raw] as BufferSource,
     );
     return new Surface(raw);
+  }
+
+  /**
+   * Calculate the width and height of a rendered text string.
+   * @param text text to measure, in utf8 encoding.
+   * @returns an object with width and height properties
+   */
+  textSize(text: string): { width: number; height: number; } {
+    const w = new Int32Array(1);
+    const h = new Int32Array(1);
+    const ret = sdl2Font.symbols.TTF_SizeUTF8(
+        this[ _raw ],
+        asCString(text) as BufferSource,
+        Deno.UnsafePointer.of(w),
+        Deno.UnsafePointer.of(h),
+    );
+    if (ret < 0) {
+        throwSDLError();
+    }
+    return { width: w[0], height: h[0] };
   }
 }
 
@@ -759,10 +781,9 @@ export class Font {
  * Color is a helper class for representing colors.
  */
 export class Color {
-  [_raw]: Deno.PointerValue;
+  [_raw]: Uint8Array;
   constructor(r: number, g: number, b: number, a: number = 0xff) {
-    const raw = new Uint8Array([r, g, b, a]);
-    this[_raw] = Deno.UnsafePointer.of(raw);
+      this[ _raw ] = new Uint8Array([ r, g, b, a ]);
   }
 }
 /**
@@ -966,8 +987,8 @@ export class Texture {
   update(pixels: Uint8Array, pitch: number, rect?: Rect) {
     const ret = sdl2.symbols.SDL_UpdateTexture(
       this.raw,
-      rect ? rect[_raw] : null,
-      pixels,
+      rect ? rect[_raw] as BufferSource : null,
+      pixels as BufferSource,
       pitch,
     );
     if (ret < 0) {
@@ -1029,7 +1050,7 @@ export class Surface {
       throw new Error("SDL2_image was not loaded");
     }
 
-    const raw = sdl2Image.symbols.IMG_Load(asCString(path));
+    const raw = sdl2Image.symbols.IMG_Load(asCString(path) as BufferSource);
     if (raw === null) {
       throwSDLError();
     }
@@ -1044,7 +1065,7 @@ export class Surface {
       throw new Error("SDL2_image was not loaded");
     }
 
-    const raw = sdl2.symbols.SDL_LoadBMP_RW(asCString(path));
+    const raw = sdl2.symbols.SDL_LoadBMP_RW(asCString(path) as BufferSource);
     if (raw === null) {
       throwSDLError();
     }
@@ -1056,7 +1077,7 @@ export class Surface {
       throw new Error("SDL2_image was not loaded");
     }
 
-    const rwops = sdl2.symbols.SDL_RWFromMem(data, data.byteLength);
+    const rwops = sdl2.symbols.SDL_RWFromMem(data as BufferSource, data.byteLength);
     const raw = sdl2Image.symbols.IMG_Load_RW(rwops);
     if (raw === null) {
       throwSDLError();
@@ -1478,7 +1499,7 @@ export class WindowBuilder {
   build(): Window {
     const title = asCString(this.title);
     const window = sdl2.symbols.SDL_CreateWindow(
-      title,
+      title as BufferSource,
       0x2FFF0000,
       0x2FFF0000,
       this.width,
