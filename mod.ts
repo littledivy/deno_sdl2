@@ -720,7 +720,7 @@ export class Canvas {
     return new Font(raw);
   }
 
-  loadFontRaw(data: Uint8Array, size: number): Font {
+  loadFontRaw(data: Uint8Array<ArrayBuffer>, size: number): Font {
     const rwops = sdl2.symbols.SDL_RWFromMem(data, data.byteLength);
     if (rwops === null) {
       throwSDLError();

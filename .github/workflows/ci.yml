@@ -27,7 +27,7 @@ jobs:
         shell: bash
         run: |
           set -xeuo pipefail
-          deno cache --unstable mod.ts
+          deno check --unstable mod.ts
           deno fmt --check
 
       - name: publish
